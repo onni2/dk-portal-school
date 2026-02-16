@@ -1,0 +1,34 @@
+import type { ReactNode } from "react";
+
+interface PageTemplateProps {
+  title: string;
+  description?: string;
+  actions?: ReactNode;
+  children: ReactNode;
+}
+
+export function PageTemplate({
+  title,
+  description,
+  actions,
+  children,
+}: PageTemplateProps) {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-[var(--color-text)]">
+            {title}
+          </h1>
+          {description && (
+            <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+              {description}
+            </p>
+          )}
+        </div>
+        {actions && <div className="flex shrink-0 gap-2">{actions}</div>}
+      </div>
+      {children}
+    </div>
+  );
+}
