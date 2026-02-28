@@ -1,3 +1,8 @@
+/**
+ * Standard page wrapper with a title, optional description, optional action buttons, and the page content below.
+ * Uses: nothing — standalone file
+ * Exports: PageTemplate
+ */
 import type { ReactNode } from "react";
 
 interface PageTemplateProps {
@@ -7,6 +12,9 @@ interface PageTemplateProps {
   children: ReactNode;
 }
 
+/**
+ *
+ */
 export function PageTemplate({
   title,
   description,
