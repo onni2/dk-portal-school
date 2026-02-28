@@ -1,3 +1,9 @@
+/**
+ * Zustand store for the project list filter state (search text and status filter).
+ * Uses: ../types/projects.types
+ * Exports: useProjectFilters
+ * Author: Haukur — example/scaffold, use as template
+ */
 import { create } from "zustand";
 import type { ProjectStatus } from "../types/projects.types";
 

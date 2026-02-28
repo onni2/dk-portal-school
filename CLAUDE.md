@@ -52,6 +52,21 @@ src/
   main.tsx                   # Entry point
 ```
 
+### Naming convention: routes vs features
+
+Route folders use **Icelandic** names (they appear in the browser URL):
+
+- `routes/reikningar/` → invoices
+- `routes/starfsmenn/` → employees
+- `routes/stimpilklukka/` → timeclock
+- `routes/vidskiptavinir/` → customers
+
+Feature folders use **English** names (they match the API endpoints):
+
+- `features/invoices/`, `features/employees/`, `features/timeclock/`, `features/customers/`
+
+This is intentional. Don't rename either side.
+
 ## How to Add a New Feature
 
 Use the `projects` feature as a reference. Copy its structure for your new feature.

@@ -4,6 +4,7 @@ import { projectsQueryOptions } from "@/features/projects/api/projects.queries";
 import { ProjectFilters } from "@/features/projects/components/ProjectFilters";
 import { ProjectList } from "@/features/projects/components/ProjectList";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
+import { PageTemplate } from "@/shared/components/PageTemplate";
 
 export const Route = createFileRoute("/projects/")({
   loader: ({ context: { queryClient } }) =>
@@ -13,12 +14,11 @@ export const Route = createFileRoute("/projects/")({
 
 function ProjectsPage() {
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Projects</h1>
+    <PageTemplate title="Projects" description="Browse graduation projects">
       <ProjectFilters />
       <Suspense fallback={<LoadingSpinner />}>
         <ProjectList />
       </Suspense>
-    </div>
+    </PageTemplate>
   );
 }
