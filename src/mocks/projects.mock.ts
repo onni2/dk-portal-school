@@ -1,3 +1,9 @@
+/**
+ * Static list of sample graduation projects used by the projects API while no real backend is connected.
+ * Uses: @/features/projects/types/projects.types
+ * Exports: MOCK_PROJECTS
+ * Author: Haukur — example/scaffold, use as template
+ */
 import type { Project } from "@/features/projects/types/projects.types";
 
 export const MOCK_PROJECTS: Project[] = [

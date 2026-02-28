@@ -1,3 +1,9 @@
+/**
+ * Detail view for a single project. Fetches the project by ID and shows its title, status, description, team members, and technology tags.
+ * Uses: @/shared/utils/cn, ../api/projects.queries
+ * Exports: ProjectDetail
+ * Author: Haukur — example/scaffold, use as template
+ */
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/shared/utils/cn";
 import { useProject } from "../api/projects.queries";
@@ -8,6 +14,9 @@ const statusStyles = {
   completed: "bg-green-100 text-green-800",
 } as const;
 
+/**
+ *
+ */
 export function ProjectDetail({ projectId }: { projectId: string }) {
   const { data: project } = useProject(projectId);
 

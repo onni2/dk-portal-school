@@ -1,7 +1,16 @@
+/**
+ * Renders the filtered list of project cards. Applies search text and status filters from the projects store.
+ * Uses: ../api/projects.queries, ../store/projects.store, ./ProjectCard
+ * Exports: ProjectList
+ * Author: Haukur — example/scaffold, use as template
+ */
 import { useProjects } from "../api/projects.queries";
 import { useProjectFilters } from "../store/projects.store";
 import { ProjectCard } from "./ProjectCard";
 
+/**
+ *
+ */
 export function ProjectList() {
   const { data: projects } = useProjects();
   const { search, status } = useProjectFilters();

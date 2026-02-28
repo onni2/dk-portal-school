@@ -1,3 +1,11 @@
+/**
+ * Search and status filter controls for the project list. Reads and writes filter state via the projects store.
+ * Uses: @/shared/components/Button, @/shared/components/Input, ../types/projects.types, ../store/projects.store
+ * Exports: ProjectFilters
+ * Author: Haukur — example/scaffold, use as template
+ */
+import { Button } from "@/shared/components/Button";
+import { Input } from "@/shared/components/Input";
 import type { ProjectStatus } from "../types/projects.types";
 import { useProjectFilters } from "../store/projects.store";
 
@@ -8,32 +16,31 @@ const statuses: { label: string; value: ProjectStatus | "all" }[] = [
   { label: "Completed", value: "completed" },
 ];
 
+/**
+ *
+ */
 export function ProjectFilters() {
   const { search, status, setSearch, setStatus } = useProjectFilters();
 
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-      <input
-        type="text"
+      <Input
         placeholder="Search projects..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
       />
 
       <div className="flex gap-1.5">
         {statuses.map((s) => (
-          <button
+          <Button
             key={s.value}
+            size="sm"
+            variant={status === s.value ? "primary" : "ghost"}
             onClick={() => setStatus(s.value)}
-            className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-              status === s.value
-                ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
+            className="rounded-full"
           >
             {s.label}
-          </button>
+          </Button>
         ))}
       </div>
     </div>

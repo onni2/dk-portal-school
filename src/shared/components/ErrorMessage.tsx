@@ -1,3 +1,9 @@
+/**
+ * Inline error message box styled with a red background and border.
+ * Uses: @/shared/utils/cn
+ * Exports: ErrorMessage
+ * Author: Haukur — example/scaffold, use as template
+ */
 import { cn } from "@/shared/utils/cn";
 
 interface ErrorMessageProps {
@@ -5,6 +11,9 @@ interface ErrorMessageProps {
   className?: string;
 }
 
+/**
+ *
+ */
 export function ErrorMessage({ message, className }: ErrorMessageProps) {
   return (
     <div

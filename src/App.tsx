@@ -1,3 +1,9 @@
+/**
+ * Root application component. Sets up the React Query client and TanStack Router provider.
+ * Uses: ./routeTree.gen
+ * Exports: App (default)
+ * Author: Haukur — example/scaffold, use as template
+ */
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
@@ -24,6 +30,9 @@ declare module "@tanstack/react-router" {
   }
 }
 
+/**
+ *
+ */
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
