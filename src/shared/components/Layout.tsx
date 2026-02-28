@@ -1,24 +1,38 @@
-import { Link, useMatches } from "@tanstack/react-router";
+/**
+ * App shell with a top header (logo, company selector, profile dropdown) and a sidebar nav. Renders the active page in the main content area.
+ * Uses: @/shared/utils/cn, @/features/licence/hooks/useVisibleNavItems, @/features/licence/store/role.store, @/features/auth/store/auth.store, @/features/auth/api/auth.api, @/features/auth/components/ProfileDropdown
+ * Exports: Layout
+ * Author: Haukur — example/scaffold, use as template
+ */
+import { Link, useMatches, useNavigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { cn } from "@/shared/utils/cn";
+import { useVisibleNavItems } from "@/features/licence/hooks/useVisibleNavItems";
+import { useRoleStore } from "@/features/licence/store/role.store";
+import { useAuthStore } from "@/features/auth/store/auth.store";
+import { logout } from "@/features/auth/api/auth.api";
+import { ProfileDropdown } from "@/features/auth/components/ProfileDropdown";
 
-const NAV_ITEMS = [
-  { label: "Yfirlit", to: "/" },
-  { label: "Reikningar", to: "/reikningar" },
-  { label: "Leyfi", to: "/leyfi" },
-  { label: "Hýsing", to: "/hysing" },
-  { label: "POS", to: "/pos" },
-  { label: "dkOne/Plus", to: "/dkone" },
-  { label: "Stimpilklukka", to: "/stimpilklukka" },
-  { label: "Zoho mál", to: "/zoho" },
-  { label: "Knowledge Base", to: "/knowledge-base" },
-  { label: "Notendur", to: "/notendur" },
-  { label: "Stillingar", to: "/stillingar" },
-];
-
+/**
+ *
+ */
 export function Layout({ children }: { children: ReactNode }) {
   const matches = useMatches();
   const currentPath = matches[matches.length - 1]?.fullPath ?? "/";
+  const navItems = useVisibleNavItems();
+  const { role, toggleRole } = useRoleStore();
+  const user = useAuthStore((s) => s.user);
+  const clearAuth = useAuthStore((s) => s.clearAuth);
+  const navigate = useNavigate();
+
+  /**
+   *
+   */
+  async function handleLogout() {
+    await logout();
+    clearAuth();
+    navigate({ to: "/login" });
+  }
 
   return (
     <div className="flex h-screen flex-col bg-[var(--color-background)] text-[var(--color-text)]">
@@ -40,11 +54,28 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
         </div>
 
-        <div className="flex items-center gap-4 text-sm">
-          <span className="text-[var(--color-text-secondary)]">Notandi</span>
-          <button className="font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-hover)]">
-            Útskrá
+        <div className="flex items-center gap-3">
+          {/* Bell icon — placeholder, no notifications yet */}
+          <button className="rounded-[var(--radius-md)] p-1.5 text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)]">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"
+              />
+            </svg>
           </button>
+
+          {user && (
+            <ProfileDropdown user={user} onLogout={handleLogout} />
+          )}
         </div>
       </header>
 
@@ -55,7 +86,7 @@ export function Layout({ children }: { children: ReactNode }) {
             <span className="mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
               Valmynd
             </span>
-            {NAV_ITEMS.map((item) => {
+            {navItems.map((item) => {
               const isActive =
                 item.to === "/"
                   ? currentPath === "/"
@@ -79,6 +110,14 @@ export function Layout({ children }: { children: ReactNode }) {
           </nav>
 
           <div className="border-t border-[var(--color-border)] p-4">
+            {import.meta.env.DEV && (
+              <button
+                onClick={toggleRole}
+                className="mb-3 w-full rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface-hover)]"
+              >
+                Hlutverk: {role === "cop" ? "COP (Admin)" : "Client"} ↔
+              </button>
+            )}
             <p className="text-xs text-[var(--color-text-muted)]">
               Þarftu hjálp?
             </p>

@@ -1,9 +1,17 @@
+/**
+ * Zustand store for authentication state. Persists the logged-in user and token to localStorage.
+ * Uses: ../types/auth.types
+ * Exports: useAuthStore
+ */
 import { create } from "zustand";
 import type { User } from "../types/auth.types";
 
 const STORAGE_KEY_USER = "dk-auth-user";
 const STORAGE_KEY_TOKEN = "dk-auth-token";
 
+/**
+ *
+ */
 function loadFromStorage(): { user: User | null; token: string | null } {
   try {
     const userJson = localStorage.getItem(STORAGE_KEY_USER);

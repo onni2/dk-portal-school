@@ -1,20 +1,40 @@
+/**
+ * HTTP client that wraps fetch with auth headers and error handling.
+ * Reads the token from localStorage after login, falls back to the env token for development.
+ * Uses: ./types
+ * Exports: apiClient, BASE_URL
+ */
 import type { ApiError } from "./types";
 
-const BASE_URL =
+export const BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "https://api.dkplus.is/api/v1";
 
-const AUTH_TOKEN = import.meta.env.VITE_API_TOKEN ?? "";
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/**
+ *
+ */
 function authHeaders(): Record<string, string> {
+  // Only use the stored token if it looks like a real UUID — guards against
+  // stale mock tokens (e.g. "mock-token-u1-...") that the real API rejects.
+  const stored = localStorage.getItem("dk-auth-token");
+  const token =
+    (stored && UUID_RE.test(stored) ? stored : null) ??
+    import.meta.env.VITE_API_TOKEN ??
+    "";
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
-  if (AUTH_TOKEN) {
-    headers["Authorization"] = `Bearer ${AUTH_TOKEN}`;
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
   }
   return headers;
 }
 
+/**
+ *
+ */
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     let message = response.statusText;
@@ -58,5 +78,16 @@ export const apiClient = {
       method: "DELETE",
       headers: authHeaders(),
     }).then(handleResponse<T>);
+  },
+
+  async getBlob(path: string): Promise<Blob> {
+    const response = await fetch(`${BASE_URL}${path}`, {
+      headers: authHeaders(),
+    });
+    if (!response.ok) {
+      const error = { message: response.statusText, status: response.status };
+      throw error;
+    }
+    return response.blob();
   },
 };
