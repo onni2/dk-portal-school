@@ -1,3 +1,8 @@
+/**
+ * TypeScript types for authentication: user roles, user shape, login credentials, and the login response.
+ * Uses: nothing — standalone file
+ * Exports: AuthRole, User, LoginCredentials, AuthResponse
+ */
 export type AuthRole = "admin" | "standard" | "accountant";
 
 export interface User {
@@ -5,11 +10,11 @@ export interface User {
   email: string;
   name: string;
   role: AuthRole;
+  kennitala?: string;
 }
 
 export interface LoginCredentials {
-  email: string;
-  password: string;
+  token: string;
 }
 
 export interface AuthResponse {
