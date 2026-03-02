@@ -11,7 +11,7 @@ import { CreateCustomerForm } from "@/features/customers/components/CreateCustom
 import { PageTemplate } from "@/shared/components/PageTemplate";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 
-export const Route = createFileRoute("/vidskiptavinir/")({
+export const Route = createFileRoute("/customers/")({
   loader: ({ context: { queryClient } }) =>
     queryClient.ensureQueryData(customersQueryOptions),
   component: CustomersPage,

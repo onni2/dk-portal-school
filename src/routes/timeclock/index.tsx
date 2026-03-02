@@ -13,7 +13,7 @@ import { TimeclockPage } from "@/features/timeclock/components/TimeclockPage";
 import { PageTemplate } from "@/shared/components/PageTemplate";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 
-export const Route = createFileRoute("/stimpilklukka/")({
+export const Route = createFileRoute("/timeclock/")({
   loader: ({ context: { queryClient } }) =>
     Promise.all([
       queryClient.ensureQueryData(timeclockEntriesQueryOptions),
