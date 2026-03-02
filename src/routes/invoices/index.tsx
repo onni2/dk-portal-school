@@ -11,7 +11,7 @@ import { TransactionTable } from "@/features/invoices/components/TransactionTabl
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { PageTemplate } from "@/shared/components/PageTemplate";
 
-export const Route = createFileRoute("/reikningar/")({
+export const Route = createFileRoute("/invoices/")({
   loader: ({ context: { queryClient } }) =>
     queryClient.ensureQueryData(customerTransactionsQueryOptions),
   component: ReikningarPage,

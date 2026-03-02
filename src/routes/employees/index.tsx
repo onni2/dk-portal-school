@@ -10,7 +10,7 @@ import { EmployeeTable } from "@/features/employees/components/EmployeeTable";
 import { PageTemplate } from "@/shared/components/PageTemplate";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 
-export const Route = createFileRoute("/starfsmenn/")({
+export const Route = createFileRoute("/employees/")({
   loader: ({ context: { queryClient } }) =>
     queryClient.ensureQueryData(employeesQueryOptions),
   component: StarfsmennPage,
