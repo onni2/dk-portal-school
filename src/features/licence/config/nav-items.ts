@@ -18,7 +18,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Yfirlit", to: "/", access: { type: "alwaysVisible" } },
   {
     label: "Reikningar",
-    to: "/reikningar",
+    to: "/invoices",
     access: { type: "requiredModules", modules: ["Sales"] },
   },
   {
@@ -43,17 +43,17 @@ export const NAV_ITEMS: NavItem[] = [
   },
   {
     label: "Viðskiptavinir",
-    to: "/vidskiptavinir",
+    to: "/customers",
     access: { type: "requiredModules", modules: ["Customer"] },
   },
   {
     label: "Starfsmenn",
-    to: "/starfsmenn",
+    to: "/employees",
     access: { type: "requiredModules", modules: ["Payroll"] },
   },
   {
     label: "Stimpilklukka",
-    to: "/stimpilklukka",
+    to: "/timeclock",
     access: { type: "requiredModules", modules: ["Payroll"] },
   },
   {
