@@ -15,6 +15,19 @@ export default defineConfig({
         changeOrigin: true,
         secure: true,
       },
+      // Forward /audkenni/* to Auðkenni test server.
+      // cookieDomainRewrite rewrites Set-Cookie Domain so the browser stores
+      // the audsso session cookie for localhost (needed between steps 1→2→3).
+      // Siggi's note: Auðkenni warns not to let the HTTP handler ACCUMULATE
+      // cookies across sessions — cookieDomainRewrite:"" prevents that by
+      // stripping the Domain attribute, scoping cookies to the current session only.
+      "/audkenni": {
+        target: "https://to5vx.audkenni.is:443/sso",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/audkenni/, ""),
+        secure: true,
+        cookieDomainRewrite: "",
+      },
     },
   },
   test: {
