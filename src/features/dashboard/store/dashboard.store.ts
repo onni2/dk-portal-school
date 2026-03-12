@@ -11,6 +11,7 @@ export interface CardDef {
   title: string;
   description: string;
   to: string;
+  adminOnly?: boolean;
 }
 
 /** Every possible card — users pick which ones to show */
@@ -19,49 +20,53 @@ export const ALL_CARDS: CardDef[] = [
     id: "reikningar",
     title: "Reikningar",
     description: "Skoðaðu reikninga og halaðu niður sem PDF.",
-    to: "/reikningar",
+    to: "/invoices/",
   },
   {
     id: "vidskiptavinir",
     title: "Viðskiptavinir",
     description: "Yfirlit yfir viðskiptavini fyrirtækisins.",
-    to: "/vidskiptavinir",
+    to: "/customers/",
   },
   {
     id: "starfsmenn",
     title: "Starfsmenn",
     description: "Skoðaðu starfsmenn og tengdar upplýsingar.",
-    to: "/starfsmenn",
+    to: "/employees/",
   },
   {
     id: "stimpilklukka",
     title: "Stimpilklukka",
     description: "Skráðu inn og út og skoðaðu tímaskráningar.",
-    to: "/stimpilklukka",
+    to: "/timeclock/",
   },
   {
     id: "leyfi",
     title: "Leyfi",
     description: "Yfirlit yfir virk leyfi og kerfisþætti.",
     to: "/leyfi",
+    adminOnly: true,
   },
   {
     id: "dkplus",
     title: "dkPlus",
     description: "Notendur og API tókn fyrir dkPlus.",
     to: "/dkone",
+    adminOnly: true,
   },
   {
     id: "hysing",
     title: "Hýsing",
     description: "Stjórnaðu hýsingaraðgangi fyrirtækisins.",
     to: "/hysing",
+    adminOnly: true,
   },
   {
     id: "notendur",
     title: "Notendur",
     description: "Stjórnaðu notendum á Mínar síður.",
     to: "/notendur",
+    adminOnly: true,
   },
   {
     id: "hjalp",
@@ -74,6 +79,7 @@ export const ALL_CARDS: CardDef[] = [
     title: "Stillingar",
     description: "Stillingar fyrir Mínar síður.",
     to: "/stillingar",
+    adminOnly: true,
   },
 ];
 

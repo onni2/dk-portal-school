@@ -54,18 +54,12 @@ src/
 
 ### Naming convention: routes vs features
 
-Route folders use **Icelandic** names (they appear in the browser URL):
+Both route folders and feature folders use **English** names:
 
-- `routes/reikningar/` → invoices
-- `routes/starfsmenn/` → employees
-- `routes/stimpilklukka/` → timeclock
-- `routes/vidskiptavinir/` → customers
-
-Feature folders use **English** names (they match the API endpoints):
-
+- `routes/invoices/`, `routes/employees/`, `routes/timeclock/`, `routes/customers/`
 - `features/invoices/`, `features/employees/`, `features/timeclock/`, `features/customers/`
 
-This is intentional. Don't rename either side.
+This keeps everything consistent and easier to navigate.
 
 ## How to Add a New Feature
 
