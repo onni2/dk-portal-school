@@ -5,6 +5,7 @@
  */
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { Link } from "@tanstack/react-router";
 import type { CardDef } from "../store/dashboard.store";
 import { CardPreview } from "./CardPreviews";
 
@@ -51,12 +52,12 @@ export function SortableDashboardCard({ card }: { card: CardDef }) {
         <CardPreview id={card.id} />
       </div>
 
-      <a
-        href={card.to}
+      <Link
+        to={card.to}
         className="inline-block rounded border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
       >
         Skoða
-      </a>
+      </Link>
     </div>
   );
 }
