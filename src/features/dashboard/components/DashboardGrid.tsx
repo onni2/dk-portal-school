@@ -19,6 +19,7 @@ import {
   arrayMove,
   rectSortingStrategy,
 } from "@dnd-kit/sortable";
+import { useAuthStore } from "@/features/auth/store/auth.store";
 import { ALL_CARDS, useDashboardLayout } from "../store/dashboard.store";
 import { SortableDashboardCard } from "./DashboardCard";
 
@@ -28,6 +29,11 @@ import { SortableDashboardCard } from "./DashboardCard";
 function AddCardTile() {
   const { cardIds, addCard, removeCard } = useDashboardLayout();
   const [open, setOpen] = useState(false);
+  const isAdmin = useAuthStore((s) => s.user?.role === "admin");
+
+  const availableCards = ALL_CARDS.filter(
+    (card) => !card.adminOnly || isAdmin,
+  );
 
   return (
     <div
@@ -53,7 +59,7 @@ function AddCardTile() {
             </button>
           </div>
           <div className="flex flex-col gap-1">
-            {ALL_CARDS.map((card) => {
+            {availableCards.map((card) => {
               const isAdded = cardIds.includes(card.id);
               return (
                 <button
@@ -86,6 +92,7 @@ function AddCardTile() {
  */
 export function DashboardGrid() {
   const { cardIds, setCardIds } = useDashboardLayout();
+  const isAdmin = useAuthStore((s) => s.user?.role === "admin");
 
   const sensors = useSensors(useSensor(PointerSensor));
 
@@ -103,7 +110,8 @@ export function DashboardGrid() {
 
   const visibleCards = cardIds
     .map((id) => ALL_CARDS.find((c) => c.id === id))
-    .filter(Boolean) as typeof ALL_CARDS;
+    .filter(Boolean)
+    .filter((card) => !card!.adminOnly || isAdmin) as typeof ALL_CARDS;
 
   return (
     <div>
