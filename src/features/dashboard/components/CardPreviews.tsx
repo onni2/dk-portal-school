@@ -6,7 +6,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { fetchCustomerTransactions } from "@/features/invoices/api/invoices.api";
-import { fetchTimeclockEmployees } from "@/features/timeclock/api/timeclock.api";
+import { fetchTimeclockSettings } from "@/features/timeclock/api/timeclock.api";
 import { fetchEmployees } from "@/features/employees/api/employees.api";
 import { fetchCustomers } from "@/features/customers/api/customers.api";
 import { fetchLicence } from "@/features/licence/api/licence.api";
@@ -76,30 +76,18 @@ function ReikningarPreview() {
  */
 function StimpilklukkaPreview() {
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["timeclock-preview"],
-    queryFn: fetchTimeclockEmployees,
+    queryKey: ["timeclock-settings"],
+    queryFn: fetchTimeclockSettings,
   });
 
   if (isLoading) return <Loading />;
   if (isError || !data) return <Err />;
 
-  const clockedIn = data.filter((e) => e.StampStatus === 1);
-  const clockedOut = data.filter((e) => e.StampStatus !== 1);
-
   return (
     <div className="space-y-1">
       <p className="text-xs text-gray-400">
-        {clockedIn.length} inni · {clockedOut.length} úti
+        Staða: {data.Enabled ? "Virkt" : "Óvirkt"}
       </p>
-      {clockedIn.slice(0, 3).map((e) => (
-        <div key={e.Number} className="flex items-center gap-1.5 text-xs">
-          <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
-          <span className="text-gray-700">{e.Name}</span>
-        </div>
-      ))}
-      {clockedIn.length > 3 && (
-        <p className="text-xs text-gray-400">+{clockedIn.length - 3} fleiri</p>
-      )}
     </div>
   );
 }

@@ -1,22 +1,20 @@
 /**
- * Zustand store for the timeclock employee grid filter state (search text and in/out status filter).
+ * Zustand store for timeclock UI state — add IP modal and add phone modal open states.
  * Uses: nothing — standalone file
- * Exports: useTimeclockFilters
+ * Exports: useTimeclockStore
  */
 import { create } from "zustand";
 
-type StatusFilter = "all" | "in" | "out";
-
-interface TimeclockFiltersState {
-  search: string;
-  statusFilter: StatusFilter;
-  setSearch: (search: string) => void;
-  setStatusFilter: (statusFilter: StatusFilter) => void;
+interface TimeclockStore {
+  addIpOpen: boolean;
+  addPhoneOpen: boolean;
+  setAddIpOpen: (open: boolean) => void;
+  setAddPhoneOpen: (open: boolean) => void;
 }
 
-export const useTimeclockFilters = create<TimeclockFiltersState>((set) => ({
-  search: "",
-  statusFilter: "all",
-  setSearch: (search) => set({ search }),
-  setStatusFilter: (statusFilter) => set({ statusFilter }),
+export const useTimeclockStore = create<TimeclockStore>((set) => ({
+  addIpOpen: false,
+  addPhoneOpen: false,
+  setAddIpOpen: (open) => set({ addIpOpen: open }),
+  setAddPhoneOpen: (open) => set({ addPhoneOpen: open }),
 }));
