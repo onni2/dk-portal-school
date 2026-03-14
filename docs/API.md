@@ -290,13 +290,61 @@ Works the same as orders — has v1 and v2 versions.
 
 **What it is:** Tracks when employees clock in and out. The portal's Stimpilklukka page reads from and writes to this.
 
-| What it does | Technical path |
-|---|---|
-| Get all timeclock entries | `GET /TimeClock/entries` |
-| See who is currently clocked in | `GET /TimeClock/in` |
-| See who is currently clocked out | `GET /TimeClock/out` |
-| Clock an employee in or out | `POST /TimeClock/stamp/{employee}` |
-| Get timeclock settings | `GET /TimeClock/settings` |
+| What it does | Technical path | Tested |
+|---|---|---|
+| Get all timeclock entries | `GET /TimeClock/entries` | ✅ works — returns `[]` on demo |
+| See who is currently clocked in | `GET /TimeClock/in` | ✅ works — returns `[]` on demo |
+| See who is currently clocked out | `GET /TimeClock/out` | ✅ works — returns `[]` on demo |
+| Clock an employee in or out | `POST /TimeClock/stamp/{employee}` | ✅ works — needs a real employee number |
+| Get timeclock settings | `GET /TimeClock/settings` | ✅ works — see shape below |
+| Map a hostname to a company | `GET /TimeClock/web/config?host=` | ✅ works — see shape below |
+| Look up employee by phone number | `GET /TimeClock/Employee?phone=` | ❌ 401 — token lacks permission |
+| Get project info for timeclock | `GET /TimeClock/project/{number}?company=` | ⚠️ returns "request is invalid" on demo |
+| Force clock out an employee | `POST /TimeClock/quit?company=&employee=` | ⚠️ returns "request is invalid" on demo |
+| Register employee stamp | `POST /TimeClock/register/{employee}` | ⚠️ returns server error on demo |
+| Register via dkPOS | `POST /TimeClock/dkposregister/{employee}` | ❌ 401 — token lacks permission |
+
+**Settings response shape** (`GET /TimeClock/settings`):
+```json
+{
+  "Enabled": false,
+  "Text": 1,
+  "Project": 1,
+  "Phase": 1,
+  "Task": 1,
+  "Dim1": 0,
+  "Dim2": 0,
+  "Dim3": 0,
+  "SendToProjectTransaction": false,
+  "RoundUpDaytimeAlso": false,
+  "RoundFactor": 1
+}
+```
+> Field values (`0` / `1`) appear to be enums — `0` = Disabled, `1` = likely Optional or Enabled. Needs confirmation from DK.
+> Settings are **read-only** — `PUT /TimeClock/settings` returns 405.
+
+**Web config response shape** (`GET /TimeClock/web/config?host=<hostname>`):
+```json
+{
+  "Enabled": true,
+  "Company": "a89e47c2-5baa-48ff-8da9-3ab512274d19",
+  "CompanyName": "Prufufyrirtækið ehf(Demo Dev)"
+}
+```
+> Maps a kiosk hostname to a company. The `host` param is required — calling without it returns 404.
+> Currently any host returns the demo company. Used by self-service kiosk terminals to identify themselves.
+
+**Entries query params** (`GET /TimeClock/entries`):
+
+| Param | Type | Description |
+|---|---|---|
+| `from` | date-time | Stamped in after |
+| `to` | date-time | Stamped out before |
+| `employee` | string | Filter by employee number |
+| `project` | string | Filter by project |
+| `phase` | string | Filter by phase |
+| `task` | string | Filter by task |
+| `dim1/2/3` | string | Dimension filters |
 
 ---
 
@@ -403,6 +451,10 @@ These are things the API *can't* do, or things we haven't been able to figure ou
 5. **Kennitala must be valid** — If you include an SSNumber (kennitala) on a customer or member, it must pass Icelandic kennitala validation. You can't use a fake number.
 
 6. **Some v2 endpoints are in beta** — The newer v2 endpoints (especially Purchase Journal) are marked beta and may change or have bugs.
+
+7. **Timeclock phone number management** — `GET /TimeClock/Employee?phone=` exists but returns `401` with our token. There is no known write endpoint for registering or managing employee phone numbers. Needs clarification from DK.
+
+8. **No IP whitelist API** — There is no endpoint for reading or writing IP whitelist rules for the timeclock kiosk. This is likely managed server-side by DK and would need a new endpoint or a different approach.
 
 ---
 

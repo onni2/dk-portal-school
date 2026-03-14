@@ -93,9 +93,9 @@ export function Layout({ children }: { children: ReactNode }) {
                   : currentPath.startsWith(item.to);
 
               return (
-                <a
+                <Link
                   key={item.to}
-                  href={item.to}
+                  to={item.to}
                   className={cn(
                     "rounded-[var(--radius-md)] px-3 py-2 text-sm font-medium transition-colors",
                     isActive
@@ -104,7 +104,7 @@ export function Layout({ children }: { children: ReactNode }) {
                   )}
                 >
                   {item.label}
-                </a>
+                </Link>
               );
             })}
           </nav>
