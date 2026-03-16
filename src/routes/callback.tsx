@@ -5,11 +5,12 @@
  * Exports: Route
  */
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   handleAudkenniCallback,
   fetchAudkenniUserInfo,
 } from "@/features/auth/api/audkenni.api";
+import { fetchEmployees } from "@/features/employees/api/employees.api";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { useRoleStore } from "@/features/licence/store/role.store";
 import { authRoleToUserRole } from "@/features/auth/utils/role-mapping";
@@ -24,8 +25,12 @@ function CallbackPage() {
   const setAuth = useAuthStore((s) => s.setAuth);
   const setRole = useRoleStore((s) => s.setRole);
   const [error, setError] = useState<string | null>(null);
+  const handled = useRef(false);
 
   useEffect(() => {
+    if (handled.current) return;
+    handled.current = true;
+
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
     const state = params.get("state");
@@ -45,14 +50,26 @@ function CallbackPage() {
     handleAudkenniCallback(code, state)
       .then(async ({ accessToken }) => {
         const userInfo = await fetchAudkenniUserInfo(accessToken);
+
+        // Match to a DK Plus employee by kennitala (nationalRegisterId vs SSNumber).
+        // apiClient falls back to VITE_API_TOKEN since no token is stored yet.
+        const employees = await fetchEmployees().catch(() => []);
+        const kennitala = userInfo.nationalRegisterId;
+        const match = kennitala
+          ? employees.find((e) => e.SSNumber === kennitala)
+          : undefined;
+
         const user = {
-          id: userInfo.sub,
-          name: userInfo.name ?? "Notandi",
-          email: userInfo.email ?? "",
-          kennitala: userInfo.sub,
+          id: match?.Number ?? userInfo.sub,
+          name: match?.Name ?? userInfo.name ?? "Notandi",
+          email: match?.Email ?? userInfo.email ?? "",
+          kennitala: kennitala ?? userInfo.sub,
           role: "standard" as const,
         };
-        setAuth(user, accessToken);
+
+        // Store the env API token so DK Plus API calls work after login
+        const apiToken = import.meta.env.VITE_API_TOKEN as string | undefined;
+        setAuth(user, apiToken ?? accessToken);
         setRole(authRoleToUserRole(user.role));
         navigate({ to: "/" });
       })
