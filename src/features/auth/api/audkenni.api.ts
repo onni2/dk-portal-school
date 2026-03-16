@@ -25,9 +25,10 @@ const REDIRECT_URI = import.meta.env.VITE_AUDKENNI_REDIRECT_URI as string;
 const AUTHENTICATE_BASE = `${BASE_URL}json/realms/root/realms/audkenni/authenticate`;
 // With service params for Steps 1 & 2
 const AUTHENTICATE_URL = `${AUTHENTICATE_BASE}?authIndexType=service&authIndexValue=api_v203`;
-const AUTHORIZE_URL = `${BASE_URL}oauth2/authorize`;
-const TOKEN_URL = `${BASE_URL}oauth2/token`;
-const USERINFO_URL = `${BASE_URL}oauth2/userinfo`;
+const OAUTH2_BASE = `${BASE_URL}oauth2/realms/root/realms/audkenni`;
+const AUTHORIZE_URL = `${OAUTH2_BASE}/authorize`;
+const TOKEN_URL = `${OAUTH2_BASE}/access_token`;
+const USERINFO_URL = `${OAUTH2_BASE}/userinfo`;
 
 const API_HEADERS = {
   "Content-Type": "application/json",
@@ -42,10 +43,10 @@ const SESSION_KEY_STATE = "audkenni_state";
 export type AudkenniMethod = "sim" | "card";
 
 export interface AudkenniUserInfo {
-  sub: string; // kennitala or subject identifier
+  sub: string;
   name?: string;
   email?: string;
-  phone_number?: string;
+  nationalRegisterId?: string; // kennitala
 }
 
 interface AudkenniCallback {
