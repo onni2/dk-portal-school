@@ -5,7 +5,7 @@
  * Author: Haukur — example/scaffold, use as template
  */
 import { Link, useMatches, useNavigate } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { cn } from "@/shared/utils/cn";
 import { useVisibleNavItems } from "@/features/licence/hooks/useVisibleNavItems";
 import { useRoleStore } from "@/features/licence/store/role.store";
@@ -24,6 +24,15 @@ export function Layout({ children }: { children: ReactNode }) {
   const user = useAuthStore((s) => s.user);
   const clearAuth = useAuthStore((s) => s.clearAuth);
   const navigate = useNavigate();
+  const [openItems, setOpenItems] = useState<string[]>(() =>
+    navItems
+      .filter((item) => item.children?.some((child) => child.to === currentPath))
+      .map((item) => item.to),
+    );
+  const toggleItem = (to: string) =>
+    setOpenItems((prev) =>
+      prev.includes(to) ? prev.filter((t) => t !== to) : [...prev, to],
+    );
 
   /**
    *
@@ -40,76 +49,118 @@ export function Layout({ children }: { children: ReactNode }) {
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-surface)] px-6">
         <div className="flex items-center gap-4">
           <Link to="/" className="flex items-center gap-2">
-            <span className="text-xl font-bold text-[var(--color-primary)]">
-              dk
-            </span>
-            <span className="text-sm text-[var(--color-text-secondary)]">
-              Mínar síður
-            </span>
+            <span className="text-xl font-bold text-[var(--color-primary)]">dk</span>
+            <span className="text-sm text-[var(--color-text-secondary)]">Mínar síður</span>
           </Link>
 
-          {/* Company selector — placeholder, will be wired to real data */}
           <div className="ml-4 rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-text-secondary)]">
             Fyrirtæki ehf. ▾
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Bell icon — placeholder, no notifications yet */}
           <button className="rounded-[var(--radius-md)] p-1.5 text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)]">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"
-              />
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
             </svg>
           </button>
-
-          {user && (
-            <ProfileDropdown user={user} onLogout={handleLogout} />
-          )}
+          {user && <ProfileDropdown user={user} onLogout={handleLogout} />}
         </div>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <aside className="flex w-[var(--sidebar-width)] shrink-0 flex-col justify-between border-r border-[var(--color-border)] bg-[var(--color-surface)]">
+        <aside className="flex w-[var(--sidebar-width)] shrink-0 flex-col justify-between border-r border-[#E6E8EF] bg-white">
           <nav className="flex flex-col gap-1 p-3">
-            <span className="mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+            {/* "Valmynd" heading */}
+            <span className="mb-1 px-3 text-[11px] font-bold uppercase tracking-wider text-[#5C667A]">
               Valmynd
             </span>
+
             {navItems.map((item) => {
-              const isActive =
-                item.to === "/"
+              const hasChildren = !!item.children?.length;
+              const isActive = hasChildren
+                ? item.children!.some((child) => currentPath === child.to)
+                : item.to === "/"
                   ? currentPath === "/"
                   : currentPath.startsWith(item.to);
+              const isOpen = openItems.includes(item.to);
 
               return (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  className={cn(
-                    "rounded-[var(--radius-md)] px-3 py-2 text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-[var(--color-primary)] text-white"
-                      : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)]",
+                <div key={item.to}>
+                  {/* Top-level item */}
+                  {hasChildren ? (
+                    <button
+                      onClick={() => toggleItem(item.to)}
+                      className={cn(
+                        "flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm font-medium transition-colors",
+                        isActive
+                          ? "text-[#4743F7]"
+                          : "text-[#0B0F1A] hover:bg-[var(--color-surface-hover)]",
+                      )}
+                    >
+                      {item.label}
+                      <svg
+                        className={cn(
+                          "h-3 w-3 shrink-0 text-[#5C667A] transition-transform duration-200",
+                          isOpen && "rotate-180",
+                        )}
+                        viewBox="0 0 10 6"
+                        fill="none"
+                      >
+                        <path
+                          d="M1 1l4 4 4-4"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </button>
+                  ) : (
+                    <a
+                      href={item.to}
+                      className={cn(
+                        "flex items-center rounded-xl px-3 py-2 text-sm font-medium transition-colors",
+                        isActive
+                          ? "text-[#4743F7]"
+                          : "text-[#0B0F1A] hover:bg-[var(--color-surface-hover)]",
+                      )}
+                    >
+                      {item.label}
+                    </a>
                   )}
-                >
-                  {item.label}
-                </Link>
+
+                  {/* Sub-items */}
+                  {hasChildren && isOpen && (
+                    <div className="mt-0.5 flex flex-col">
+                      {item.children!.map((child) => {
+                        const childActive = currentPath === child.to;
+                        return (
+                          <a
+                            key={child.to}
+                            href={child.to}
+                            className={cn(
+                              "flex items-center gap-2 rounded-xl py-2 pl-8 pr-3 text-[13px] transition-colors",
+                              childActive
+                                ? "font-medium text-[#4743F7]"
+                                : "text-[#0B0F1A] hover:bg-[var(--color-surface-hover)]",
+                            )}
+                          >
+                            <span className={cn("text-xs", childActive ? "text-[#4743F7]" : "text-[#9CB3E2]")}>•</span>
+                            {child.label}
+                          </a>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               );
             })}
           </nav>
 
-          <div className="border-t border-[var(--color-border)] p-4">
+          {/* Bottom section */}
+          <div className="p-3">
             {import.meta.env.DEV && (
               <button
                 onClick={toggleRole}
@@ -118,15 +169,17 @@ export function Layout({ children }: { children: ReactNode }) {
                 Hlutverk: {role === "cop" ? "COP (Admin)" : "Client"} ↔
               </button>
             )}
-            <p className="text-xs text-[var(--color-text-muted)]">
-              Þarftu hjálp?
-            </p>
-            <a
-              href="/knowledge-base"
-              className="text-xs font-medium text-[var(--color-primary)] hover:underline"
-            >
-              Leiðbeiningar (Knowledge Base)
-            </a>
+
+            {/* Help box */}
+            <div className="rounded-[14px] border border-[#E6E8EF] bg-[#F6F8FC] px-4 py-3">
+              <p className="text-[12px] font-medium text-[#0B0F1A]">Þarftu aðstoð?</p>
+              <p className="text-[13px] font-bold text-[#0B0F1A]">
+                Spjalla við{" "}
+                <a href="/hjalpfus" className="text-[#4743F7] hover:underline">
+                  Hjálpfús!
+                </a>
+              </p>
+            </div>
           </div>
         </aside>
 

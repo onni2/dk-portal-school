@@ -15,7 +15,14 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: NavItem[] = [
-  { label: "Yfirlit", to: "/", access: { type: "alwaysVisible" } },
+  { label: "Yfirlit",
+    to: "/",
+    access: { type: "alwaysVisible" },
+    children: [
+      { label: "Forsíða", to: "/" },
+      { label: "Demo", to: "/demo" },
+    ],
+  },
   {
     label: "Reikningar",
     to: "/invoices",
