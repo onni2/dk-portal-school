@@ -27,6 +27,16 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/audkenni/, ""),
         secure: true,
         cookieDomainRewrite: "",
+        configure: (proxy) => {
+          // Strip cookies from POST /authenticate requests (steps 1–3) so a
+          // stale audsso cookie from a previous session never interferes.
+          // GET requests (step 4 OAuth2 redirect) still carry cookies.
+          proxy.on("proxyReq", (proxyReq, req) => {
+            if (req.method === "POST" && req.url?.includes("/authenticate")) {
+              proxyReq.removeHeader("cookie");
+            }
+          });
+        },
       },
     },
   },

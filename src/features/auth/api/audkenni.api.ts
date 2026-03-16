@@ -39,7 +39,7 @@ const SESSION_KEY_STATE = "audkenni_state";
 
 // ---- Types ----
 
-export type AudkenniMethod = "sim" | "card" | "qr";
+export type AudkenniMethod = "sim" | "card";
 
 export interface AudkenniUserInfo {
   sub: string; // kennitala or subject identifier
@@ -229,14 +229,12 @@ function buildStep2Callbacks(
 ): AudkenniCallback[] {
   // Maps input token name → value to inject
   const authTypeMap: Record<AudkenniMethod, string> = {
-    sim: "",        // SIM uses default push notification
-    card: "",       // card auth type handled by IDToken11
-    qr: "QR",      // QR code flow — app scans code on screen
+    sim: "",
+    card: "",
   };
   const authMethodMap: Record<AudkenniMethod, number> = {
-    sim: 0,   // 0 = sim
-    card: 1,  // 1 = card
-    qr: 2,    // 2 = app (QR is an app-based auth type)
+    sim: 0,
+    card: 1,
   };
   const values: Record<string, string | number> = {
     IDToken1: CLIENT_ID,
@@ -252,36 +250,20 @@ function buildStep2Callbacks(
     IDToken11: authMethodMap[method],
   };
 
+  if (!session.callbacks) {
+    throw new Error("Óvænt svar frá Auðkenni — vantar callbacks");
+  }
+
   return session.callbacks.map((cb) => {
     const inputName = cb.input?.[0]?.name;
     if (inputName && inputName in values) {
       return {
         ...cb,
-        input: [{ name: inputName, value: values[inputName] }],
+        input: [{ name: inputName, value: values[inputName] as string | number }],
       };
     }
     return cb;
   });
-}
-
-/**
- * Looks for QR code data in the callbacks returned by Step 2 of the QR flow.
- * Auðkenni returns the QR content as a TextOutputCallback (or similar) whose
- * message value is a URL / data string the app scans.
- * Returns null if no QR data is found (e.g. for SIM/card flows).
- */
-function extractQRData(callbacks: AudkenniCallback[]): string | null {
-  for (const cb of callbacks) {
-    if (cb.type === "TextOutputCallback" || cb.type === "HiddenValueCallback") {
-      const message = cb.output?.find(
-        (o) => o.name === "message" || o.name === "value",
-      );
-      if (message && typeof message.value === "string" && message.value.length > 10) {
-        return message.value;
-      }
-    }
-  }
-  return null;
 }
 
 // ---- Step 4 — redirect to OAuth2 authorize ----
@@ -325,16 +307,14 @@ async function redirectToAuthorize(): Promise<void> {
  *   3. Poll until user confirms
  *   4. Redirect to OAuth2 authorize
  *
- * @param method "sim" for SIM push, "card" for smart card, "qr" for QR code (demo app)
- * @param phoneOrKennitala Phone number for SIM; empty for card/QR
+ * @param method "sim" for SIM push, "card" for smart card
+ * @param phoneOrKennitala Phone number for SIM; empty for card
  * @param onTick     Called before each poll attempt — use to update progress UI
- * @param onQRCode   Called with QR data string once Step 2 completes (QR flow only)
  */
 export async function initiateAudkenniLogin(
   method: AudkenniMethod,
   phoneOrKennitala?: string,
   onTick?: () => void,
-  onQRCode?: (qrData: string) => void,
 ): Promise<void> {
   const message = "Innskráning á DK Mínar síður";
 
@@ -349,12 +329,6 @@ export async function initiateAudkenniLogin(
     message,
   );
   const step2 = await submitCallbacks(session.authId, filledCallbacks);
-
-  // For QR flow, extract and surface the QR data so the UI can display it
-  if (method === "qr" && onQRCode) {
-    const qrData = extractQRData(step2.callbacks ?? []);
-    if (qrData) onQRCode(qrData);
-  }
 
   const pollingCallback = step2.callbacks?.find(
     (cb) => cb.type === "PollingWaitCallback",

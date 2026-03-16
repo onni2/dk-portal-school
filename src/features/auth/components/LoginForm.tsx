@@ -6,7 +6,6 @@
  */
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import QRCode from "react-qr-code";
 import { Button } from "@/shared/components/Button";
 import { Input } from "@/shared/components/Input";
 import { login } from "../api/auth.api";
@@ -39,7 +38,6 @@ export function LoginForm() {
   // "polling" = waiting for user to confirm on their phone (Rafræn / Kort)
   const [polling, setPolling] = useState(false);
   const [pollCount, setPollCount] = useState(0);
-  const [qrData, setQrData] = useState<string | null>(null);
   const navigate = useNavigate();
   const setAuth = useAuthStore((s) => s.setAuth);
   const setRole = useRoleStore((s) => s.setRole);
@@ -49,36 +47,13 @@ export function LoginForm() {
     setError("");
     setPolling(false);
     setPollCount(0);
-    setQrData(null);
   }
 
   function handleCancel() {
     setLoading(false);
     setPolling(false);
     setPollCount(0);
-    setQrData(null);
     setError("");
-  }
-
-  async function handleQRSubmit() {
-    setError("");
-    setLoading(true);
-    setPolling(false);
-    setPollCount(0);
-    setQrData(null);
-    try {
-      await initiateAudkenniLogin(
-        "qr",
-        "",
-        () => setPollCount((n) => n + 1),
-        (data) => setQrData(data),
-      );
-      // page redirects to /callback — loading stays true
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Tenging við Auðkenni mistókst");
-      setLoading(false);
-      setQrData(null);
-    }
   }
 
   async function handleHefdbundinSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -220,47 +195,34 @@ export function LoginForm() {
                 {polling ? (
                   /* ── Waiting for user to confirm ── */
                   <div className="flex flex-col items-center gap-4 py-4 text-center">
-                    {qrData ? (
-                      /* QR code — scan with Auðkenni demo app */
-                      <div className="rounded-lg border border-[var(--color-border)] bg-white p-4">
-                        <QRCode value={qrData} size={180} />
-                      </div>
-                    ) : (
-                      /* SIM spinner */
-                      <svg
-                        className="h-10 w-10 animate-spin text-[var(--color-primary)]"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        />
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8v8H4z"
-                        />
-                      </svg>
-                    )}
+                    <svg
+                      className="h-10 w-10 animate-spin text-[var(--color-primary)]"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v8H4z"
+                      />
+                    </svg>
                     <p className="text-sm font-medium text-[var(--color-text)]">
-                      {qrData
-                        ? "Skanaðu QR kóðann í Auðkenni-appinu"
-                        : "Auðkennisbeiðni send í síma þinn"}
+                      Auðkennisbeiðni send í síma þinn
                     </p>
                     <p className="text-xs text-[var(--color-text-muted)]">
-                      {qrData
-                        ? "Opnaðu Auðkenni-appið og skanaðu kóðann til að staðfesta innskráningu."
-                        : <>
-                            Staðfestu innskráningu í Auðkenni-appinu á{" "}
-                            <span className="font-semibold">{phoneNumber}</span>
-                          </>
-                      }
+                      <>
+                        Staðfestu innskráningu í Auðkenni-appinu á{" "}
+                        <span className="font-semibold">{phoneNumber}</span>
+                      </>
                       {pollCount > 1 && (
                         <span className="ml-1 block">({pollCount} tilraunir)</span>
                       )}
@@ -296,22 +258,7 @@ export function LoginForm() {
                     >
                       {loading ? "Tengist Auðkenni..." : "Senda beiðni"}
                     </Button>
-                    <div className="flex items-center gap-3">
-                      <div className="h-px flex-1 bg-[var(--color-border)]" />
-                      <span className="text-xs text-[var(--color-text-muted)]">eða</span>
-                      <div className="h-px flex-1 bg-[var(--color-border)]" />
-                    </div>
-                    <Button
-                      type="button"
-                      disabled={loading}
-                      onClick={handleQRSubmit}
-                      className="w-full"
-                    >
-                      {loading ? "Tengist Auðkenni..." : "Nota QR kóða"}
-                    </Button>
-                    <p className="text-center text-xs text-[var(--color-text-muted)]">
-                      Fyrir Auðkenni prófunarappið
-                    </p>
+
                   </form>
                 )}
               </>
