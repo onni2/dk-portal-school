@@ -216,11 +216,11 @@ export function LoginForm() {
                       />
                     </svg>
                     <p className="text-sm font-medium text-[var(--color-text)]">
-                      Auðkennisbeiðni send í síma þinn
+                      Auðkennisbeiðni hefur verið send í símann þinn
                     </p>
                     <p className="text-xs text-[var(--color-text-muted)]">
                       <>
-                        Staðfestu innskráningu í Auðkenni-appinu á{" "}
+                        Staðfestu auðkenningu á símanúmeri:{" "}
                         <span className="font-semibold">{phoneNumber}</span>
                       </>
                       {pollCount > 1 && (
