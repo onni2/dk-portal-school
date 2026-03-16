@@ -70,10 +70,10 @@ export function Layout({ children }: { children: ReactNode }) {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <aside className="flex w-[var(--sidebar-width)] shrink-0 flex-col justify-between border-r border-[#E6E8EF] bg-white">
+        <aside className="flex w-[var(--sidebar-width)] shrink-0 flex-col justify-between border-r border-[var(--color-border)] bg-[var(--color-surface)]">
           <nav className="flex flex-col gap-1 p-3">
             {/* "Valmynd" heading */}
-            <span className="mb-1 px-3 text-[11px] font-bold uppercase tracking-wider text-[#5C667A]">
+            <span className="mb-1 px-3 text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-secondary)]">
               Valmynd
             </span>
 
@@ -93,16 +93,16 @@ export function Layout({ children }: { children: ReactNode }) {
                     <button
                       onClick={() => toggleItem(item.to)}
                       className={cn(
-                        "flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm font-medium transition-colors",
+                        "flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm font-medium transition-colors hover:bg-[var(--color-surface-hover)]",
                         isActive
-                          ? "text-[#4743F7]"
-                          : "text-[#0B0F1A] hover:bg-[var(--color-surface-hover)]",
+                          ? "text-[var(--color-primary)]"
+                          : "text-[var(--color-text)] hover:bg-[var(--color-surface-hover)]",
                       )}
                     >
                       {item.label}
                       <svg
                         className={cn(
-                          "h-3 w-3 shrink-0 text-[#5C667A] transition-transform duration-200",
+                          "h-3 w-3 shrink-0 text-[var(--color-text-secondary)] transition-transform duration-200",
                           isOpen && "rotate-180",
                         )}
                         viewBox="0 0 10 6"
@@ -118,40 +118,47 @@ export function Layout({ children }: { children: ReactNode }) {
                       </svg>
                     </button>
                   ) : (
-                    <a
-                      href={item.to}
+                    <Link
+                      to={item.to}
                       className={cn(
                         "flex items-center rounded-xl px-3 py-2 text-sm font-medium transition-colors",
                         isActive
-                          ? "text-[#4743F7]"
-                          : "text-[#0B0F1A] hover:bg-[var(--color-surface-hover)]",
+                          ? "text-[var(--color-primary)]"
+                          : "text-[var(--color-text)] hover:bg-[var(--color-surface-hover)]",
                       )}
                     >
                       {item.label}
-                    </a>
+                    </Link>
                   )}
 
                   {/* Sub-items */}
-                  {hasChildren && isOpen && (
-                    <div className="mt-0.5 flex flex-col">
+                  {hasChildren && (
+                    <div
+                      className={cn(
+                        "overflow-hidden transition-all duration-300 ease-in-out",
+                        isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0",
+                      )}
+                    >
+                      <div className="mt-0.5 flex flex-col">
                       {item.children!.map((child) => {
                         const childActive = currentPath === child.to;
                         return (
-                          <a
+                          <Link
                             key={child.to}
-                            href={child.to}
+                            to={child.to}
                             className={cn(
                               "flex items-center gap-2 rounded-xl py-2 pl-8 pr-3 text-[13px] transition-colors",
                               childActive
-                                ? "font-medium text-[#4743F7]"
-                                : "text-[#0B0F1A] hover:bg-[var(--color-surface-hover)]",
+                                ? "font-medium text-[var(--color-primary)]"
+                                : "text-[var(--color-text)] hover:bg-[var(--color-surface-hover)]",
                             )}
                           >
-                            <span className={cn("text-xs", childActive ? "text-[#4743F7]" : "text-[#9CB3E2]")}>•</span>
+                            <span className={cn("text-xs", childActive ? "text-[var(--color-primary)]" : "text-[var(--color-text-muted)]")}>•</span>
                             {child.label}
-                          </a>
+                                                      </Link>
                         );
                       })}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -171,11 +178,11 @@ export function Layout({ children }: { children: ReactNode }) {
             )}
 
             {/* Help box */}
-            <div className="rounded-[14px] border border-[#E6E8EF] bg-[#F6F8FC] px-4 py-3">
-              <p className="text-[12px] font-medium text-[#0B0F1A]">Þarftu aðstoð?</p>
-              <p className="text-[13px] font-bold text-[#0B0F1A]">
+            <div className="rounded-[14px] border border-[var(--color-border)] bg-[var(--color-background)] px-4 py-3">
+              <p className="text-[12px] font-medium text-[var(--color-text)]">Þarftu aðstoð?</p>
+              <p className="text-[13px] font-bold text-[var(--color-text)]">
                 Spjalla við{" "}
-                <a href="/hjalpfus" className="text-[#4743F7] hover:underline">
+                <a href="/hjalpfus" className="text-[var(--color-primary)] hover:underline">
                   Hjálpfús!
                 </a>
               </p>
