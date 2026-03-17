@@ -27,6 +27,10 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Reikningar",
     to: "/invoices",
     access: { type: "requiredModules", modules: ["Sales"] },
+    children: [
+    { label: "Demo", to: "/demo" },
+    { label: "Demo", to: "/demo" },
+    ],
   },
   {
     label: "Leyfi",

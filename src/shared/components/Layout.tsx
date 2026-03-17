@@ -93,7 +93,7 @@ export function Layout({ children }: { children: ReactNode }) {
                     <button
                       onClick={() => toggleItem(item.to)}
                       className={cn(
-                        "flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm font-medium transition-colors hover:bg-[var(--color-surface-hover)]",
+                        "flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-[var(--color-surface-hover)]",
                         isActive
                           ? "text-[var(--color-primary)]"
                           : "text-[var(--color-text)] hover:bg-[var(--color-surface-hover)]",
@@ -147,7 +147,7 @@ export function Layout({ children }: { children: ReactNode }) {
                             key={child.to}
                             to={child.to}
                             className={cn(
-                              "flex items-center gap-2 rounded-xl py-2 pl-8 pr-3 text-[13px] transition-colors",
+                              "flex items-center gap-2 rounded-lg py-2 pl-8 pr-3 text-[13px] transition-colors",
                               childActive
                                 ? "font-medium text-[var(--color-primary)]"
                                 : "text-[var(--color-text)] hover:bg-[var(--color-surface-hover)]",
@@ -171,14 +171,14 @@ export function Layout({ children }: { children: ReactNode }) {
             {import.meta.env.DEV && (
               <button
                 onClick={toggleRole}
-                className="mb-3 w-full rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface-hover)]"
+                className="mb-3 w-full rounded-[var(--radius-lg)] border border-[var(--color-border)] px-3 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface-hover)]"
               >
                 Hlutverk: {role === "cop" ? "COP (Admin)" : "Client"} ↔
               </button>
             )}
 
             {/* Help box */}
-            <div className="rounded-[14px] border border-[var(--color-border)] bg-[var(--color-background)] px-4 py-3">
+            <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-background)] px-4 py-3">
               <p className="text-[12px] font-medium text-[var(--color-text)]">Þarftu aðstoð?</p>
               <p className="text-[13px] font-bold text-[var(--color-text)]">
                 Spjalla við{" "}
