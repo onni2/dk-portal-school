@@ -53,13 +53,13 @@ export function Layout({ children }: { children: ReactNode }) {
             <span className="text-sm text-[var(--color-text-secondary)]">Mínar síður</span>
           </Link>
 
-          <div className="ml-4 rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-text-secondary)]">
+          <div className="ml-4 rounded-[var(--radius-lg)] border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-text-secondary)]">
             Fyrirtæki ehf. ▾
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          <button className="rounded-[var(--radius-md)] p-1.5 text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)]">
+          <button className="rounded-[var(--radius-lg)] p-1.5 text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)]">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
             </svg>
@@ -155,7 +155,7 @@ export function Layout({ children }: { children: ReactNode }) {
                           >
                             <span className={cn("text-xs", childActive ? "text-[var(--color-primary)]" : "text-[var(--color-text-muted)]")}>•</span>
                             {child.label}
-                                                      </Link>
+                          </Link>
                         );
                       })}
                       </div>
