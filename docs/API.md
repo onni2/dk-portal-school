@@ -31,12 +31,12 @@ These are the parts of the API we've connected to so far:
 | Company info | `/company` | Dashboard company name |
 | Licence modules | `/company/licence` | Deciding which nav items to show |
 | Login / token lookup | `/Token`, `/Token/{user}/{company}` | Logging in with an API token |
-| Employee list | `/general/employee` | Starfsmenn page |
+| Employee list | `/general/employee` | Starfsmenn page + eID role lookup |
 | Timeclock | `/TimeClock/in`, `/TimeClock/out`, `/TimeClock/stamp/{employee}` | Stimpilklukka |
 | Customer transactions | `/customer/transaction/page/1/100` | Reikningar page |
 | Invoice PDF | `/sales/invoice/{number}/pdf` | Downloading invoices |
 | Customer list | `/Customer` | Viðskiptavinir page |
-| Portal users | `/mypages/users`, `/mypages/invites` | Notendur page |
+| Portal invites | `/mypages/invites` | Notendur page (see note below) |
 
 ---
 
@@ -63,31 +63,117 @@ These are the parts of the API we've connected to so far:
 
 **What you'd use it for:** Logging in. When a user enters their token, we call `/Token` to verify it and find out who they are.
 
-| What it does | Technical path |
+| What it does | Technical path | Tested |
+|---|---|---|
+| List all tokens for the company | `GET /Token` | ✅ returns only your own token |
+| Get a single token | `GET /Token/{id}` | ✅ works |
+| Get the employee linked to a user+company | `GET /Token/{userID}/{companyID}` | ✅ returns employee number (kennitala) |
+| Get companies the token has access to | `GET /Token/companies` | ✅ returns `[{ ID, Number, Name, SSN }]` |
+| Create a new token | `POST /Token` | untested |
+| Update a token | `PUT /Token/{id}` | untested |
+| Delete a token | `DELETE /Token/{id}` | untested |
+| Get request logs for a token | `GET /token/report/logs` | untested |
+| Download usage report as PDF | `GET /token/report/usage/pdf` | untested |
+
+**Token shape:**
+```json
+{
+  "Token": "be5efec7-...",
+  "Company": "cfb71469-...",
+  "User": "21f532e3-...",
+  "Type": 0,
+  "Description": "prufan",
+  "Notify": [],
+  "Created": "2026-02-14T13:46:23.473"
+}
+```
+
+> `Type` is always `0` on our token. It may encode permission levels — worth asking DK what the possible values are.
+
+---
+
+## Permissions
+
+**What it is:** A breakdown of what the current token is allowed to do, per module.
+
+| What it does | Technical path | Tested |
+|---|---|---|
+| Get current token's permissions | `GET /permission` | ✅ works |
+
+**Permission levels (confirmed from official DK docs):**
+
+| Value | Meaning |
 |---|---|
-| List all tokens for the company | `GET /Token` |
-| Get the employee linked to a user+company | `GET /Token/{userID}/{companyID}` |
-| Create a new token | `POST /Token` |
-| Delete a token | `DELETE /Token/{id}` |
-| Get request logs for a token | `GET /token/report/logs` |
-| Download usage report as PDF | `GET /token/report/usage/pdf` |
+| `0` | Full |
+| `1` | View |
+| `2` | Modify |
+| `3` | None |
+| `4` | Deny |
+
+**Enabled field values:** `Enabled`, `Disabled`, `Blocked`
+
+**Response shape:**
+```json
+{
+  "GeneralPermission": { "Employee": 0, "MyPages": 3, "TimeClock": 0, ... },
+  "SalesPermission":   { "Invoices": 0, "Orders": 0, "Salespersons": 3, ... },
+  "CustomerPermission": { "Customers": 0, "Invoices": 0, "Transactions": 3, ... },
+  "PayrollPermission": { "Payslip": 4, "Enabled": 2 },
+  ...
+}
+```
+
+So on our token: `Employee: 0` = full access to employees, `MyPages: 3` = no access to MyPages, `Payslip: 4` = explicitly denied.
+
+> This is per-token, not per-user. If DK allows setting these values when creating a token via `POST /Token`, you could issue per-employee tokens with restricted permissions instead of using the `Tag`/Merking workaround.
+
+**This is per-token, not per-user.** The API has no concept of per-user permissions (see Known Limitations). The permission response only reflects the token being used, not the individual who logged in.
+
+---
+
+## eID Login — How to know what a user can see
+
+When a user logs in via eID (rafræn skilríki) you get their kennitala. Use it like this:
+
+1. `GET /general/employee` — find the employee where `SSNumber === kennitala`
+2. Read `employee.Tag` — this is the **Merking** field in DK Plus
+3. Use the value to decide what nav items to show
+
+**Role values we use in Merking:**
+
+| Merking value | What they can see |
+|---|---|
+| `admin` | Everything |
+| `worker` | Dashboard + Stimpilklukka |
+| `bokari` | Dashboard + Reikningar + Viðskiptavinir |
+| missing/empty | Deny access |
+
+> This is a workaround because the DK API has no per-user permission system. Roles live in the `Tag`/Merking field on each employee record in DK Plus, and the portal enforces them in the UI.
 
 ---
 
 ## Portal Users (MyPages / Notendur)
 
-**What it is:** The list of people who have been given access to log into *this portal* (Mínar síður). This is separate from employees or customers — it's specifically about who can use this website.
+**What it is:** Inviting people to access the portal and managing those invites.
 
-**What you'd use it for:** The Notendur page — admins can invite new people, see who has access, and remove access.
+**What you'd use it for:** The Notendur page — admins can invite new people and cancel invites.
 
-| What it does | Technical path |
-|---|---|
-| See who has portal access | `GET /mypages/users` |
-| Remove someone's access | `DELETE /mypages/users/{userId}` |
-| Update which customers a user can see | `PUT /mypages/users/{userId}` |
-| See pending invites (not yet accepted) | `GET /mypages/invites` |
-| Invite someone to the portal | `POST /mypages/invites` |
-| Cancel an invite | `DELETE /mypages/invites/{id}` |
+| What it does | Technical path | Tested |
+|---|---|---|
+| See pending invites | `GET /mypages/invites` | ❌ GET not supported |
+| Invite someone to the portal | `POST /mypages/invites` | untested |
+| Cancel an invite | `DELETE /mypages/invites/{id}` | untested |
+
+**Invite body:**
+```json
+{
+  "Email": "user@example.is",
+  "Customer": "customerNumber",
+  "Role": "Admin"
+}
+```
+
+> **Note:** `GET /mypages/users`, `DELETE /mypages/users/{id}` and `PUT /mypages/users/{id}` do not exist in the API — they return 404. The only working endpoint is `/mypages/invites` for creating/cancelling invites.
 
 ---
 
@@ -225,13 +311,17 @@ Works the same as orders — has v1 and v2 versions.
 
 **What it is:** The product catalogue — everything the company sells. Includes barcodes, categories, pricing, and stock levels.
 
-| What it does | Technical path |
-|---|---|
-| List all products | `GET /Product` |
-| Get product count | `GET /Product/info/count` |
-| Search products | `GET /Product/search/{value}/{max}` |
-| Get one product | `GET /Product/{id}` |
-| Create a product | `POST /Product` |
+| What it does | Technical path | Tested |
+|---|---|---|
+| Get a page of products | `GET /Product/page/{page}/{count}` | ✅ works |
+| Get products modified after date | `GET /Product/modified/{date}/{page}/{size}` | untested |
+| Search products | `GET /Product/search/{value}/{max}` | untested |
+| Get one product | `GET /Product/{id}` | untested |
+| Create a product | `POST /Product` | untested |
+| Update a product | `PUT /Product/{id}` | untested |
+| Get product groups/categories | `GET /productgroup` | ✅ works |
+| Search by barcode | `GET /barcode/{code}` | untested |
+| Get barcodes for a product | `GET /Product/{number}/barcode` | untested |
 
 ---
 
@@ -239,18 +329,26 @@ Works the same as orders — has v1 and v2 versions.
 
 **What it is:** Tracking how many of each product is in stock, moving stock between warehouses, and doing stock counts.
 
+| What it does | Technical path | Tested |
+|---|---|---|
+| Get product transactions | `GET /product/transaction/{page}/{count}` | untested |
+| Transfer products between warehouses | `POST /product/register/transfer` | untested |
+| Record inventory count | `POST /product/register/Inventorying` | untested |
+
 ---
 
 ## General Ledger (Fjárhagur)
 
 **What it is:** The accounting backbone — every financial movement in the company ends up here as a ledger entry. This is the "books."
 
-| What it does | Technical path |
-|---|---|
-| List all accounts | `GET /generalledger/account` |
-| View transactions on an account | `GET /generalledger/account/{id}/transaction/{page}/{count}` |
-| Create a journal entry (manual booking) | `POST /generalLedger/journal` |
-| List all transactions | `GET /generalledger/transaction/page/{page}/{count}` |
+| What it does | Technical path | Tested |
+|---|---|---|
+| List all accounts | `GET /generalledger/account` | ✅ works |
+| View transactions on an account | `GET /generalledger/account/{id}/transaction/{page}/{count}` | untested |
+| List all transactions | `GET /generalledger/transaction/page/{page}/{count}` | ✅ works |
+| Create a journal entry (manual booking) | `POST /generalLedger/journal` | untested |
+
+Supports filters on `GET /generalledger/transaction/page/{page}/{count}`: `createdAfter`, `createdBefore`, `dueAfter`, `reference`, `dim1`, `voucher`, `account`.
 
 ---
 
@@ -368,6 +466,15 @@ Works the same as orders — has v1 and v2 versions.
 
 This section is only relevant if the company uses DK's membership module.
 
+| What it does | Technical path | Tested |
+|---|---|---|
+| Get a page of members | `GET /member/{page}/{count}` | ✅ works |
+| Get one member | `GET /member/{number}` | untested |
+| Create a member | `POST /member` | untested |
+| Update a member | `PUT /member/{number}` | untested |
+| Get member applications | `GET /member/{number}/application` | untested |
+| Create a member fee | `POST /member/{number}/fee` | untested |
+
 ---
 
 ## Search
@@ -386,9 +493,35 @@ This section is only relevant if the company uses DK's membership module.
 
 **What it is:** Look up a person or company in the Icelandic national registry (Þjóðskrá) by their kennitala. Useful for auto-filling customer details.
 
-| What it does | Technical path |
-|---|---|
-| Look up by kennitala | `GET /nation/entry/{kennitala}` |
+| What it does | Technical path | Tested |
+|---|---|---|
+| Look up by kennitala | `GET /nation/entry/{kennitala}` | ❌ returns error on LOK-HR — may not be enabled for this company |
+
+---
+
+## Salespersons
+
+**What it is:** The salespeople attached to invoices. Required for creating invoices — an invoice must have a salesperson.
+
+| What it does | Technical path | Tested |
+|---|---|---|
+| List salespersons | `GET /sales/person/page/{page}/{count}` | ✅ works — Jón and Óðinn already set up |
+| Get one salesperson | `GET /sales/person/{number}` | untested |
+| Create a salesperson | `POST /sales/person` | untested |
+| Update a salesperson | `PUT /sales/person/{number}` | untested |
+| Delete a salesperson | `DELETE /sales/person/{number}` | untested |
+
+> Salespersons already exist in LOK-HR so invoice creation should work without any extra setup.
+
+---
+
+## Payment Reference Data
+
+| What it does | Technical path | Tested |
+|---|---|---|
+| Get payment terms | `GET /general/payment/term` | ✅ works — 8 terms (stgr, lm, d15, d20, d30, m15, m20, post) |
+| Get payment modes | `GET /general/payment/mode` | ✅ works — empty on LOK-HR |
+| Get sales payment types (POS) | `GET /sales/payment/type` | ✅ works — card types, cash, bank transfer etc. |
 
 ---
 
@@ -396,7 +529,13 @@ This section is only relevant if the company uses DK's membership module.
 
 **What it is:** Instead of the portal asking "has anything changed?" every few seconds, webhooks let DK *tell* the portal when something changes — like a notification system.
 
-Not currently used in this project.
+| What it does | Technical path | Tested |
+|---|---|---|
+| List subscriptions | `GET /admin/webhook` | ✅ works — empty on LOK-HR |
+| Create subscription | `POST /admin/webhook` | untested |
+| Update subscription | `PUT /admin/webhook/{id}` | untested |
+| Delete subscription | `DELETE /admin/webhook/{id}` | untested |
+| Test webhook | `POST /admin/webhook/action/test` | untested |
 
 ---
 
@@ -442,9 +581,9 @@ These are things the API *can't* do, or things we haven't been able to figure ou
 
 1. **No support ticket system** — The design shows a support/ticket section but the DK API has no ticket system. Would need a separate integration (e.g. Zoho).
 
-2. **Creating invoices needs a salesperson** — You can't create an invoice through the API unless a salesperson already exists in the DK ERP system. Has to be set up there manually.
+2. **Creating invoices needs a salesperson** — You can't create an invoice through the API unless a salesperson already exists. Jón and Óðinn are already set up as salespersons in LOK-HR so this is no longer a blocker.
 
-3. **No per-user permissions** — The API works with one token per company. It doesn't have a concept of "this user can only see invoices, not employees." Access control has to be built into the portal itself.
+3. **No per-user permissions** — The API works with one token per company. There is no way to ask the API what a specific logged-in user is allowed to see. We tested Tokens, Permissions, and MyPages endpoints exhaustively — none of them solve this. Access control is handled in the portal using the `Tag`/Merking field on each employee (see eID Login section).
 
 4. **Products and projects need ERP setup** — Some features (like logging hours on a project) require the project to exist in the DK ERP first. Can't be created entirely through the API.
 
