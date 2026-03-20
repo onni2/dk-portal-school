@@ -71,11 +71,11 @@ export function Layout({ children }: { children: ReactNode }) {
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
         <aside className="flex w-[var(--sidebar-width)] shrink-0 flex-col justify-between border-r border-[var(--color-border)] bg-[var(--color-surface)]">
-          <nav className="flex flex-col gap-1 p-3">
-            {/* "Valmynd" heading */}
-            <span className="mb-1 px-3 text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-secondary)]">
+          <div className="flex flex-col overflow-hidden">
+            <span className="px-4 pb-1 pt-3 text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-secondary)]">
               Valmynd
             </span>
+            <nav className="nav-scroll flex flex-col gap-1 overflow-y-auto p-3">
 
             {navItems.map((item) => {
               const hasChildren = !!item.children?.length;
@@ -164,7 +164,8 @@ export function Layout({ children }: { children: ReactNode }) {
                 </div>
               );
             })}
-          </nav>
+            </nav>
+          </div>
 
           {/* Bottom section */}
           <div className="p-3">

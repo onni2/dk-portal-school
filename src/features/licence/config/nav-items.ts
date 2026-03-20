@@ -12,16 +12,13 @@ export interface NavItem {
     | { type: "alwaysVisible" }
     | { type: "requiredModules"; modules: LicenceModule[] }
     | { type: "copOnly" };
+  children?: { label: string; to: string }[];
 }
 
 export const NAV_ITEMS: NavItem[] = [
   { label: "Yfirlit",
     to: "/",
     access: { type: "alwaysVisible" },
-    children: [
-      { label: "Forsíða", to: "/" },
-      { label: "Demo", to: "/demo" },
-    ],
   },
   {
     label: "Reikningar",
@@ -51,6 +48,14 @@ export const NAV_ITEMS: NavItem[] = [
     label: "dkOne/Plus",
     to: "/dkone",
     access: { type: "copOnly" },
+    children: [
+    { label: "Fjárhagur", to: "/fjarhagur" },
+    { label: "Skuldunautar", to: "/skuldunautar" },
+    { label: "Vörur", to: "/vorur" },
+    { label: "Sala - Bóka Reikning", to: "/sala" },
+    { label: "Verk", to: "/verk" },
+    { label: "Lánadrottnar", to: "/lanadrottnar" },
+    ],
   },
   {
     label: "Viðskiptavinir",
