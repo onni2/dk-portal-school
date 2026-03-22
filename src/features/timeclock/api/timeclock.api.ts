@@ -6,7 +6,10 @@
  */
 import { apiClient } from "@/shared/api/client";
 import { delay } from "@/mocks/handlers";
-import { MOCK_IP_WHITELIST, MOCK_EMPLOYEE_PHONES } from "@/mocks/timeclock.mock";
+import {
+  MOCK_IP_WHITELIST,
+  MOCK_EMPLOYEE_PHONES,
+} from "@/mocks/timeclock.mock";
 import type {
   TimeclockSettings,
   IpWhitelistEntry,

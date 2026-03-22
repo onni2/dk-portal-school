@@ -79,17 +79,15 @@ export function LoginForm() {
     setPolling(false);
     setPollCount(0);
     try {
-      await initiateAudkenniLogin(
-        "sim",
-        phoneNumber,
-        () => {
-          setPolling(true);
-          setPollCount((n) => n + 1);
-        },
-      );
+      await initiateAudkenniLogin("sim", phoneNumber, () => {
+        setPolling(true);
+        setPollCount((n) => n + 1);
+      });
       // page redirects to /callback — loading stays true
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Tenging við Auðkenni mistókst");
+      setError(
+        err instanceof Error ? err.message : "Tenging við Auðkenni mistókst",
+      );
       setLoading(false);
       setPolling(false);
     }
@@ -101,17 +99,15 @@ export function LoginForm() {
     setPolling(false);
     setPollCount(0);
     try {
-      await initiateAudkenniLogin(
-        "card",
-        "",
-        () => {
-          setPolling(true);
-          setPollCount((n) => n + 1);
-        },
-      );
+      await initiateAudkenniLogin("card", "", () => {
+        setPolling(true);
+        setPollCount((n) => n + 1);
+      });
       // page redirects to /callback — loading stays true
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Tenging við Auðkenni mistókst");
+      setError(
+        err instanceof Error ? err.message : "Tenging við Auðkenni mistókst",
+      );
       setLoading(false);
       setPolling(false);
     }
@@ -165,7 +161,10 @@ export function LoginForm() {
           {/* Tab content */}
           <div className="mt-6">
             {activeTab === "hefdbundin" && (
-              <form onSubmit={handleHefdbundinSubmit} className="flex flex-col gap-4">
+              <form
+                onSubmit={handleHefdbundinSubmit}
+                className="flex flex-col gap-4"
+              >
                 <Input
                   label="API tókn"
                   type="password"
@@ -224,11 +223,15 @@ export function LoginForm() {
                         <span className="font-semibold">{phoneNumber}</span>
                       </>
                       {pollCount > 1 && (
-                        <span className="ml-1 block">({pollCount} tilraunir)</span>
+                        <span className="ml-1 block">
+                          ({pollCount} tilraunir)
+                        </span>
                       )}
                     </p>
                     {error && (
-                      <p className="text-sm text-[var(--color-error)]">{error}</p>
+                      <p className="text-sm text-[var(--color-error)]">
+                        {error}
+                      </p>
                     )}
                     <button
                       type="button"
@@ -240,7 +243,10 @@ export function LoginForm() {
                   </div>
                 ) : (
                   /* ── Input form ── */
-                  <form onSubmit={handleRafraenSubmit} className="flex flex-col gap-4">
+                  <form
+                    onSubmit={handleRafraenSubmit}
+                    className="flex flex-col gap-4"
+                  >
                     <Input
                       label="Símanúmer"
                       type="tel"
@@ -249,7 +255,9 @@ export function LoginForm() {
                       placeholder=""
                     />
                     {error && (
-                      <p className="text-sm text-[var(--color-error)]">{error}</p>
+                      <p className="text-sm text-[var(--color-error)]">
+                        {error}
+                      </p>
                     )}
                     <Button
                       type="submit"
@@ -258,7 +266,6 @@ export function LoginForm() {
                     >
                       {loading ? "Tengist Auðkenni..." : "Senda beiðni"}
                     </Button>
-
                   </form>
                 )}
               </>
@@ -300,8 +307,8 @@ export function LoginForm() {
                       Undirbúningur
                     </p>
                     <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-                      Gakktu úr skugga um að kortalesari sé tengdur og
-                      skilríki séu í lesara áður en þú heldur áfram.
+                      Gakktu úr skugga um að kortalesari sé tengdur og skilríki
+                      séu í lesara áður en þú heldur áfram.
                     </p>
                   </div>
                 </div>
@@ -320,8 +327,8 @@ export function LoginForm() {
                 </Button>
 
                 <p className="text-xs text-[var(--color-text-muted)]">
-                  Þú gætir verið beðinn um að velja skilríki eða slá inn PIN
-                  í kerfisglugga.
+                  Þú gætir verið beðinn um að velja skilríki eða slá inn PIN í
+                  kerfisglugga.
                 </p>
               </div>
             )}

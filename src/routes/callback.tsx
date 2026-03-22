@@ -75,7 +75,9 @@ function CallbackPage() {
       })
       .catch((err: unknown) => {
         setError(
-          err instanceof Error ? err.message : "Auðkenning mistókst — reyndu aftur",
+          err instanceof Error
+            ? err.message
+            : "Auðkenning mistókst — reyndu aftur",
         );
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
