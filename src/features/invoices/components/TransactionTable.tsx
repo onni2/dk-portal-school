@@ -3,9 +3,9 @@
  * Uses: ../api/invoices.queries, ../store/invoices.store, ../api/invoices.api, ../types/invoices.types
  * Exports: TransactionTable
  */
+import { cn } from "@/shared/utils/cn";
 import { useCustomerTransactions } from "../api/invoices.queries";
 import { useInvoiceFilters } from "../store/invoices.store";
-import { fetchInvoicePdf } from "../api/invoices.api";
 import type { CustomerTransaction } from "../types/invoices.types";
 
 /**
@@ -34,12 +34,27 @@ function isDebit(tx: CustomerTransaction): boolean {
  */
 export function TransactionTable() {
   const { data: transactions } = useCustomerTransactions();
-  const { dateFrom, dateTo } = useInvoiceFilters();
+  const {
+    dateFrom,
+    dateTo,
+    search,
+    selectedInvoiceNumber,
+    setSelectedInvoiceNumber,
+  } = useInvoiceFilters();
 
   const filtered = transactions.filter((tx) => {
     const journalDate = tx.JournalDate.split("T")[0] ?? "";
     if (dateFrom && journalDate < dateFrom) return false;
     if (dateTo && journalDate > dateTo) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      if (
+        !tx.InvoiceNumber.toLowerCase().includes(q) &&
+        !tx.Text.toLowerCase().includes(q) &&
+        !tx.Customer.toLowerCase().includes(q)
+      )
+        return false;
+    }
     return true;
   });
 
@@ -57,40 +72,48 @@ export function TransactionTable() {
         <thead className="border-b border-[var(--color-border)] bg-[var(--color-surface)]">
           <tr>
             <th className="px-4 py-3 font-medium text-[var(--color-text-secondary)]">
-              Reikningsnúmer
-            </th>
-            <th className="px-4 py-3 font-medium text-[var(--color-text-secondary)]">
               Dagsetning
             </th>
             <th className="px-4 py-3 font-medium text-[var(--color-text-secondary)]">
-              Eindagi
+              Reikningsnúmer
             </th>
             <th className="px-4 py-3 font-medium text-[var(--color-text-secondary)]">
-              Lýsing
+              Text
             </th>
             <th className="px-4 py-3 text-right font-medium text-[var(--color-text-secondary)]">
-              Debet
+              Debit
             </th>
             <th className="px-4 py-3 text-right font-medium text-[var(--color-text-secondary)]">
               Kredit
             </th>
             <th className="px-4 py-3 text-right font-medium text-[var(--color-text-secondary)]">
-              Jafnaður
+              Gjaldm.
             </th>
             <th className="px-4 py-3 font-medium text-[var(--color-text-secondary)]">
               Staða
-            </th>
-            <th className="px-4 py-3 font-medium text-[var(--color-text-secondary)]">
-              PDF
             </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-[var(--color-border)]">
           {filtered.map((tx) => (
-            <tr key={tx.ID} className="hover:bg-[var(--color-surface-hover)]">
-              <td className="px-4 py-3">{tx.InvoiceNumber}</td>
+            <tr
+              key={tx.ID}
+              onClick={() =>
+                setSelectedInvoiceNumber(
+                  tx.InvoiceNumber === selectedInvoiceNumber
+                    ? null
+                    : tx.InvoiceNumber,
+                )
+              }
+              className={cn(
+                "cursor-pointer",
+                tx.InvoiceNumber === selectedInvoiceNumber
+                  ? "bg-[#87A1FF]/20"
+                  : "hover:bg-[var(--color-surface-hover)]",
+              )}
+            >
               <td className="px-4 py-3">{formatDate(tx.JournalDate)}</td>
-              <td className="px-4 py-3">{formatDate(tx.DueDate)}</td>
+              <td className="px-4 py-3">{tx.InvoiceNumber}</td>
               <td className="px-4 py-3">{tx.Text}</td>
               <td className="px-4 py-3 text-right">
                 {isDebit(tx) ? formatAmount(tx.Amount, tx.Currency) : ""}
@@ -113,14 +136,6 @@ export function TransactionTable() {
                 >
                   {tx.Settled ? "Greitt" : "Ógreitt"}
                 </span>
-              </td>
-              <td className="px-4 py-3">
-                <button
-                  onClick={() => fetchInvoicePdf(tx.InvoiceNumber)}
-                  className="text-sm font-medium text-[var(--color-primary)] hover:underline"
-                >
-                  Skoða
-                </button>
               </td>
             </tr>
           ))}

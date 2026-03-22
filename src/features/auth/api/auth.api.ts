@@ -40,7 +40,9 @@ async function getWithToken<T>(path: string, token: string): Promise<T> {
  * Logs in using a DK API token.
  * Verifies the token, looks up the employee it belongs to, and returns their details.
  */
-export async function login(credentials: LoginCredentials): Promise<AuthResponse> {
+export async function login(
+  credentials: LoginCredentials,
+): Promise<AuthResponse> {
   const { token } = credentials;
 
   // Step 1 — verify token and get the user + company IDs

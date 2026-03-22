@@ -26,17 +26,17 @@ Every request you make needs a **token** — think of it as your key card. Witho
 
 These are the parts of the API we've connected to so far:
 
-| What | API endpoint | Used for |
-|------|-------------|----------|
-| Company info | `/company` | Dashboard company name |
-| Licence modules | `/company/licence` | Deciding which nav items to show |
-| Login / token lookup | `/Token`, `/Token/{user}/{company}` | Logging in with an API token |
-| Employee list | `/general/employee` | Starfsmenn page |
-| Timeclock | `/TimeClock/in`, `/TimeClock/out`, `/TimeClock/stamp/{employee}` | Stimpilklukka |
-| Customer transactions | `/customer/transaction/page/1/100` | Reikningar page |
-| Invoice PDF | `/sales/invoice/{number}/pdf` | Downloading invoices |
-| Customer list | `/Customer` | Viðskiptavinir page |
-| Portal users | `/mypages/users`, `/mypages/invites` | Notendur page |
+| What                  | API endpoint                                                     | Used for                         |
+| --------------------- | ---------------------------------------------------------------- | -------------------------------- |
+| Company info          | `/company`                                                       | Dashboard company name           |
+| Licence modules       | `/company/licence`                                               | Deciding which nav items to show |
+| Login / token lookup  | `/Token`, `/Token/{user}/{company}`                              | Logging in with an API token     |
+| Employee list         | `/general/employee`                                              | Starfsmenn page                  |
+| Timeclock             | `/TimeClock/in`, `/TimeClock/out`, `/TimeClock/stamp/{employee}` | Stimpilklukka                    |
+| Customer transactions | `/customer/transaction/page/1/100`                               | Reikningar page                  |
+| Invoice PDF           | `/sales/invoice/{number}/pdf`                                    | Downloading invoices             |
+| Customer list         | `/Customer`                                                      | Viðskiptavinir page              |
+| Portal users          | `/mypages/users`, `/mypages/invites`                             | Notendur page                    |
 
 ---
 
@@ -46,12 +46,12 @@ These are the parts of the API we've connected to so far:
 
 **What you'd use it for:** Showing the company name on the dashboard, knowing which features to turn on or off.
 
-| What it does | Technical path |
-|---|---|
-| Get company info and address | `GET /company` |
+| What it does                             | Technical path            |
+| ---------------------------------------- | ------------------------- |
+| Get company info and address             | `GET /company`            |
 | Check if the connection to DK is working | `GET /company/connection` |
-| See which modules are licensed/enabled | `GET /company/licence` |
-| Trigger a data sync with DK | `PUT /company/sync` |
+| See which modules are licensed/enabled   | `GET /company/licence`    |
+| Trigger a data sync with DK              | `PUT /company/sync`       |
 
 **Licence modules you might see:** GeneralLedger, Customer, Vendor, Sales, Product, Project, Payroll, Member, Purchase — these control which sections appear in the portal sidebar.
 
@@ -63,31 +63,31 @@ These are the parts of the API we've connected to so far:
 
 **What you'd use it for:** Logging in. When a user enters their token, we call `/Token` to verify it and find out who they are.
 
-| What it does | Technical path |
-|---|---|
-| List all tokens for the company | `GET /Token` |
+| What it does                              | Technical path                    |
+| ----------------------------------------- | --------------------------------- |
+| List all tokens for the company           | `GET /Token`                      |
 | Get the employee linked to a user+company | `GET /Token/{userID}/{companyID}` |
-| Create a new token | `POST /Token` |
-| Delete a token | `DELETE /Token/{id}` |
-| Get request logs for a token | `GET /token/report/logs` |
-| Download usage report as PDF | `GET /token/report/usage/pdf` |
+| Create a new token                        | `POST /Token`                     |
+| Delete a token                            | `DELETE /Token/{id}`              |
+| Get request logs for a token              | `GET /token/report/logs`          |
+| Download usage report as PDF              | `GET /token/report/usage/pdf`     |
 
 ---
 
 ## Portal Users (MyPages / Notendur)
 
-**What it is:** The list of people who have been given access to log into *this portal* (Mínar síður). This is separate from employees or customers — it's specifically about who can use this website.
+**What it is:** The list of people who have been given access to log into _this portal_ (Mínar síður). This is separate from employees or customers — it's specifically about who can use this website.
 
 **What you'd use it for:** The Notendur page — admins can invite new people, see who has access, and remove access.
 
-| What it does | Technical path |
-|---|---|
-| See who has portal access | `GET /mypages/users` |
-| Remove someone's access | `DELETE /mypages/users/{userId}` |
-| Update which customers a user can see | `PUT /mypages/users/{userId}` |
-| See pending invites (not yet accepted) | `GET /mypages/invites` |
-| Invite someone to the portal | `POST /mypages/invites` |
-| Cancel an invite | `DELETE /mypages/invites/{id}` |
+| What it does                           | Technical path                   |
+| -------------------------------------- | -------------------------------- |
+| See who has portal access              | `GET /mypages/users`             |
+| Remove someone's access                | `DELETE /mypages/users/{userId}` |
+| Update which customers a user can see  | `PUT /mypages/users/{userId}`    |
+| See pending invites (not yet accepted) | `GET /mypages/invites`           |
+| Invite someone to the portal           | `POST /mypages/invites`          |
+| Cancel an invite                       | `DELETE /mypages/invites/{id}`   |
 
 ---
 
@@ -97,19 +97,20 @@ These are the parts of the API we've connected to so far:
 
 **What you'd use it for:** The Viðskiptavinir page — browsing and searching through customers, seeing their outstanding balance, their contact people, and their delivery addresses.
 
-| What it does | Technical path |
-|---|---|
-| Get a page of customers | `GET /Customer/page/{page}/{count}` |
-| Get total customer count | `GET /Customer/info/count` |
-| Look up one customer | `GET /Customer/{customer}` |
-| Search customers | `GET /Customer/search/{value}/{max}` |
-| Create a new customer | `POST /Customer` |
-| Update a customer | `PUT /Customer/{customer}` |
-| Look up customer by phone number | `GET /Customer/Phone/{number}` |
-| Get invoices for a customer | `GET /Customer/{customer}/invoice` |
-| Get transactions for a customer | `GET /Customer/{customer}/transaction` |
+| What it does                     | Technical path                         |
+| -------------------------------- | -------------------------------------- |
+| Get a page of customers          | `GET /Customer/page/{page}/{count}`    |
+| Get total customer count         | `GET /Customer/info/count`             |
+| Look up one customer             | `GET /Customer/{customer}`             |
+| Search customers                 | `GET /Customer/search/{value}/{max}`   |
+| Create a new customer            | `POST /Customer`                       |
+| Update a customer                | `PUT /Customer/{customer}`             |
+| Look up customer by phone number | `GET /Customer/Phone/{number}`         |
+| Get invoices for a customer      | `GET /Customer/{customer}/invoice`     |
+| Get transactions for a customer  | `GET /Customer/{customer}/transaction` |
 
 **Important fields on a customer:**
+
 - `Name` — company or person name
 - `SSNumber` — Icelandic kennitala (must be valid if provided)
 - `BalanceAmount` — how much they owe
@@ -121,12 +122,12 @@ These are the parts of the API we've connected to so far:
 
 **What it is:** Specific people attached to a customer. For example, a customer company might have a CEO, a project manager, and an accountant — these are the contacts.
 
-| What it does | Technical path |
-|---|---|
-| List contacts for a customer | `GET /Customer/{customer}/Contact` |
-| Add a contact | `POST /Customer/{customer}/Contact` |
-| Update a contact | `PUT /Customer/{customer}/Contact/{contactId}` |
-| Remove a contact | `DELETE /Customer/{customer}/Contact/{contactId}` |
+| What it does                 | Technical path                                    |
+| ---------------------------- | ------------------------------------------------- |
+| List contacts for a customer | `GET /Customer/{customer}/Contact`                |
+| Add a contact                | `POST /Customer/{customer}/Contact`               |
+| Update a contact             | `PUT /Customer/{customer}/Contact/{contactId}`    |
+| Remove a contact             | `DELETE /Customer/{customer}/Contact/{contactId}` |
 
 ---
 
@@ -134,11 +135,11 @@ These are the parts of the API we've connected to so far:
 
 **What it is:** Some customers have goods delivered to a different address than their billing address. These are called "receivers" in the system.
 
-| What it does | Technical path |
-|---|---|
-| List delivery addresses for a customer | `GET /Customer/{customer}/Reciver` |
-| Add a delivery address | `POST /Customer/{customer}/reciver` |
-| Update a delivery address | `PUT /Customer/{customer}/reciver/{reciverId}` |
+| What it does                           | Technical path                                 |
+| -------------------------------------- | ---------------------------------------------- |
+| List delivery addresses for a customer | `GET /Customer/{customer}/Reciver`             |
+| Add a delivery address                 | `POST /Customer/{customer}/reciver`            |
+| Update a delivery address              | `PUT /Customer/{customer}/reciver/{reciverId}` |
 
 ---
 
@@ -148,14 +149,14 @@ These are the parts of the API we've connected to so far:
 
 **What you'd use it for:** The Reikningar page — showing the list of invoices, letting users download PDFs.
 
-| What it does | Technical path |
-|---|---|
-| Get a page of invoices | `GET /sales/invoice/page/{page}/{count}` |
-| Get one invoice | `GET /sales/invoice/{number}` |
-| Download invoice as PDF | `GET /sales/invoice/{number}/pdf` |
-| Email invoice to customer | `POST /sales/invoice/{number}/email` |
-| Create an invoice | `POST /sales/invoice` |
-| Create a credit note (reverse an invoice) | `POST /sales/invoice/{id}/reverse` |
+| What it does                              | Technical path                           |
+| ----------------------------------------- | ---------------------------------------- |
+| Get a page of invoices                    | `GET /sales/invoice/page/{page}/{count}` |
+| Get one invoice                           | `GET /sales/invoice/{number}`            |
+| Download invoice as PDF                   | `GET /sales/invoice/{number}/pdf`        |
+| Email invoice to customer                 | `POST /sales/invoice/{number}/email`     |
+| Create an invoice                         | `POST /sales/invoice`                    |
+| Create a credit note (reverse an invoice) | `POST /sales/invoice/{id}/reverse`       |
 
 > **Note:** Creating invoices requires a salesperson to already exist in the DK ERP. This has to be set up there directly.
 
@@ -167,12 +168,12 @@ These are the parts of the API we've connected to so far:
 
 There are two versions — v1 (older, simpler) and v2 (newer, more flexible). v2 lets you add/edit individual lines on an order.
 
-| What it does | Technical path |
-|---|---|
-| List orders | `GET /sales/order` or `GET /v2/sales/order/{page}/{size}` |
-| Create an order | `POST /sales/order` |
-| Convert order to invoice | `PUT /v2/sales/order/{uid}/invoice` |
-| Download order as PDF | `GET /sales/order/{number}/pdf` |
+| What it does             | Technical path                                            |
+| ------------------------ | --------------------------------------------------------- |
+| List orders              | `GET /sales/order` or `GET /v2/sales/order/{page}/{size}` |
+| Create an order          | `POST /sales/order`                                       |
+| Convert order to invoice | `PUT /v2/sales/order/{uid}/invoice`                       |
+| Download order as PDF    | `GET /sales/order/{number}/pdf`                           |
 
 ---
 
@@ -198,26 +199,26 @@ Works the same as orders — has v1 and v2 versions.
 
 ## Vendors / Suppliers (Lánardrottnar)
 
-**What it is:** The companies or people that the company *buys from* (opposite of customers). Their invoices are purchase invoices.
+**What it is:** The companies or people that the company _buys from_ (opposite of customers). Their invoices are purchase invoices.
 
-| What it does | Technical path |
-|---|---|
-| List all vendors | `GET /Vendor` |
-| Get one vendor | `GET /Vendor/{id}` |
-| Create a vendor | `POST /Vendor` |
+| What it does            | Technical path                           |
+| ----------------------- | ---------------------------------------- |
+| List all vendors        | `GET /Vendor`                            |
+| Get one vendor          | `GET /Vendor/{id}`                       |
+| Create a vendor         | `POST /Vendor`                           |
 | Get vendor transactions | `GET /vendor/transaction/{page}/{count}` |
 
 ---
 
 ## Purchase / Vendor Invoices
 
-**What it is:** Bills that come *in* to the company (from vendors). These go through an approval process before being booked.
+**What it is:** Bills that come _in_ to the company (from vendors). These go through an approval process before being booked.
 
-| What it does | Technical path |
-|---|---|
-| List unbooked (unapproved) vendor invoices | `GET /vendor/invoice/unprocessed` |
-| List booked vendor invoices | `GET /vendor/invoice/processed/page/{page}/{count}` |
-| Approve or reject a vendor invoice | `PUT /vendor/invoice/my/approval/{id}` |
+| What it does                               | Technical path                                      |
+| ------------------------------------------ | --------------------------------------------------- |
+| List unbooked (unapproved) vendor invoices | `GET /vendor/invoice/unprocessed`                   |
+| List booked vendor invoices                | `GET /vendor/invoice/processed/page/{page}/{count}` |
+| Approve or reject a vendor invoice         | `PUT /vendor/invoice/my/approval/{id}`              |
 
 ---
 
@@ -225,13 +226,13 @@ Works the same as orders — has v1 and v2 versions.
 
 **What it is:** The product catalogue — everything the company sells. Includes barcodes, categories, pricing, and stock levels.
 
-| What it does | Technical path |
-|---|---|
-| List all products | `GET /Product` |
-| Get product count | `GET /Product/info/count` |
-| Search products | `GET /Product/search/{value}/{max}` |
-| Get one product | `GET /Product/{id}` |
-| Create a product | `POST /Product` |
+| What it does      | Technical path                      |
+| ----------------- | ----------------------------------- |
+| List all products | `GET /Product`                      |
+| Get product count | `GET /Product/info/count`           |
+| Search products   | `GET /Product/search/{value}/{max}` |
+| Get one product   | `GET /Product/{id}`                 |
+| Create a product  | `POST /Product`                     |
 
 ---
 
@@ -245,12 +246,12 @@ Works the same as orders — has v1 and v2 versions.
 
 **What it is:** The accounting backbone — every financial movement in the company ends up here as a ledger entry. This is the "books."
 
-| What it does | Technical path |
-|---|---|
-| List all accounts | `GET /generalledger/account` |
-| View transactions on an account | `GET /generalledger/account/{id}/transaction/{page}/{count}` |
-| Create a journal entry (manual booking) | `POST /generalLedger/journal` |
-| List all transactions | `GET /generalledger/transaction/page/{page}/{count}` |
+| What it does                            | Technical path                                               |
+| --------------------------------------- | ------------------------------------------------------------ |
+| List all accounts                       | `GET /generalledger/account`                                 |
+| View transactions on an account         | `GET /generalledger/account/{id}/transaction/{page}/{count}` |
+| Create a journal entry (manual booking) | `POST /generalLedger/journal`                                |
+| List all transactions                   | `GET /generalledger/transaction/page/{page}/{count}`         |
 
 ---
 
@@ -258,8 +259,8 @@ Works the same as orders — has v1 and v2 versions.
 
 **What it is:** Employee payslips. Currently read-only — you can view payslips but not create them through the API.
 
-| What it does | Technical path |
-|---|---|
+| What it does  | Technical path                        |
+| ------------- | ------------------------------------- |
 | List payslips | `GET /payroll/payslip/{page}/{count}` |
 
 ---
@@ -270,15 +271,16 @@ Works the same as orders — has v1 and v2 versions.
 
 **What you'd use it for:** The Starfsmenn page — listing employees, viewing their details.
 
-| What it does | Technical path |
-|---|---|
-| List all employees | `GET /general/employee` |
-| Get one employee | `GET /general/employee/{number}` |
-| Create an employee | `POST /general/employee` |
-| Update an employee | `PUT /general/employee/{number}` |
+| What it does                  | Technical path                          |
+| ----------------------------- | --------------------------------------- |
+| List all employees            | `GET /general/employee`                 |
+| Get one employee              | `GET /general/employee/{number}`        |
+| Create an employee            | `POST /general/employee`                |
+| Update an employee            | `PUT /general/employee/{number}`        |
 | See their project assignments | `GET /general/employee/{number}/worker` |
 
 **Key fields:**
+
 - `Number` — employee ID (often their kennitala)
 - `Name` — full name
 - `Status` — 0 means active
@@ -290,21 +292,22 @@ Works the same as orders — has v1 and v2 versions.
 
 **What it is:** Tracks when employees clock in and out. The portal's Stimpilklukka page reads from and writes to this.
 
-| What it does | Technical path | Tested |
-|---|---|---|
-| Get all timeclock entries | `GET /TimeClock/entries` | ✅ works — returns `[]` on demo |
-| See who is currently clocked in | `GET /TimeClock/in` | ✅ works — returns `[]` on demo |
-| See who is currently clocked out | `GET /TimeClock/out` | ✅ works — returns `[]` on demo |
-| Clock an employee in or out | `POST /TimeClock/stamp/{employee}` | ✅ works — needs a real employee number |
-| Get timeclock settings | `GET /TimeClock/settings` | ✅ works — see shape below |
-| Map a hostname to a company | `GET /TimeClock/web/config?host=` | ✅ works — see shape below |
-| Look up employee by phone number | `GET /TimeClock/Employee?phone=` | ❌ 401 — token lacks permission |
-| Get project info for timeclock | `GET /TimeClock/project/{number}?company=` | ⚠️ returns "request is invalid" on demo |
-| Force clock out an employee | `POST /TimeClock/quit?company=&employee=` | ⚠️ returns "request is invalid" on demo |
-| Register employee stamp | `POST /TimeClock/register/{employee}` | ⚠️ returns server error on demo |
-| Register via dkPOS | `POST /TimeClock/dkposregister/{employee}` | ❌ 401 — token lacks permission |
+| What it does                     | Technical path                             | Tested                                  |
+| -------------------------------- | ------------------------------------------ | --------------------------------------- |
+| Get all timeclock entries        | `GET /TimeClock/entries`                   | ✅ works — returns `[]` on demo         |
+| See who is currently clocked in  | `GET /TimeClock/in`                        | ✅ works — returns `[]` on demo         |
+| See who is currently clocked out | `GET /TimeClock/out`                       | ✅ works — returns `[]` on demo         |
+| Clock an employee in or out      | `POST /TimeClock/stamp/{employee}`         | ✅ works — needs a real employee number |
+| Get timeclock settings           | `GET /TimeClock/settings`                  | ✅ works — see shape below              |
+| Map a hostname to a company      | `GET /TimeClock/web/config?host=`          | ✅ works — see shape below              |
+| Look up employee by phone number | `GET /TimeClock/Employee?phone=`           | ❌ 401 — token lacks permission         |
+| Get project info for timeclock   | `GET /TimeClock/project/{number}?company=` | ⚠️ returns "request is invalid" on demo |
+| Force clock out an employee      | `POST /TimeClock/quit?company=&employee=`  | ⚠️ returns "request is invalid" on demo |
+| Register employee stamp          | `POST /TimeClock/register/{employee}`      | ⚠️ returns server error on demo         |
+| Register via dkPOS               | `POST /TimeClock/dkposregister/{employee}` | ❌ 401 — token lacks permission         |
 
 **Settings response shape** (`GET /TimeClock/settings`):
+
 ```json
 {
   "Enabled": false,
@@ -320,10 +323,12 @@ Works the same as orders — has v1 and v2 versions.
   "RoundFactor": 1
 }
 ```
+
 > Field values (`0` / `1`) appear to be enums — `0` = Disabled, `1` = likely Optional or Enabled. Needs confirmation from DK.
 > Settings are **read-only** — `PUT /TimeClock/settings` returns 405.
 
 **Web config response shape** (`GET /TimeClock/web/config?host=<hostname>`):
+
 ```json
 {
   "Enabled": true,
@@ -331,20 +336,21 @@ Works the same as orders — has v1 and v2 versions.
   "CompanyName": "Prufufyrirtækið ehf(Demo Dev)"
 }
 ```
+
 > Maps a kiosk hostname to a company. The `host` param is required — calling without it returns 404.
 > Currently any host returns the demo company. Used by self-service kiosk terminals to identify themselves.
 
 **Entries query params** (`GET /TimeClock/entries`):
 
-| Param | Type | Description |
-|---|---|---|
-| `from` | date-time | Stamped in after |
-| `to` | date-time | Stamped out before |
-| `employee` | string | Filter by employee number |
-| `project` | string | Filter by project |
-| `phase` | string | Filter by phase |
-| `task` | string | Filter by task |
-| `dim1/2/3` | string | Dimension filters |
+| Param      | Type      | Description               |
+| ---------- | --------- | ------------------------- |
+| `from`     | date-time | Stamped in after          |
+| `to`       | date-time | Stamped out before        |
+| `employee` | string    | Filter by employee number |
+| `project`  | string    | Filter by project         |
+| `phase`    | string    | Filter by phase           |
+| `task`     | string    | Filter by task            |
+| `dim1/2/3` | string    | Dimension filters         |
 
 ---
 
@@ -352,19 +358,19 @@ Works the same as orders — has v1 and v2 versions.
 
 **What it is:** Jobs or projects the company is working on. Employees can log hours against projects. Projects link to invoices and customers.
 
-| What it does | Technical path |
-|---|---|
-| List all projects | `GET /project` |
-| Get one project | `GET /project/{number}` |
-| Create a project | `POST /project` |
-| Get invoices linked to a project | `GET /project/{number}/invoice` |
-| Log hours on a project | `POST /general/employee/{employee}/work` |
+| What it does                     | Technical path                           |
+| -------------------------------- | ---------------------------------------- |
+| List all projects                | `GET /project`                           |
+| Get one project                  | `GET /project/{number}`                  |
+| Create a project                 | `POST /project`                          |
+| Get invoices linked to a project | `GET /project/{number}/invoice`          |
+| Log hours on a project           | `POST /general/employee/{employee}/work` |
 
 ---
 
 ## Members (Félagar)
 
-**What it is:** For organisations that have *members* rather than customers — like unions or clubs. Members can have fees, grants, fund memberships, and applications.
+**What it is:** For organisations that have _members_ rather than customers — like unions or clubs. Members can have fees, grants, fund memberships, and applications.
 
 This section is only relevant if the company uses DK's membership module.
 
@@ -374,11 +380,11 @@ This section is only relevant if the company uses DK's membership module.
 
 **What it is:** A global search across all modules. You can search for customers, products, or everything at once.
 
-| What it does | Technical path |
-|---|---|
-| Search everything | `GET /search` |
+| What it does          | Technical path         |
+| --------------------- | ---------------------- |
+| Search everything     | `GET /search`          |
 | Search customers only | `GET /search/customer` |
-| Search products only | `GET /search/product` |
+| Search products only  | `GET /search/product`  |
 
 ---
 
@@ -386,15 +392,15 @@ This section is only relevant if the company uses DK's membership module.
 
 **What it is:** Look up a person or company in the Icelandic national registry (Þjóðskrá) by their kennitala. Useful for auto-filling customer details.
 
-| What it does | Technical path |
-|---|---|
+| What it does         | Technical path                  |
+| -------------------- | ------------------------------- |
 | Look up by kennitala | `GET /nation/entry/{kennitala}` |
 
 ---
 
 ## WebHooks
 
-**What it is:** Instead of the portal asking "has anything changed?" every few seconds, webhooks let DK *tell* the portal when something changes — like a notification system.
+**What it is:** Instead of the portal asking "has anything changed?" every few seconds, webhooks let DK _tell_ the portal when something changes — like a notification system.
 
 Not currently used in this project.
 
@@ -419,26 +425,28 @@ Not currently used in this project.
 Here's what's currently set up in the test company (LOK - HR):
 
 ### Customers
-| Name | Email |
-|------|-------|
-| Jói Test | joi.test@example.is |
-| Anna Test Sigurðardóttir | anna.test@example.is |
-| Magnús Test Jónsson | magnus.test@example.is |
-| Helga Test Björnsdóttir | helga.test@example.is |
+
+| Name                     | Email                  |
+| ------------------------ | ---------------------- |
+| Jói Test                 | joi.test@example.is    |
+| Anna Test Sigurðardóttir | anna.test@example.is   |
+| Magnús Test Jónsson      | magnus.test@example.is |
+| Helga Test Björnsdóttir  | helga.test@example.is  |
 
 ### Employees (our team)
-| Name | Email |
-|------|-------|
-| Jón Ágústsson | jonagu@ru.is |
-| Óðinn Karl Skúlason | odinnkarl@gmail.com |
-| Þóra Xue Reynisdóttir | thora.reynisdottir@gmail.com |
-| Ísak Máni Þrastarson | isakmanithrastarson@gmail.com |
+
+| Name                  | Email                         |
+| --------------------- | ----------------------------- |
+| Jón Ágústsson         | jonagu@ru.is                  |
+| Óðinn Karl Skúlason   | odinnkarl@gmail.com           |
+| Þóra Xue Reynisdóttir | thora.reynisdottir@gmail.com  |
+| Ísak Máni Þrastarson  | isakmanithrastarson@gmail.com |
 
 ---
 
 # Known Limitations
 
-These are things the API *can't* do, or things we haven't been able to figure out:
+These are things the API _can't_ do, or things we haven't been able to figure out:
 
 1. **No support ticket system** — The design shows a support/ticket section but the DK API has no ticket system. Would need a separate integration (e.g. Zoho).
 
@@ -467,6 +475,7 @@ When something goes wrong, the API always returns a message explaining why:
 ```
 
 **Common status codes:**
+
 - `200` — Everything worked
 - `204` — Worked, nothing to return
 - `400` — Something was wrong with your request (read the Message)

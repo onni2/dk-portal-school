@@ -83,7 +83,12 @@ export const ALL_CARDS: CardDef[] = [
   },
 ];
 
-const DEFAULT_CARD_IDS = ["reikningar", "vidskiptavinir", "stimpilklukka", "leyfi"];
+const DEFAULT_CARD_IDS = [
+  "reikningar",
+  "vidskiptavinir",
+  "stimpilklukka",
+  "leyfi",
+];
 const STORAGE_KEY = "dk-dashboard-cards";
 
 /**

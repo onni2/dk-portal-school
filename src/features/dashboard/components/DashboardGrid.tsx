@@ -31,14 +31,10 @@ function AddCardTile() {
   const [open, setOpen] = useState(false);
   const isAdmin = useAuthStore((s) => s.user?.role === "admin");
 
-  const availableCards = ALL_CARDS.filter(
-    (card) => !card.adminOnly || isAdmin,
-  );
+  const availableCards = ALL_CARDS.filter((card) => !card.adminOnly || isAdmin);
 
   return (
-    <div
-      className="relative rounded border-2 border-dashed border-gray-300 bg-white p-4"
-    >
+    <div className="relative rounded border-2 border-dashed border-gray-300 bg-white p-4">
       {!open ? (
         <button
           onClick={() => setOpen(true)}
@@ -73,9 +69,7 @@ function AddCardTile() {
                       : "text-gray-600 hover:bg-gray-100"
                   }`}
                 >
-                  <span className="w-4 text-center">
-                    {isAdded ? "✓" : "+"}
-                  </span>
+                  <span className="w-4 text-center">{isAdded ? "✓" : "+"}</span>
                   {card.title}
                 </button>
               );
