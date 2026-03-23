@@ -13,6 +13,7 @@ import {
 import { fetchEmployees } from "@/features/employees/api/employees.api";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { useRoleStore } from "@/features/licence/store/role.store";
+import { usePortalUsersStore } from "@/features/users/store/users.store";
 import { authRoleToUserRole } from "@/features/auth/utils/role-mapping";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 
@@ -51,27 +52,38 @@ function CallbackPage() {
       .then(async ({ accessToken }) => {
         const userInfo = await fetchAudkenniUserInfo(accessToken);
 
-        // Match to a DK Plus employee by kennitala (nationalRegisterId vs SSNumber).
-        // apiClient falls back to VITE_API_TOKEN since no token is stored yet.
-        const employees = await fetchEmployees().catch(() => []);
         const kennitala = userInfo.nationalRegisterId;
-        const match = kennitala
+
+        // Match to a portal user by kennitala — this determines their role
+        const portalUsers = usePortalUsersStore.getState().users;
+        const portalUser = kennitala
+          ? portalUsers.find((u) => u.kennitala === kennitala)
+          : undefined;
+
+        if (!portalUser) {
+          setError("Notandi ekki skráður í gáttina — hafðu samband við stjórnanda");
+          return;
+        }
+
+        // Also fetch DK Plus employee info for name/email if available
+        const employees = await fetchEmployees().catch(() => []);
+        const employee = kennitala
           ? employees.find((e) => e.SSNumber === kennitala)
           : undefined;
 
         const user = {
-          id: match?.Number ?? userInfo.sub,
-          name: match?.Name ?? userInfo.name ?? "Notandi",
-          email: match?.Email ?? userInfo.email ?? "",
-          kennitala: kennitala ?? userInfo.sub,
-          role: "standard" as const,
+          id: portalUser.id,
+          name: employee?.Name ?? portalUser.name,
+          email: employee?.Email ?? portalUser.email,
+          kennitala,
+          role: portalUser.role,
+          mustResetPassword: portalUser.mustResetPassword,
         };
 
-        // Store the env API token so DK Plus API calls work after login
         const apiToken = import.meta.env.VITE_API_TOKEN as string | undefined;
         setAuth(user, apiToken ?? accessToken);
         setRole(authRoleToUserRole(user.role));
-        navigate({ to: "/" });
+        navigate({ to: portalUser.mustResetPassword ? "/reset-password" : "/" });
       })
       .catch((err: unknown) => {
         setError(
