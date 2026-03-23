@@ -1,5 +1,5 @@
 /**
- * Login form with three tabs: Hefðbundin (DK API token), Rafræn skilríki
+ * Login form with three tabs: Lykilorð (username/password), Rafræn skilríki
  * (Auðkenni app/SIM), and Skilríki á korti (smart card).
  * Uses: Button, Input, auth.api, audkenni.api, auth.store, role.store, role-mapping
  * Exports: LoginForm
@@ -15,23 +15,24 @@ import { useRoleStore } from "@/features/licence/store/role.store";
 import { authRoleToUserRole } from "../utils/role-mapping";
 import { cn } from "@/shared/utils/cn";
 
-type Tab = "hefdbundin" | "rafraen" | "kort";
+type Tab = "lykilord" | "rafraen" | "kort";
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: "hefdbundin", label: "Hefðbundin" },
+  { id: "lykilord", label: "Lykilorð" },
   { id: "rafraen", label: "Rafræn skilríki" },
   { id: "kort", label: "Skilríki á korti" },
 ];
 
 const SUBTITLES: Record<Tab, string> = {
-  hefdbundin: "Skráðu þig inn með DK API tókni.",
+  lykilord: "Skráðu þig inn með notendanafni og lykilorði.",
   rafraen: "Sláðu inn símanúmer og staðfestu í Auðkenni-appinu.",
   kort: "Við sendum þig í örugga auðkenningu með skilríkjum á korti.",
 };
 
 export function LoginForm() {
-  const [activeTab, setActiveTab] = useState<Tab>("rafraen");
-  const [token, setToken] = useState("");
+  const [activeTab, setActiveTab] = useState<Tab>("lykilord");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -56,15 +57,15 @@ export function LoginForm() {
     setError("");
   }
 
-  async function handleHefdbundinSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleLykilordSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     setLoading(true);
     try {
-      const { user, token: authToken } = await login({ token });
+      const { user, token: authToken } = await login({ username, password });
       setAuth(user, authToken);
       setRole(authRoleToUserRole(user.role));
-      navigate({ to: "/" });
+      navigate({ to: user.mustResetPassword ? "/reset-password" : "/" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Innskráning mistókst");
     } finally {
@@ -164,25 +165,30 @@ export function LoginForm() {
 
           {/* Tab content */}
           <div className="mt-6">
-            {activeTab === "hefdbundin" && (
-              <form onSubmit={handleHefdbundinSubmit} className="flex flex-col gap-4">
+            {activeTab === "lykilord" && (
+              <form onSubmit={handleLykilordSubmit} className="flex flex-col gap-4">
                 <Input
-                  label="API tókn"
-                  type="password"
-                  value={token}
-                  onChange={(e) => setToken(e.target.value)}
-                  placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                  label="Notendanafn"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="notendanafn"
                   required
                 />
-                <p className="text-xs text-[var(--color-text-muted)]">
-                  Tóknið er fáanlegt í DK Plus stillingunum þínum.
-                </p>
+                <Input
+                  label="Lykilorð"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                />
                 {error && (
                   <p className="text-sm text-[var(--color-error)]">{error}</p>
                 )}
                 <Button
                   type="submit"
-                  disabled={loading || !token}
+                  disabled={loading || !username || !password}
                   className="mt-2 w-full"
                 >
                   {loading ? "Skrái inn..." : "Innskrá"}
@@ -327,21 +333,6 @@ export function LoginForm() {
             )}
           </div>
 
-          {/* Footer links */}
-          <div className="mt-8 flex justify-between text-sm">
-            <a
-              href="#"
-              className="text-[var(--color-primary)] underline underline-offset-2"
-            >
-              Nota lykilorð í staðinn
-            </a>
-            <a
-              href="#"
-              className="text-[var(--color-primary)] underline underline-offset-2"
-            >
-              Nýskráning
-            </a>
-          </div>
         </div>
       </main>
 
