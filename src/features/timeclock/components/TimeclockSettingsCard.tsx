@@ -36,9 +36,19 @@ export function TimeclockSettingsCard() {
               i
             </span>
             <div className="pointer-events-none absolute left-1/2 top-6 z-10 w-64 -translate-x-1/2 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-xs text-[var(--color-text-secondary)] opacity-0 shadow-md transition-opacity group-hover:opacity-100">
-              <p className="mb-1 font-semibold text-[var(--color-text)]">Um stillingar</p>
-              <p>Þessar stillingar eru sóttar beint úr DK og sýna hvernig stimpilklukkukerfið er uppsett. Hér má sjá hvort kerfið sé virkt, hvernig tímar eru slétttaðir og hvaða reiti starfsmenn þurfa að fylla út þegar þeir stimpla sig inn.</p>
-              <p className="mt-1.5 text-[var(--color-text-muted)]">Ekki er hægt að breyta þessum stillingum hér — þær eru stilltar í DK.</p>
+              <p className="mb-1 font-semibold text-[var(--color-text)]">
+                Um stillingar
+              </p>
+              <p>
+                Þessar stillingar eru sóttar beint úr DK og sýna hvernig
+                stimpilklukkukerfið er uppsett. Hér má sjá hvort kerfið sé
+                virkt, hvernig tímar eru slétttaðir og hvaða reiti starfsmenn
+                þurfa að fylla út þegar þeir stimpla sig inn.
+              </p>
+              <p className="mt-1.5 text-[var(--color-text-muted)]">
+                Ekki er hægt að breyta þessum stillingum hér — þær eru stilltar
+                í DK.
+              </p>
             </div>
           </div>
         </div>

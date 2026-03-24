@@ -163,7 +163,10 @@ function LeyfиPreview() {
   const active = Object.entries(MODULE_LABELS).filter(([key]) => {
     const mod = data[key as keyof typeof data];
     if (!mod || typeof mod !== "object") return false;
-    return ("Enabled" in mod && mod.Enabled) || ("PurchaseOrders" in mod && mod.PurchaseOrders);
+    return (
+      ("Enabled" in mod && mod.Enabled) ||
+      ("PurchaseOrders" in mod && mod.PurchaseOrders)
+    );
   });
 
   return (
