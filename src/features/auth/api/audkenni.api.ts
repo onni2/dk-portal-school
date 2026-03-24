@@ -23,8 +23,10 @@ const REDIRECT_URI = import.meta.env.VITE_AUDKENNI_REDIRECT_URI as string;
 
 // Auðkenni REST authenticate endpoint (no trailing query params for polling)
 const AUTHENTICATE_BASE = `${BASE_URL}json/realms/root/realms/audkenni/authenticate`;
-// With service params for Steps 1 & 2
+// SIM flow (api_v203) — used for Steps 1 & 2
 const AUTHENTICATE_URL = `${AUTHENTICATE_BASE}?authIndexType=service&authIndexValue=api_v203`;
+// Nexus Smart ID card flow — separate authentication tree
+const NEXUS_AUTHENTICATE_URL = `${AUTHENTICATE_BASE}?service=default&authIndexType=service&authIndexValue=nexus-auth`;
 const OAUTH2_BASE = `${BASE_URL}oauth2/realms/root/realms/audkenni`;
 const AUTHORIZE_URL = `${OAUTH2_BASE}/authorize`;
 const TOKEN_URL = `${OAUTH2_BASE}/access_token`;
@@ -101,15 +103,14 @@ function generateState(): string {
 // ---- Internal REST flow (Steps 1–3) ----
 
 /**
- * Step 1 — POST to authenticate with an empty body to begin a session.
- * Returns authId and the callbacks that must be filled in Step 2.
+ * Step 1 (SIM) — POST to api_v203 with an empty body to begin a session.
  */
 async function startSession(): Promise<AudkenniSession> {
   const res = await fetch(AUTHENTICATE_URL, {
     method: "POST",
     headers: API_HEADERS,
     body: "{}",
-    credentials: "include", // needed so the audsso session cookie is set/sent
+    credentials: "include",
   });
   if (!res.ok) {
     const body = await res.text().catch(() => "(no body)");
@@ -117,6 +118,27 @@ async function startSession(): Promise<AudkenniSession> {
     throw new Error(`Gat ekki tengst Auðkenni (${res.status}) — reyndu aftur`);
   }
   return res.json() as Promise<AudkenniSession>;
+}
+
+/**
+ * Step 1 (Card) — POST to the nexus-auth tree to begin a Nexus Smart ID
+ * session.  Logs the response so we can inspect the callbacks.
+ */
+async function startNexusSession(): Promise<AudkenniSession> {
+  const res = await fetch(NEXUS_AUTHENTICATE_URL, {
+    method: "POST",
+    headers: API_HEADERS,
+    body: "",
+    credentials: "include",
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => "(no body)");
+    console.error("[Auðkenni Nexus] Step 1 failed", res.status, body);
+    throw new Error(`Gat ekki tengst Auðkenni (${res.status}) — reyndu aftur`);
+  }
+  const data = await res.json() as AudkenniSession;
+  console.debug("[Auðkenni Nexus] Step 1 response:", JSON.stringify(data, null, 2));
+  return data;
 }
 
 /**
@@ -278,7 +300,7 @@ function buildStep2Callbacks(
  * PKCE verifier + state are stored in sessionStorage so the callback route
  * can complete the token exchange.
  */
-async function redirectToAuthorize(): Promise<void> {
+async function redirectToAuthorize(forceReauth = false): Promise<void> {
   const verifier = generateCodeVerifier();
   const challenge = await generateCodeChallenge(verifier);
   const state = generateState();
@@ -296,33 +318,54 @@ async function redirectToAuthorize(): Promise<void> {
     state,
   });
 
+  // max_age=0 tells Auðkenni to ignore any existing session and force
+  // fresh authentication — required for card so the Smart ID Desktop App
+  // is triggered even when the user already has a valid SIM session cookie.
+  if (forceReauth) params.set("max_age", "0");
+
   window.location.href = `${AUTHORIZE_URL}?${params}`;
 }
 
 // ---- Public API ----
 
 /**
- * Runs the full REST authentication flow (Steps 1–4):
- *   1. Start session
- *   2. Submit phone number + method
+ * Runs the full authentication flow for the given method.
+ *
+ * SIM (Steps 1–4):
+ *   1. Start REST session
+ *   2. Submit phone number → Auðkenni sends push to user's phone
  *   3. Poll until user confirms
  *   4. Redirect to OAuth2 authorize
  *
+ * Card (Step 4 only):
+ *   Auðkenni's own /authorize page handles the Nexus Smart ID Desktop App
+ *   interaction, so Steps 1–3 are not needed.  We just redirect to /authorize
+ *   and Auðkenni triggers the Smart ID app from there.
+ *
  * @param method "sim" for SIM push, "card" for smart card
- * @param phoneOrKennitala Phone number for SIM; empty for card
- * @param onTick     Called before each poll attempt — use to update progress UI
+ * @param phoneOrKennitala Phone number for SIM; unused for card
+ * @param onTick     Called before each SIM poll attempt — use to update progress UI
  */
 export async function initiateAudkenniLogin(
   method: AudkenniMethod,
   phoneOrKennitala?: string,
   onTick?: () => void,
 ): Promise<void> {
+  if (method === "card") {
+    // Nexus Smart ID card flow uses a separate authentication tree.
+    // Step 1: start nexus-auth session (sets audsso cookie for card auth).
+    // Step 4: redirect to /authorize — Auðkenni triggers Smart ID Desktop App.
+    await startNexusSession();
+    await redirectToAuthorize(true);
+    return;
+  }
+
   const message = "Innskráning á DK Mínar síður";
 
-  // Step 1
+  // SIM Step 1
   const session = await startSession();
 
-  // Step 2
+  // SIM Step 2
   const filledCallbacks = buildStep2Callbacks(
     session,
     method,
@@ -331,14 +374,13 @@ export async function initiateAudkenniLogin(
   );
   const step2 = await submitCallbacks(session.authId, filledCallbacks);
 
+  // SIM Step 3: poll until the user confirms on their phone
   const pollingCallback = step2.callbacks?.find(
     (cb) => cb.type === "PollingWaitCallback",
   );
   if (!pollingCallback) {
     throw new Error("Óvænt svar frá Auðkenni — vantar PollingWaitCallback");
   }
-
-  // Step 3
   await pollUntilDone(step2.authId, pollingCallback, onTick);
 
   // Step 4 — redirect; page navigates away, /callback takes over
