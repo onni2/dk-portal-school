@@ -6,7 +6,6 @@
  */
 import { cn } from "@/shared/utils/cn";
 import { DatePicker } from "@/shared/components/DatePicker";
-import { fetchInvoicePdf } from "../api/invoices.api";
 import { useInvoiceFilters } from "../store/invoices.store";
 
 function toDateString(date: Date): string {
@@ -26,7 +25,6 @@ export function InvoiceFilters() {
     dateTo,
     activePeriod,
     search,
-    selectedInvoiceNumber,
     setDateFrom,
     setDateTo,
     setActivePeriod,
@@ -77,23 +75,21 @@ export function InvoiceFilters() {
         </div>
       </div>
 
-      {/* Date pickers */}
-      <div className="flex flex-wrap gap-3">
-        <DatePicker
-          value={dateFrom}
-          onChange={setDateFrom}
-          maxDate={dateTo || undefined}
-        />
-        <DatePicker
-          value={dateTo}
-          onChange={setDateTo}
-          minDate={dateFrom || undefined}
-        />
-      </div>
-
-      {/* Search + PDF */}
+      {/* Date pickers + Search */}
       <div className="flex items-center justify-between gap-3">
-        <div className="relative w-72">
+        <div className="flex gap-3">
+          <DatePicker
+            value={dateFrom}
+            onChange={setDateFrom}
+            maxDate={dateTo || undefined}
+          />
+          <DatePicker
+            value={dateTo}
+            onChange={setDateTo}
+            minDate={dateFrom || undefined}
+          />
+        </div>
+        <div className="relative w-64">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-muted)]"
@@ -110,26 +106,12 @@ export function InvoiceFilters() {
           </svg>
           <input
             type="text"
-            placeholder="Search..."
+            placeholder="Leita..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] py-1.5 pl-9 pr-3 text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-muted)]"
           />
         </div>
-        <button
-          disabled={!selectedInvoiceNumber}
-          onClick={() =>
-            selectedInvoiceNumber && fetchInvoicePdf(selectedInvoiceNumber)
-          }
-          className={cn(
-            "rounded-[var(--radius-md)] border px-4 py-1.5 text-sm transition-colors",
-            selectedInvoiceNumber
-              ? "border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white"
-              : "cursor-not-allowed border-[var(--color-border)] text-[var(--color-text-muted)] opacity-50",
-          )}
-        >
-          Hlaða niður PDF
-        </button>
       </div>
     </div>
   );
