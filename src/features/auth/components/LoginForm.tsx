@@ -99,22 +99,12 @@ export function LoginForm() {
   async function handleKortSubmit() {
     setError("");
     setLoading(true);
-    setPolling(false);
-    setPollCount(0);
     try {
-      await initiateAudkenniLogin(
-        "card",
-        "",
-        () => {
-          setPolling(true);
-          setPollCount((n) => n + 1);
-        },
-      );
-      // page redirects to /callback — loading stays true
+      await initiateAudkenniLogin("card");
+      // page redirects to Auðkenni /authorize — loading stays true
     } catch (err) {
       setError(err instanceof Error ? err.message : "Tenging við Auðkenni mistókst");
       setLoading(false);
-      setPolling(false);
     }
   }
 
