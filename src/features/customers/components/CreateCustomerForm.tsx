@@ -54,9 +54,7 @@ export function CreateCustomerForm() {
   }
 
   if (!open) {
-    return (
-      <Button onClick={() => setOpen(true)}>+ Nýr viðskiptavinur</Button>
-    );
+    return <Button onClick={() => setOpen(true)}>+ Nýr viðskiptavinur</Button>;
   }
 
   return (
