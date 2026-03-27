@@ -4,7 +4,7 @@
  * Exports: timeclockSettingsQueryOptions, ipWhitelistQueryOptions, employeePhonesQueryOptions,
  *          useTimeclockSettings, useIpWhitelist, useEmployeePhones
  */
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions, useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import {
   fetchTimeclockSettings,
   fetchIpWhitelist,
@@ -37,4 +37,14 @@ export function useIpWhitelist() {
 
 export function useEmployeePhones() {
   return useSuspenseQuery(employeePhonesQueryOptions);
+}
+
+export function useInvalidateIpWhitelist() {
+  const qc = useQueryClient();
+  return () => qc.invalidateQueries({ queryKey: ["timeclock-ip-whitelist"] });
+}
+
+export function useInvalidateEmployeePhones() {
+  const qc = useQueryClient();
+  return () => qc.invalidateQueries({ queryKey: ["timeclock-employee-phones"] });
 }
