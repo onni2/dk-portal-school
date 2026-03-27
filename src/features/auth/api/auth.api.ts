@@ -1,77 +1,109 @@
 /**
- * Auth API functions: login and logout against the real DK API.
- * Login verifies the token, looks up the employee, and returns a User.
- * Uses: @/shared/api/client, ../types/auth.types
+ * Auth API functions: login and logout.
+ * Calls the mock backend (Express + PostgreSQL) for username/password auth.
+ * If the logged-in user has a dkToken, also fetches their real DK Plus employee info.
+ * Uses: @/shared/api/mockClient, @/shared/api/client, ../types/auth.types
  * Exports: login, logout
  */
+import { mockClient } from "@/shared/api/mockClient";
 import { BASE_URL } from "@/shared/api/client";
-import type { AuthResponse, LoginCredentials } from "../types/auth.types";
+import type { AuthResponse, LoginCredentials, User } from "../types/auth.types";
 
-// Shape of what GET /Token returns
+interface MockLoginResponse {
+  token: string;
+  user: {
+    id: string;
+    username: string;
+    email: string;
+    name: string;
+    role: string;
+    kennitala?: string;
+    mustResetPassword: boolean;
+    dkToken?: string;
+    companyId?: string;
+  };
+}
+
 interface TokenData {
   Token: string;
   Company: string;
   User: string;
 }
 
-// Shape of what GET /general/employee/{number} returns (only what we need)
 interface EmployeeData {
   Number: string;
   Name: string;
   Email?: string;
 }
 
-/**
- * Makes a GET request with a specific bearer token.
- * Used during login before the token is stored.
- */
+const DK_API_TIMEOUT_MS = 5000;
+
 async function getWithToken<T>(path: string, token: string): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  if (!res.ok) throw new Error("Ógilt tókn — athugaðu og reyndu aftur");
-  return res.json();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), DK_API_TIMEOUT_MS);
+  try {
+    const res = await fetch(`${BASE_URL}${path}`, {
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (!res.ok) throw new Error(`${res.status}`);
+    return res.json();
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
-/**
- * Logs in using a DK API token.
- * Verifies the token, looks up the employee it belongs to, and returns their details.
- */
-export async function login(
-  credentials: LoginCredentials,
-): Promise<AuthResponse> {
-  const { token } = credentials;
+export async function login(credentials: LoginCredentials): Promise<AuthResponse> {
+  const data = await mockClient.post<MockLoginResponse>("/auth/login", credentials);
 
-  // Step 1 — verify token and get the user + company IDs
-  const tokens = await getWithToken<TokenData[]>("/Token", token);
-  const tokenData = tokens[0];
-  if (!tokenData) throw new Error("Ógilt tókn");
+  // Store JWT so mockClient can use it for subsequent requests
+  localStorage.setItem("dk-auth-token", data.token);
 
-  // Step 2 — get the employee number linked to this user in this company
-  const employeeNumber = await getWithToken<string>(
-    `/Token/${tokenData.User}/${tokenData.Company}`,
-    token,
-  );
+  const mockUser = data.user;
 
-  // Step 3 — get the employee's full details (name, email, kennitala)
-  const employee = await getWithToken<EmployeeData>(
-    `/general/employee/${employeeNumber}`,
-    token,
-  );
+  // If the user has a DK Plus token, try to enrich with real employee data
+  if (mockUser.dkToken) {
+    try {
+      const tokens = await getWithToken<TokenData[]>("/Token", mockUser.dkToken);
+      const tokenData = tokens[0];
+      if (tokenData) {
+        const employeeNumber = await getWithToken<string>(
+          `/Token/${tokenData.User}/${tokenData.Company}`,
+          mockUser.dkToken,
+        );
+        const employee = await getWithToken<EmployeeData>(
+          `/general/employee/${employeeNumber}`,
+          mockUser.dkToken,
+        );
+        const user: User = {
+          id: mockUser.id,
+          name: employee.Name,
+          email: employee.Email ?? mockUser.email,
+          kennitala: mockUser.kennitala,
+          role: mockUser.role as User["role"],
+          mustResetPassword: mockUser.mustResetPassword,
+        };
+        return { user, token: data.token };
+      }
+    } catch {
+      // DK API unreachable — fall through to local data
+    }
+  }
 
-  return {
-    user: {
-      id: employee.Number,
-      name: employee.Name,
-      email: employee.Email ?? "",
-      kennitala: employee.Number,
-      role: "standard",
-    },
-    token,
+  const user: User = {
+    id: mockUser.id,
+    name: mockUser.name,
+    email: mockUser.email,
+    kennitala: mockUser.kennitala,
+    role: mockUser.role as User["role"],
+    mustResetPassword: mockUser.mustResetPassword,
+    companyId: mockUser.companyId,
   };
+
+  return { user, token: data.token };
 }
 
 /**

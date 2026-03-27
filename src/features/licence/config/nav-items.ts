@@ -63,8 +63,8 @@ export const NAV_ITEMS: NavItem[] = [
   },
   {
     label: "Notendur",
-    to: "/notendur",
-    access: { type: "alwaysVisible" },
+    to: "/users",
+    access: { type: "copOnly" },
   },
   {
     label: "Stillingar",
