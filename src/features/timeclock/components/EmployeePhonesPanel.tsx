@@ -1,69 +1,65 @@
 /**
  * Panel for viewing and managing employee phone numbers used to clock in at kiosks.
- * Add/remove is mock-only until the backend supports it.
+ * Data is stored in Neon, scoped per company.
  * Uses: @/shared/components/Button, @/shared/components/Card, @/shared/components/Input,
- *       ../api/timeclock.queries, ../store/timeclock.store
+ *       ../api/timeclock.queries, ../api/timeclock.api, ../store/timeclock.store
  * Exports: EmployeePhonesPanel
  */
 import { useState } from "react";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { Input } from "@/shared/components/Input";
-import { useEmployeePhones } from "../api/timeclock.queries";
+import { useEmployeePhones, useInvalidateEmployeePhones } from "../api/timeclock.queries";
+import { addEmployeePhone, removeEmployeePhone } from "../api/timeclock.api";
 import { useTimeclockStore } from "../store/timeclock.store";
-import type { EmployeePhoneEntry } from "../types/timeclock.types";
 
 export function EmployeePhonesPanel() {
-  const { data: initial } = useEmployeePhones();
+  const { data: entries } = useEmployeePhones();
+  const invalidate = useInvalidateEmployeePhones();
   const { addPhoneOpen, setAddPhoneOpen } = useTimeclockStore();
-
-  const [entries, setEntries] = useState<EmployeePhoneEntry[]>(initial);
   const [employeeNumber, setEmployeeNumber] = useState("");
   const [employeeName, setEmployeeName] = useState("");
   const [phone, setPhone] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [removingId, setRemovingId] = useState<string | null>(null);
 
-  function handleAdd() {
+  async function handleAdd() {
     if (!employeeNumber.trim() || !phone.trim()) return;
-    setEntries((prev) => [
-      ...prev,
-      {
-        id: Date.now().toString(),
-        employeeNumber: employeeNumber.trim(),
-        employeeName: employeeName.trim(),
-        phone: phone.trim(),
-      },
-    ]);
-    setEmployeeNumber("");
-    setEmployeeName("");
-    setPhone("");
-    setAddPhoneOpen(false);
+    setSaving(true);
+    try {
+      await addEmployeePhone(employeeNumber.trim(), employeeName.trim(), phone.trim());
+      await invalidate();
+      setEmployeeNumber("");
+      setEmployeeName("");
+      setPhone("");
+      setAddPhoneOpen(false);
+    } finally {
+      setSaving(false);
+    }
   }
 
-  function handleRemove(id: string) {
-    setEntries((prev) => prev.filter((e) => e.id !== id));
+  async function handleRemove(id: string) {
+    setRemovingId(id);
+    try {
+      await removeEmployeePhone(id);
+      await invalidate();
+    } finally {
+      setRemovingId(null);
+    }
   }
 
   return (
     <Card>
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-base font-semibold text-[var(--color-text)]">
-              Símanúmer starfsmanna
-            </h2>
-            <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700">
-              Mock
-            </span>
-          </div>
+          <h2 className="text-base font-semibold text-[var(--color-text)]">
+            Símanúmer starfsmanna
+          </h2>
           <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
             Starfsmenn nota símanúmer sitt til að skrá sig inn á stimpilklukku.
           </p>
         </div>
-        <Button
-          size="sm"
-          variant="primary"
-          onClick={() => setAddPhoneOpen(true)}
-        >
+        <Button size="sm" variant="primary" onClick={() => setAddPhoneOpen(true)}>
           + Bæta við
         </Button>
       </div>
@@ -75,24 +71,20 @@ export function EmployeePhonesPanel() {
       ) : (
         <ul className="divide-y divide-[var(--color-border)]">
           {entries.map((entry) => (
-            <li
-              key={entry.id}
-              className="flex items-center justify-between py-3"
-            >
+            <li key={entry.id} className="flex items-center justify-between py-3">
               <div>
                 <p className="text-sm font-medium text-[var(--color-text)]">
                   {entry.employeeName || entry.employeeNumber}
                 </p>
-                <p className="text-xs text-[var(--color-text-muted)]">
-                  {entry.phone}
-                </p>
+                <p className="text-xs text-[var(--color-text-muted)]">{entry.phone}</p>
               </div>
               <Button
                 size="sm"
                 variant="ghost"
                 onClick={() => handleRemove(entry.id)}
+                disabled={removingId === entry.id}
               >
-                Fjarlægja
+                {removingId === entry.id ? "..." : "Fjarlægja"}
               </Button>
             </li>
           ))}
@@ -117,14 +109,10 @@ export function EmployeePhonesPanel() {
             onChange={(e) => setPhone(e.target.value)}
           />
           <div className="flex gap-2">
-            <Button variant="primary" size="sm" onClick={handleAdd}>
-              Vista
+            <Button variant="primary" size="sm" onClick={handleAdd} disabled={saving || !employeeNumber.trim() || !phone.trim()}>
+              {saving ? "Vista..." : "Vista"}
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setAddPhoneOpen(false)}
-            >
+            <Button variant="ghost" size="sm" onClick={() => setAddPhoneOpen(false)}>
               Hætta við
             </Button>
           </div>

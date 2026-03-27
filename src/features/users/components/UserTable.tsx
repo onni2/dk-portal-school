@@ -1,17 +1,18 @@
 /**
  * Table of portal users with role/status badges and a remove action.
  * The logged-in user cannot remove themselves.
- * Uses: ../store/users.store, ../api/users.api, @/features/auth/store/auth.store
+ * Uses: ../api/users.queries, ../api/users.api, @/features/auth/store/auth.store
  * Exports: UserTable
  */
 import { useState } from "react";
-import { usePortalUsersStore } from "../store/users.store";
+import { usePortalUsers, useInvalidateUsers } from "../api/users.queries";
 import { removeUser } from "../api/users.api";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { cn } from "@/shared/utils/cn";
 
 export function UserTable() {
-  const users = usePortalUsersStore((s) => s.users);
+  const { data: users = [], isLoading, error } = usePortalUsers();
+  const invalidate = useInvalidateUsers();
   const currentUser = useAuthStore((s) => s.user);
   const [removingId, setRemovingId] = useState<string | null>(null);
 
@@ -20,9 +21,26 @@ export function UserTable() {
     setRemovingId(id);
     try {
       await removeUser(id);
+      await invalidate();
     } finally {
       setRemovingId(null);
     }
+  }
+
+  if (isLoading) {
+    return (
+      <p className="py-8 text-center text-sm text-[var(--color-text-secondary)]">
+        Hleð notendum...
+      </p>
+    );
+  }
+
+  if (error) {
+    return (
+      <p className="py-8 text-center text-sm text-[var(--color-error)]">
+        Villa við að sækja notendur.
+      </p>
+    );
   }
 
   if (users.length === 0) {
@@ -48,7 +66,8 @@ export function UserTable() {
         </thead>
         <tbody className="divide-y divide-[var(--color-border)]">
           {users.map((user) => {
-            const isSelf = user.id === currentUser?.id || user.username === currentUser?.id;
+            const isSelf = user.id === currentUser?.id;
+            const isOtherAdmin = user.role === "admin" && !isSelf;
             return (
               <tr key={user.id} className="hover:bg-[var(--color-surface-hover)]">
                 <td className="px-4 py-3 font-medium text-[var(--color-text)]">
@@ -85,7 +104,7 @@ export function UserTable() {
                   </span>
                 </td>
                 <td className="px-4 py-3 text-right">
-                  {!isSelf && (
+                  {!isSelf && !isOtherAdmin && (
                     <button
                       onClick={() => handleRemove(user.id)}
                       disabled={removingId === user.id}

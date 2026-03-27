@@ -2,11 +2,9 @@
  * Forced password reset page — shown to users whose mustResetPassword flag is set.
  * Requires current password verification + strong new password.
  */
-import { compare } from "bcryptjs";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useAuthStore } from "@/features/auth/store/auth.store";
-import { usePortalUsersStore } from "@/features/users/store/users.store";
 import { resetPassword } from "@/features/users/api/users.api";
 import { Button } from "@/shared/components/Button";
 import { Input } from "@/shared/components/Input";
@@ -49,29 +47,20 @@ function ResetPasswordPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-
-    const portalUser = usePortalUsersStore
-      .getState()
-      .users.find((u) => u.name === user?.name || u.email === user?.email);
-
-    if (!portalUser || !(await compare(currentPassword, portalUser.password))) {
-      setError("Núverandi lykilorð er rangt");
-      return;
-    }
-
-    if (!allRulesPassed || !passwordsMatch) return;
+    if (!allRulesPassed || !passwordsMatch || !user) return;
 
     setLoading(true);
     try {
-      await resetPassword(portalUser.id, newPassword);
+      await resetPassword(user.id, newPassword, currentPassword);
 
       if (user && token) {
         setAuth({ ...user, mustResetPassword: false }, token);
       }
 
       navigate({ to: "/" });
-    } catch {
-      setError("Villa kom upp — reyndu aftur");
+    } catch (err: unknown) {
+      const apiErr = err as { message?: string };
+      setError(apiErr?.message ?? "Villa kom upp — reyndu aftur");
     } finally {
       setLoading(false);
     }

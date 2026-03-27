@@ -13,8 +13,9 @@ import {
 import { fetchEmployees } from "@/features/employees/api/employees.api";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { useRoleStore } from "@/features/licence/store/role.store";
-import { usePortalUsersStore } from "@/features/users/store/users.store";
 import { authRoleToUserRole } from "@/features/auth/utils/role-mapping";
+import { mockClient } from "@/shared/api/mockClient";
+import type { User } from "@/features/auth/types/auth.types";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 
 export const Route = createFileRoute("/callback")({
@@ -54,36 +55,43 @@ function CallbackPage() {
 
         const kennitala = userInfo.nationalRegisterId;
 
-        // Match to a portal user by kennitala — this determines their role
-        const portalUsers = usePortalUsersStore.getState().users;
-        const portalUser = kennitala
-          ? portalUsers.find((u) => u.kennitala === kennitala)
-          : undefined;
-
-        if (!portalUser) {
+        if (!kennitala) {
           setError("Notandi ekki skráður í gáttina — hafðu samband við stjórnanda");
           return;
         }
 
-        // Also fetch DK Plus employee info for name/email if available
-        const employees = await fetchEmployees().catch(() => []);
-        const employee = kennitala
-          ? employees.find((e) => e.SSNumber === kennitala)
-          : undefined;
+        // Match to a portal user by kennitala via the mock backend
+        interface AudkenniLoginResponse {
+          token: string;
+          user: { id: string; username: string; email: string; name: string; role: string; kennitala?: string; mustResetPassword: boolean; dkToken?: string };
+        }
+        let portalData: AudkenniLoginResponse;
+        try {
+          portalData = await mockClient.post<AudkenniLoginResponse>("/auth/audkenni", { kennitala });
+        } catch {
+          setError("Notandi ekki skráður í gáttina — hafðu samband við stjórnanda");
+          return;
+        }
 
-        const user = {
-          id: portalUser.id,
-          name: employee?.Name ?? portalUser.name,
-          email: employee?.Email ?? portalUser.email,
+        // Store JWT so subsequent API calls are authenticated
+        localStorage.setItem("dk-auth-token", portalData.token);
+
+        // Optionally enrich with DK Plus employee info for name/email
+        const employees = await fetchEmployees().catch(() => []);
+        const employee = employees.find((e) => e.SSNumber === kennitala);
+
+        const user: User = {
+          id: portalData.user.id,
+          name: employee?.Name ?? portalData.user.name,
+          email: employee?.Email ?? portalData.user.email,
           kennitala,
-          role: portalUser.role,
-          mustResetPassword: portalUser.mustResetPassword,
+          role: portalData.user.role as User["role"],
+          mustResetPassword: portalData.user.mustResetPassword,
         };
 
-        const apiToken = import.meta.env.VITE_API_TOKEN as string | undefined;
-        setAuth(user, apiToken ?? accessToken);
+        setAuth(user, portalData.token);
         setRole(authRoleToUserRole(user.role));
-        navigate({ to: portalUser.mustResetPassword ? "/reset-password" : "/" });
+        navigate({ to: portalData.user.mustResetPassword ? "/reset-password" : "/" });
       })
       .catch((err: unknown) => {
         setError(
