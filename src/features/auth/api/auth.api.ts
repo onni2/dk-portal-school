@@ -1,16 +1,28 @@
 /**
  * Auth API functions: login and logout.
- * Checks username/password against the portal users store, then uses each
- * user's personal DK Plus token (if set) to fetch their real employee info
- * and derive role from the Merking field.
- * Uses: ../store/users.store (via getState), @/shared/api/client, ../types/auth.types
+ * Calls the mock backend (Express + PostgreSQL) for username/password auth.
+ * If the logged-in user has a dkToken, also fetches their real DK Plus employee info.
+ * Uses: @/shared/api/mockClient, @/shared/api/client, ../types/auth.types
  * Exports: login, logout
  */
-import { compare } from "bcryptjs";
-import { delay } from "@/mocks/handlers";
-import { usePortalUsersStore } from "@/features/users/store/users.store";
+import { mockClient } from "@/shared/api/mockClient";
 import { BASE_URL } from "@/shared/api/client";
-import type { AuthResponse, LoginCredentials } from "../types/auth.types";
+import type { AuthResponse, LoginCredentials, User } from "../types/auth.types";
+
+interface MockLoginResponse {
+  token: string;
+  user: {
+    id: string;
+    username: string;
+    email: string;
+    name: string;
+    role: string;
+    kennitala?: string;
+    mustResetPassword: boolean;
+    dkToken?: string;
+    companyId?: string;
+  };
+}
 
 interface TokenData {
   Token: string;
@@ -44,62 +56,54 @@ async function getWithToken<T>(path: string, token: string): Promise<T> {
   }
 }
 
-/**
- * Logs in using username and password against the portal users store.
- * If the matched user has a dkToken, fetches their real DK Plus employee info.
- * Falls back to local data if the DK API is unreachable or times out.
- */
 export async function login(credentials: LoginCredentials): Promise<AuthResponse> {
-  const { username, password } = credentials;
+  const data = await mockClient.post<MockLoginResponse>("/auth/login", credentials);
 
-  const users = usePortalUsersStore.getState().users;
-  const match = users.find((u) => u.username === username);
+  // Store JWT so mockClient can use it for subsequent requests
+  localStorage.setItem("dk-auth-token", data.token);
 
-  if (!match || !(await compare(password, match.password))) {
-    await delay(600); // small delay only for failed logins to prevent brute force
-    throw new Error("Rangt notendanafn eða lykilorð");
-  }
+  const mockUser = data.user;
 
-  if (match.dkToken) {
+  // If the user has a DK Plus token, try to enrich with real employee data
+  if (mockUser.dkToken) {
     try {
-      const tokens = await getWithToken<TokenData[]>("/Token", match.dkToken);
+      const tokens = await getWithToken<TokenData[]>("/Token", mockUser.dkToken);
       const tokenData = tokens[0];
       if (tokenData) {
         const employeeNumber = await getWithToken<string>(
           `/Token/${tokenData.User}/${tokenData.Company}`,
-          match.dkToken,
+          mockUser.dkToken,
         );
         const employee = await getWithToken<EmployeeData>(
           `/general/employee/${employeeNumber}`,
-          match.dkToken,
+          mockUser.dkToken,
         );
-        return {
-          user: {
-            id: employee.Number,
-            name: employee.Name,
-            email: employee.Email ?? match.email,
-            kennitala: employee.Number,
-            role: match.role,
-            mustResetPassword: match.mustResetPassword,
-          },
-          token: match.dkToken,
+        const user: User = {
+          id: mockUser.id,
+          name: employee.Name,
+          email: employee.Email ?? mockUser.email,
+          kennitala: mockUser.kennitala,
+          role: mockUser.role as User["role"],
+          mustResetPassword: mockUser.mustResetPassword,
         };
+        return { user, token: data.token };
       }
     } catch {
       // DK API unreachable — fall through to local data
     }
   }
 
-  return {
-    user: {
-      id: match.id,
-      name: match.name,
-      email: match.email,
-      role: match.role,
-      mustResetPassword: match.mustResetPassword,
-    },
-    token: `mock-token-${match.id}`,
+  const user: User = {
+    id: mockUser.id,
+    name: mockUser.name,
+    email: mockUser.email,
+    kennitala: mockUser.kennitala,
+    role: mockUser.role as User["role"],
+    mustResetPassword: mockUser.mustResetPassword,
+    companyId: mockUser.companyId,
   };
+
+  return { user, token: data.token };
 }
 
 /**

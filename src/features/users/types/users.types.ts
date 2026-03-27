@@ -10,7 +10,8 @@ export type PortalUserStatus = "active" | "pending";
 export interface PortalUser {
   id: string;
   username: string;
-  password: string;
+  /** Not returned by the API — only present in mock store (legacy) */
+  password?: string;
   email: string;
   name: string;
   role: AuthRole;
@@ -19,8 +20,10 @@ export interface PortalUser {
   createdAt: string;
   /** Kennitala — used to match Auðkenni (electronic ID) logins to this portal user */
   kennitala?: string;
+  phone?: string;
   /** Personal DK Plus API token — optional, used to fetch real employee info on login */
   dkToken?: string;
+  companyId?: string;
 }
 
 export interface InviteUserInput {

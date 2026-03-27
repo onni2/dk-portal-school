@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { UserTable } from "@/features/users/components/UserTable";
 import { InviteUserModal } from "@/features/users/components/InviteUserModal";
+import { useInvalidateUsers } from "@/features/users/api/users.queries";
 import { Button } from "@/shared/components/Button";
 
 export const Route = createFileRoute("/users/")({
@@ -19,6 +20,7 @@ export const Route = createFileRoute("/users/")({
 
 function UsersPage() {
   const [showInvite, setShowInvite] = useState(false);
+  const invalidateUsers = useInvalidateUsers();
 
   return (
     <>
@@ -37,7 +39,7 @@ function UsersPage() {
       {showInvite && (
         <InviteUserModal
           onClose={() => setShowInvite(false)}
-          onInvited={() => {}}
+          onInvited={() => { void invalidateUsers(); }}
         />
       )}
     </>
