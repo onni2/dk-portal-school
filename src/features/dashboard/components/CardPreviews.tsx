@@ -7,8 +7,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchCustomerTransactions } from "@/features/invoices/api/invoices.api";
 import { fetchTimeclockSettings } from "@/features/timeclock/api/timeclock.api";
-import { fetchEmployees } from "@/features/employees/api/employees.api";
-import { fetchCustomers } from "@/features/customers/api/customers.api";
 import { fetchLicence } from "@/features/licence/api/licence.api";
 
 const MODULE_LABELS: Record<string, string> = {
@@ -95,62 +93,6 @@ function StimpilklukkaPreview() {
 /**
  *
  */
-function StarfsmennPreview() {
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["employees-preview"],
-    queryFn: fetchEmployees,
-  });
-
-  if (isLoading) return <Loading />;
-  if (isError || !data) return <Err />;
-
-  const active = data.filter((e) => e.Status === 0);
-
-  return (
-    <div className="space-y-1">
-      <p className="text-xs text-gray-400">{active.length} starfsmenn</p>
-      {active.slice(0, 3).map((e) => (
-        <p key={e.Number} className="text-xs text-gray-700">
-          {e.Name}
-        </p>
-      ))}
-      {active.length > 3 && (
-        <p className="text-xs text-gray-400">+{active.length - 3} fleiri</p>
-      )}
-    </div>
-  );
-}
-
-/**
- *
- */
-function VidskiptavinirPreview() {
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["customers-preview"],
-    queryFn: fetchCustomers,
-  });
-
-  if (isLoading) return <Loading />;
-  if (isError || !data) return <Err />;
-
-  return (
-    <div className="space-y-1">
-      <p className="text-xs text-gray-400">{data.length} viðskiptavinir</p>
-      {data.slice(0, 3).map((c) => (
-        <p key={c.Number} className="text-xs text-gray-700">
-          {c.Name}
-        </p>
-      ))}
-      {data.length > 3 && (
-        <p className="text-xs text-gray-400">+{data.length - 3} fleiri</p>
-      )}
-    </div>
-  );
-}
-
-/**
- *
- */
 function LeyfиPreview() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["licence-preview"],
@@ -196,10 +138,6 @@ export function CardPreview({ id }: { id: string }) {
       return <ReikningarPreview />;
     case "stimpilklukka":
       return <StimpilklukkaPreview />;
-    case "starfsmenn":
-      return <StarfsmennPreview />;
-    case "vidskiptavinir":
-      return <VidskiptavinirPreview />;
     case "leyfi":
       return <LeyfиPreview />;
     default:
