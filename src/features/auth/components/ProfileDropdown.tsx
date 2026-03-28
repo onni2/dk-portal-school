@@ -6,8 +6,6 @@
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/shared/utils/cn";
 import type { User } from "../types/auth.types";
-import { EditUserModal } from "@/features/users/components/EditUserModal";
-import { useAuthStore } from "../store/auth.store";
 
 interface ProfileDropdownProps {
   user: User;
@@ -20,9 +18,6 @@ interface ProfileDropdownProps {
 export function ProfileDropdown({ user, onLogout }: ProfileDropdownProps) {
   const [open, setOpen] = useState(false);
   const [lang, setLang] = useState<"IS" | "EN">("IS");
-  const [showEdit, setShowEdit] = useState(false);
-  const setAuth = useAuthStore((s) => s.setAuth);
-  const token = useAuthStore((s) => s.token);
   const ref = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -43,7 +38,6 @@ export function ProfileDropdown({ user, onLogout }: ProfileDropdownProps) {
   const firstName = user.name.split(" ")[0];
 
   return (
-    <>
     <div ref={ref} className="relative">
       {/* Trigger button */}
       <button
@@ -135,14 +129,6 @@ export function ProfileDropdown({ user, onLogout }: ProfileDropdownProps) {
               </div>
             </div>
 
-            {/* Edit profile */}
-            <button
-              onClick={() => { setOpen(false); setShowEdit(true); }}
-              className="mb-2 w-full rounded-[var(--radius-md)] border border-[var(--color-border)] py-2 text-sm font-medium text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-hover)]"
-            >
-              Breyta reikningi
-            </button>
-
             {/* Logout */}
             <button
               onClick={() => {
@@ -157,16 +143,5 @@ export function ProfileDropdown({ user, onLogout }: ProfileDropdownProps) {
         </div>
       )}
     </div>
-
-    {showEdit && (
-      <EditUserModal
-        user={{ id: user.id, username: "", email: user.email, name: user.name, role: user.role, status: "active", mustResetPassword: false, createdAt: "", kennitala: user.kennitala, phone: (user as {phone?: string}).phone }}
-        onClose={() => setShowEdit(false)}
-        onSaved={(kennitala, phone) => {
-          if (token) setAuth({ ...user, kennitala, ...(phone !== undefined && { phone }) }, token);
-        }}
-      />
-    )}
-    </>
   );
 }

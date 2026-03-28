@@ -35,7 +35,7 @@ export const usePortalUsersStore = create<PortalUsersState>()(
     }),
     {
       name: "dk-portal-users",
-      version: 1,
+      version: 2,
       migrate: () => ({ users: SEED_USERS }),
     },
   ),

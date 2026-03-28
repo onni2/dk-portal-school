@@ -31,4 +31,6 @@ export interface InviteUserInput {
   email: string;
   name: string;
   role: AuthRole;
+  kennitala?: string;
+  hostingUsername?: string;
 }
