@@ -5,7 +5,8 @@
  * Author: Haukur — example/scaffold, use as template
  */
 import { Link, useMatches, useNavigate } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import dkLogo from "@/assets/Logo_main.svg";
+import { type ReactNode, useState } from "react";
 import { cn } from "@/shared/utils/cn";
 import { useVisibleNavItems } from "@/features/licence/hooks/useVisibleNavItems";
 import { useRoleStore } from "@/features/licence/store/role.store";
@@ -20,6 +21,7 @@ export function Layout({ children }: { children: ReactNode }) {
   const matches = useMatches();
   const currentPath = matches[matches.length - 1]?.fullPath ?? "/";
   const navItems = useVisibleNavItems();
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
   const { role, toggleRole } = useRoleStore();
   const user = useAuthStore((s) => s.user);
   const clearAuth = useAuthStore((s) => s.clearAuth);
@@ -40,9 +42,7 @@ export function Layout({ children }: { children: ReactNode }) {
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-surface)] px-6">
         <div className="flex items-center gap-4">
           <Link to="/" className="flex items-center gap-2">
-            <span className="text-xl font-bold text-[var(--color-primary)]">
-              dk
-            </span>
+            <img src={dkLogo} alt="DK Hugbúnaður" className="h-8 w-auto" />
             <span className="text-sm text-[var(--color-text-secondary)]">
               Mínar síður
             </span>
@@ -91,6 +91,62 @@ export function Layout({ children }: { children: ReactNode }) {
                 item.to === "/"
                   ? currentPath === "/"
                   : currentPath.startsWith(item.to);
+
+              if (item.children && item.children.length > 0) {
+                const isOpen = openGroup === item.label;
+                const hasActiveChild = item.children.some((child) =>
+                  currentPath.startsWith(child.to),
+                );
+
+                return (
+                  <div key={item.to}>
+                    <button
+                      onClick={() =>
+                        setOpenGroup(isOpen ? null : item.label)
+                      }
+                      className={cn(
+                        "flex w-full items-center justify-between rounded-[var(--radius-md)] px-3 py-2 text-left text-sm font-medium transition-colors",
+                        hasActiveChild
+                          ? "bg-[var(--color-primary)] text-white"
+                          : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)]",
+                      )}
+                    >
+                      {item.label}
+                      <span
+                        className={cn(
+                          "text-xs transition-transform duration-200",
+                          isOpen && "rotate-180",
+                        )}
+                      >
+                        ▾
+                      </span>
+                    </button>
+                    {isOpen && (
+                      <div className="ml-3 mt-1 flex flex-col gap-1 border-l border-[var(--color-border)] pl-3">
+                        {item.children.map((child) => {
+                          const isChildActive = currentPath.startsWith(
+                            child.to,
+                          );
+                          return (
+                            <a
+                              key={child.to}
+                              href={child.to}
+                              className={cn(
+                                "rounded-[var(--radius-md)] px-3 py-1.5 text-sm font-medium transition-colors",
+                                isChildActive
+                                  ? "bg-[var(--color-primary)] text-white"
+                                  : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)]",
+                              )}
+                            >
+                              {child.label}
+                            </a>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
 
               return (
                 <a
