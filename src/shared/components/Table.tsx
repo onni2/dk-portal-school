@@ -19,6 +19,7 @@ export interface TableProps<T> {
   keyFn: (row: T) => string | number;
   footer?: ReactNode;
   emptyMessage?: string;
+  onRowClick?: (row: T) => void;
 }
 
 const hiddenClasses = {
@@ -35,6 +36,7 @@ export function Table<T>({
   keyFn,
   footer,
   emptyMessage = "Engar niðurstöður.",
+  onRowClick,
 }: TableProps<T>) {
   if (data.length === 0) {
     return (
@@ -46,14 +48,14 @@ export function Table<T>({
 
   return (
     <div className="overflow-x-auto rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)]">
-      <table className="w-full text-left text-sm">
+      <table className="w-full text-left">
         <thead>
           <tr className="border-b border-[var(--color-border)] bg-[var(--color-background)]">
             {columns.map((col, i) => (
               <th
                 key={i}
                 className={cn(
-                  "px-4 py-3 font-semibold text-[var(--color-text)]",
+                  "px-3 py-2.5 text-sm font-semibold text-[var(--color-text)]",
                   col.hideBelow && hiddenClasses[col.hideBelow],
                 )}
               >
@@ -66,13 +68,17 @@ export function Table<T>({
           {data.map((row) => (
             <tr
               key={keyFn(row)}
-              className="border-b border-[var(--color-border-light)] transition-colors last:border-b-0 hover:bg-[var(--color-surface-hover)]"
+              onClick={() => onRowClick?.(row)}
+              className={cn(
+                "border-b border-[var(--color-border-light)] transition-colors last:border-b-0 hover:bg-[var(--color-surface-hover)]",
+                onRowClick && "cursor-pointer",
+              )}
             >
               {columns.map((col, i) => (
                 <td
                   key={i}
                   className={cn(
-                    "px-4 py-3",
+                    "px-3 py-2.5 text-xs",
                     col.hideBelow && hiddenClasses[col.hideBelow],
                     col.className,
                   )}

@@ -13,6 +13,11 @@ export interface LicenceResponse {
   Payroll?: { Enabled: boolean };
   Member?: { Enabled: boolean };
   Purchase?: { PurchaseOrders: boolean };
+  // DK product subscriptions — replace mock field names with real API field names when available
+  Hosting?: { Enabled: boolean };
+  POS?: { Enabled: boolean };
+  dkOne?: { Enabled: boolean };
+  dkPlus?: { Enabled: boolean };
 }
 
 export type LicenceModule =
@@ -24,6 +29,10 @@ export type LicenceModule =
   | "Project"
   | "Payroll"
   | "Member"
-  | "Purchase";
+  | "Purchase"
+  | "Hosting"
+  | "POS"
+  | "dkOne"
+  | "dkPlus";
 
 export type UserRole = "cop" | "client";
