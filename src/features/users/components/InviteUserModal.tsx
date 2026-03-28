@@ -45,9 +45,7 @@ export function InviteUserModal({ onClose, onInvited }: Props) {
   }
 
   function copyCredentials() {
-    navigator.clipboard.writeText(
-      `Notendanafn: ${username}\nLykilorð: ${generatedPassword}`,
-    );
+    navigator.clipboard.writeText(`Notendanafn: ${username}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -61,7 +59,7 @@ export function InviteUserModal({ onClose, onInvited }: Props) {
               Bjóða notanda
             </h2>
             <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-              Notandinn fær lykilorð sem hann þarf að breyta við fyrstu innskráningu.
+              Notandinn skráir sig inn með notendanafni og tómu lykilorði og setur sitt eigið í stillingum.
             </p>
 
             <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-4">
