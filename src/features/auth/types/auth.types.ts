@@ -11,10 +11,14 @@ export interface User {
   name: string;
   role: AuthRole;
   kennitala?: string;
+  phone?: string;
+  mustResetPassword?: boolean;
+  companyId?: string;
 }
 
 export interface LoginCredentials {
-  token: string;
+  username: string;
+  password: string;
 }
 
 export interface AuthResponse {

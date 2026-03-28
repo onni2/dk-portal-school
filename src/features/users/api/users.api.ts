@@ -1,62 +1,45 @@
 /**
- * Fetches employees from the DK API and merges with stored portal permissions.
- * To connect permissions to a real backend: replace getPermissions/setPermissions
- * with apiClient calls to a portal users endpoint.
- * Uses: @/shared/api/client, ../types/users.types
- * Exports: fetchPortalUsers, updateUserPermissions
+ * Portal user management: invite, remove, and password reset.
+ * All operations call the mock backend API (Express + PostgreSQL via Docker).
+ * Uses: @/shared/api/mockClient, ../types/users.types
+ * Exports: fetchUsers, inviteUser, removeUser, resetPassword
  */
-import { apiClient } from "@/shared/api/client";
-import type { Employee, UserPermissions, PortalUser } from "../types/users.types";
+import { mockClient } from "@/shared/api/mockClient";
+import type { InviteUserInput, PortalUser } from "../types/users.types";
 
-const PERMISSIONS_KEY = "dk-portal-permissions";
-
-const DEFAULT_PERMISSIONS: UserPermissions = {
-  invoices: false,
-  hosting: false,
-  pos: false,
-  dkOne: false,
-  dkPlus: false,
-  timeclock: false,
-  users: false,
-  subscription: false,
-};
-
-function loadPermissions(): Record<string, Partial<UserPermissions>> {
-  try {
-    const raw = localStorage.getItem(PERMISSIONS_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
+interface InviteResponse {
+  user: PortalUser;
+  generatedPassword: string;
 }
 
-function savePermissions(perms: Record<string, Partial<UserPermissions>>) {
-  localStorage.setItem(PERMISSIONS_KEY, JSON.stringify(perms));
+export async function fetchUsers(): Promise<PortalUser[]> {
+  return mockClient.get<PortalUser[]>("/users");
 }
 
-export async function fetchPortalUsers(): Promise<PortalUser[]> {
-  const employees = await apiClient.get<Employee[]>("/general/employee");
-  const stored = loadPermissions();
-  return employees
-    .map((emp) => ({
-      ...emp,
-      permissions: { ...DEFAULT_PERMISSIONS, ...stored[emp.Number] },
-    }))
-    .sort((a, b) => a.Name.localeCompare(b.Name, "is"));
+export async function inviteUser(
+  input: InviteUserInput,
+): Promise<{ user: PortalUser; generatedPassword: string }> {
+  return mockClient.post<InviteResponse>("/users/invite", input);
 }
 
-export async function updateUserPermissions(
-  number: string,
-  permissions: UserPermissions,
+export async function updateUser(
+  id: string,
+  data: { kennitala?: string; phone?: string; dkToken?: string },
 ): Promise<void> {
-  const stored = loadPermissions();
-  stored[number] = permissions;
-  savePermissions(stored);
+  return mockClient.patch<void>(`/users/${id}`, data);
 }
 
-// TODO: replace with apiClient.delete(`/portal/users/${number}`) when backend is ready
-export async function deleteUser(number: string): Promise<void> {
-  const stored = loadPermissions();
-  delete stored[number];
-  savePermissions(stored);
+export async function removeUser(id: string): Promise<void> {
+  return mockClient.delete<void>(`/users/${id}`);
+}
+
+export async function resetPassword(
+  userId: string,
+  newPassword: string,
+  currentPassword?: string,
+): Promise<void> {
+  return mockClient.post<void>(`/users/${userId}/reset-password`, {
+    currentPassword,
+    newPassword,
+  });
 }

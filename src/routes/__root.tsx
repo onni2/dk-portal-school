@@ -24,7 +24,8 @@ export interface RouterContext {
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   beforeLoad: ({ location }) => {
-    const isLoginPage = location.pathname === "/login";
+    const isLoginPage =
+      location.pathname === "/login" || location.pathname === "/callback";
     const isAuthenticated = useAuthStore.getState().isAuthenticated;
 
     if (!isAuthenticated && !isLoginPage) {
@@ -45,7 +46,10 @@ export const Route = createRootRouteWithContext<RouterContext>()({
  */
 function RootComponent() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const isLoginPage = pathname === "/login";
+  const isLoginPage =
+    pathname === "/login" ||
+    pathname === "/callback" ||
+    pathname.startsWith("/reset-password");
 
   if (isLoginPage) {
     return (

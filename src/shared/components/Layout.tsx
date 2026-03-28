@@ -5,7 +5,6 @@
  * Author: Haukur — example/scaffold, use as template
  */
 import { Link, useMatches, useNavigate } from "@tanstack/react-router";
-import dkLogo from "@/assets/Logo_main.svg";
 import { type ReactNode, useState } from "react";
 import { cn } from "@/shared/utils/cn";
 import { useVisibleNavItems } from "@/features/licence/hooks/useVisibleNavItems";
@@ -42,7 +41,33 @@ export function Layout({ children }: { children: ReactNode }) {
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-surface)] px-6">
         <div className="flex items-center gap-4">
           <Link to="/" className="flex items-center gap-2">
-            <img src={dkLogo} alt="DK Hugbúnaður" className="h-8 w-auto" />
+            <svg
+              width="48"
+              height="25"
+              viewBox="0 0 280 147"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <g clipPath="url(#clip0_6318_198)">
+                <path
+                  d="M246.073 46.1325L205.527 0H240.481L280.001 46.1325V46.3215L240.481 92.5485H205.527L246.073 46.3215"
+                  fill="#5B57FF"
+                />
+                <path
+                  d="M226.22 145.866L183.064 92.1704L223.516 46.227H188.377L151.839 88.8617L152.118 0H121.453L121.359 145.866V146.433H151.652L151.839 95.7627L191.08 145.866H226.22Z"
+                  fill="#20265B"
+                />
+                <path
+                  d="M104.953 0H74.2876V46.6051C68.0426 46.227 57.976 45.7543 48.4687 45.7543C21.0652 45.7543 0 68.537 0 95.6682C0 122.799 17.0573 147.095 45.7656 147.095C48.6551 147.095 52.3835 147.095 56.3915 147L74.2876 126.013V146.527C75.2197 146.527 75.9654 146.527 76.8043 146.527H104.581L104.953 0ZM52.7563 119.963C40.5459 119.963 31.9707 108.052 31.9707 95.5736C31.9707 83.0952 40.6391 73.4527 52.7563 73.0746C60.9587 72.791 68.7883 73.0746 74.2876 73.3582V119.963H52.7563Z"
+                  fill="#20265B"
+                />
+              </g>
+              <defs>
+                <clipPath id="clip0_6318_198">
+                  <rect width="280" height="147" fill="white" />
+                </clipPath>
+              </defs>
+            </svg>
             <span className="text-sm text-[var(--color-text-secondary)]">
               Mínar síður
             </span>
@@ -73,9 +98,7 @@ export function Layout({ children }: { children: ReactNode }) {
             </svg>
           </button>
 
-          {user && (
-            <ProfileDropdown user={user} onLogout={handleLogout} />
-          )}
+          {user && <ProfileDropdown user={user} onLogout={handleLogout} />}
         </div>
       </header>
 
@@ -149,9 +172,9 @@ export function Layout({ children }: { children: ReactNode }) {
               }
 
               return (
-                <a
+                <Link
                   key={item.to}
-                  href={item.to}
+                  to={item.to}
                   className={cn(
                     "rounded-[var(--radius-md)] px-3 py-2 text-sm font-medium transition-colors",
                     isActive
@@ -160,7 +183,7 @@ export function Layout({ children }: { children: ReactNode }) {
                   )}
                 >
                   {item.label}
-                </a>
+                </Link>
               );
             })}
           </nav>

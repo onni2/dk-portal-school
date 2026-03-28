@@ -44,6 +44,9 @@ export function useVisibleNavItems() {
 
   const userPermissions = user ? loadUserPermissions(user.id) : null;
 
+  // COP sees everything — no need to wait for licence
+  if (role === "cop") return NAV_ITEMS;
+
   // While loading, show only alwaysVisible items
   if (isLoading || !licence) {
     return NAV_ITEMS.filter((item) => item.access.type === "alwaysVisible");

@@ -1,37 +1,34 @@
 /**
- * TypeScript types for portal users (employees with access to Mínar síður).
- * Uses: nothing — standalone file
- * Exports: Employee, UserPermissions, PortalUser
+ * TypeScript types for portal user management.
+ * Uses: @/features/auth/types/auth.types
+ * Exports: PortalUserStatus, PortalUser, InviteUserInput
  */
+import type { AuthRole } from "@/features/auth/types/auth.types";
 
-// Shape returned by GET /general/employee
-export interface Employee {
-  Number: string;
-  Name: string;
-  SSNumber?: string;
-  Phone?: string;
-  PhoneMobile?: string;
-  Email?: string;
-  Status: number; // 0 = Active
-  Gender: number;
-  StampStatus?: number;
-  Created: string;
-  Modified: string;
+export type PortalUserStatus = "active" | "pending";
+
+export interface PortalUser {
+  id: string;
+  username: string;
+  /** Not returned by the API — only present in mock store (legacy) */
+  password?: string;
+  email: string;
+  name: string;
+  role: AuthRole;
+  status: PortalUserStatus;
+  mustResetPassword: boolean;
+  createdAt: string;
+  /** Kennitala — used to match Auðkenni (electronic ID) logins to this portal user */
+  kennitala?: string;
+  phone?: string;
+  /** Personal DK Plus API token — optional, used to fetch real employee info on login */
+  dkToken?: string;
+  companyId?: string;
 }
 
-export interface UserPermissions {
-  invoices: boolean;
-  hosting: boolean;
-  pos: boolean;
-  dkOne: boolean;
-  dkPlus: boolean;
-  timeclock: boolean;
-  users: boolean;
-  subscription: boolean;
-}
-
-// Employee + portal permissions combined
-export interface PortalUser extends Employee {
-  hostingUsername?: string;
-  permissions: UserPermissions;
+export interface InviteUserInput {
+  username: string;
+  email: string;
+  name: string;
+  role: AuthRole;
 }

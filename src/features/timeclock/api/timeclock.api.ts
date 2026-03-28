@@ -1,57 +1,50 @@
 /**
- * API functions for fetching timeclock entries, employee stamp statuses, stamping an employee in or out, and fetching timeclock settings.
- * Uses: @/shared/api/client, ../types/timeclock.types
- * Exports: fetchTimeclockEntries, fetchTimeclockEmployees, stampEmployee, fetchTimeclockSettings, fetchTimeclockWebConfig
+ * API functions for timeclock settings and web config.
+ * IP whitelist and phone numbers are stored in the mock backend (Neon DB), scoped per company.
+ * Uses: @/shared/api/client, @/shared/api/mockClient, ../types/timeclock.types
+ * Exports: fetchTimeclockSettings, fetchIpWhitelist, addIpEntry, removeIpEntry,
+ *          fetchEmployeePhones, addEmployeePhone, removeEmployeePhone
  */
 import { apiClient } from "@/shared/api/client";
+import { mockClient } from "@/shared/api/mockClient";
 import type {
-  TimeclockEntry,
-  TimeclockEmployee,
   TimeclockSettings,
-  TimeclockWebConfig,
-  StampInput,
-  StampResponse,
+  IpWhitelistEntry,
+  EmployeePhoneEntry,
 } from "../types/timeclock.types";
 
-/**
- *
- */
-export async function fetchTimeclockEntries(): Promise<TimeclockEntry[]> {
-  return apiClient.get<TimeclockEntry[]>("/TimeClock/entries");
-}
-
-// Fetch clocked-in and clocked-out employees separately and combine them
-/**
- *
- */
-export async function fetchTimeclockEmployees(): Promise<TimeclockEmployee[]> {
-  const [inEmployees, outEmployees] = await Promise.all([
-    apiClient.get<TimeclockEmployee[]>("/TimeClock/in"),
-    apiClient.get<TimeclockEmployee[]>("/TimeClock/out"),
-  ]);
-  return [...inEmployees, ...outEmployees];
-}
-
-/**
- *
- */
-export async function stampEmployee(input: StampInput): Promise<StampResponse> {
-  return apiClient.post<StampResponse>(
-    `/TimeClock/stamp/${input.employeeNumber}`,
-    { comment: input.comment, project: input.project },
-  );
-}
-
-/**
- *
- */
 export async function fetchTimeclockSettings(): Promise<TimeclockSettings> {
   return apiClient.get<TimeclockSettings>("/TimeClock/settings");
 }
 
-/**
- *
- */
-export async function fetchTimeclockWebConfig(): Promise<TimeclockWebConfig> {
-  return apiClient.get<TimeclockWebConfig>("/TimeClock/web/config");
+// --- IP Whitelist ---
+
+export async function fetchIpWhitelist(): Promise<IpWhitelistEntry[]> {
+  return mockClient.get<IpWhitelistEntry[]>("/timeclock/ips");
+}
+
+export async function addIpEntry(ip: string, label: string): Promise<IpWhitelistEntry> {
+  return mockClient.post<IpWhitelistEntry>("/timeclock/ips", { ip, label });
+}
+
+export async function removeIpEntry(id: string): Promise<void> {
+  return mockClient.delete<void>(`/timeclock/ips/${id}`);
+}
+
+// --- Employee Phones ---
+
+export async function fetchEmployeePhones(): Promise<EmployeePhoneEntry[]> {
+  return mockClient.get<EmployeePhoneEntry[]>("/timeclock/phones");
+}
+
+export async function addEmployeePhone(
+  employeeNumber: string,
+  employeeName: string,
+  phone: string,
+): Promise<EmployeePhoneEntry> {
+  return mockClient.post<EmployeePhoneEntry>("/timeclock/phones", { employeeNumber, employeeName, phone });
+}
+
+export async function removeEmployeePhone(id: string): Promise<void> {
+  return mockClient.delete<void>(`/timeclock/phones/${id}`);
 }

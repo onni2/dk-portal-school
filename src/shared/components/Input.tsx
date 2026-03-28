@@ -6,8 +6,7 @@
 import { forwardRef } from "react";
 import { cn } from "@/shared/utils/cn";
 
-export interface InputProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
 }
@@ -17,7 +16,8 @@ export interface InputProps
  */
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, className, id, ...props }, ref) => {
-    const inputId = id ?? (label ? label.replace(/\s+/g, "-").toLowerCase() : undefined);
+    const inputId =
+      id ?? (label ? label.replace(/\s+/g, "-").toLowerCase() : undefined);
 
     return (
       <div>
@@ -34,7 +34,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           id={inputId}
           className={cn(
             "w-full rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 text-sm text-[var(--color-text)] outline-none transition-colors focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]",
-            error && "border-[var(--color-error)] focus:border-[var(--color-error)] focus:ring-[var(--color-error)]",
+            error &&
+              "border-[var(--color-error)] focus:border-[var(--color-error)] focus:ring-[var(--color-error)]",
             className,
           )}
           {...props}
