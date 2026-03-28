@@ -8,31 +8,7 @@ import { NAV_ITEMS } from "../config/nav-items";
 import { useRoleStore } from "../store/role.store";
 import { filterNavItems } from "../utils/filter-nav";
 import { useAuthStore } from "@/features/auth/store/auth.store";
-import type { UserPermissions } from "@/features/users/types/user-permissions.types";
-
-const PERMISSIONS_KEY = "dk-portal-permissions";
-
-function loadUserPermissions(userId: string): UserPermissions | null {
-  try {
-    const raw = localStorage.getItem(PERMISSIONS_KEY);
-    if (!raw) return null;
-    const all = JSON.parse(raw) as Record<string, Partial<UserPermissions>>;
-    const stored = all[userId];
-    if (!stored) return null;
-    return {
-      invoices: stored.invoices ?? false,
-      hosting: stored.hosting ?? false,
-      pos: stored.pos ?? false,
-      dkOne: stored.dkOne ?? false,
-      dkPlus: stored.dkPlus ?? false,
-      timeclock: stored.timeclock ?? false,
-      users: stored.users ?? false,
-      subscription: stored.subscription ?? false,
-    };
-  } catch {
-    return null;
-  }
-}
+import { loadUserPermissions } from "@/features/users/api/permissions.api";
 
 /**
  *

@@ -23,20 +23,7 @@ import { useAuthStore } from "@/features/auth/store/auth.store";
 import { useRoleStore } from "@/features/licence/store/role.store";
 import { ALL_CARDS, useDashboardLayout } from "../store/dashboard.store";
 import { SortableDashboardCard } from "./DashboardCard";
-import type { UserPermissions } from "@/features/users/types/user-permissions.types";
-
-const PERMISSIONS_KEY = "dk-portal-permissions";
-
-function loadUserPermissions(userId: string): Partial<UserPermissions> {
-  try {
-    const raw = localStorage.getItem(PERMISSIONS_KEY);
-    if (!raw) return {};
-    const all = JSON.parse(raw) as Record<string, Partial<UserPermissions>>;
-    return all[userId] ?? {};
-  } catch {
-    return {};
-  }
-}
+import { loadUserPermissions, DEFAULT_PERMISSIONS } from "@/features/users/api/permissions.api";
 
 /**
  * The "+" card at the end of the grid — click to add or remove cards.
@@ -47,7 +34,7 @@ function AddCardTile() {
   const user = useAuthStore((s) => s.user);
   const role = useRoleStore((s) => s.role);
 
-  const userPermissions = user ? loadUserPermissions(user.id) : {};
+  const userPermissions = user ? loadUserPermissions(user.id) : DEFAULT_PERMISSIONS;
 
   const availableCards = ALL_CARDS.filter((card) => {
     if (!card.permission) return true;
@@ -114,7 +101,7 @@ export function DashboardGrid() {
   const { cardIds, setCardIds } = useDashboardLayout();
   const user = useAuthStore((s) => s.user);
   const role = useRoleStore((s) => s.role);
-  const userPermissions = user ? loadUserPermissions(user.id) : {};
+  const userPermissions = user ? loadUserPermissions(user.id) : DEFAULT_PERMISSIONS;
 
   const sensors = useSensors(useSensor(PointerSensor));
 
