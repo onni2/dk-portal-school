@@ -20,6 +20,19 @@ const SEED_USERS = [
     dk_token: null,
     company_id: "hr",
   },
+  {
+    id: "2",
+    username: "jon",
+    password: "admin321",   
+    email: "admin2@example.is",
+    name: "Jón Ágústsson",
+    role: "admin",
+    status: "active",
+    must_reset_password: false,
+    kennitala: "0909032330",    
+    dk_token: null,
+    company_id: "hr",
+  },
   // Add teammates here:
   // {
   //   id: "2",
