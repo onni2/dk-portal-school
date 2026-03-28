@@ -1,16 +1,16 @@
-/**
- * React Query options and hook for portal users.
- * Uses: ./users.api
- * Exports: usersQueryOptions, useUsers
- */
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { fetchPortalUsers } from "./users.api";
+import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
+import { fetchUsers } from "./users.api";
 
 export const usersQueryOptions = queryOptions({
   queryKey: ["portal-users"],
-  queryFn: fetchPortalUsers,
+  queryFn: fetchUsers,
 });
 
-export function useUsers() {
-  return useSuspenseQuery(usersQueryOptions);
+export function usePortalUsers() {
+  return useQuery(usersQueryOptions);
+}
+
+export function useInvalidateUsers() {
+  const qc = useQueryClient();
+  return () => qc.invalidateQueries({ queryKey: ["portal-users"] });
 }

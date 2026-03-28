@@ -11,10 +11,7 @@ import type { UserPermissions } from "@/features/users/types/user-permissions.ty
 /**
  *
  */
-function isModuleEnabled(
-  licence: LicenceResponse,
-  module: string,
-): boolean {
+function isModuleEnabled(licence: LicenceResponse, module: string): boolean {
   const entry = licence[module as keyof LicenceResponse];
   if (!entry || typeof entry !== "object") return false;
   if ("Enabled" in entry) return entry.Enabled;
