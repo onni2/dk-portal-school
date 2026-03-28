@@ -20,10 +20,11 @@ export async function inviteUser(
     email: input.email,
     name: input.name,
     role: input.role,
-    password: "",
+    password: "dk",
     status: "active",
     mustResetPassword: true,
     createdAt: new Date().toISOString(),
+    kennitala: input.kennitala,
   };
 
   usePortalUsersStore.getState().addUser(newUser);
