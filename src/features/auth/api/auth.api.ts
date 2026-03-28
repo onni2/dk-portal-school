@@ -1,114 +1,44 @@
 /**
- * Auth API functions: login and logout.
- * Calls the mock backend (Express + PostgreSQL) for username/password auth.
- * If the logged-in user has a dkToken, also fetches their real DK Plus employee info.
- * Uses: @/shared/api/mockClient, @/shared/api/client, ../types/auth.types
+ * Auth API: login checks credentials against the portal users store (localStorage).
+ * The DK API token (VITE_API_TOKEN) is shared for all users — apiClient uses it automatically.
+ * Uses: @/features/users/store/users.store, ../types/auth.types
  * Exports: login, logout
  */
-import { mockClient } from "@/shared/api/mockClient";
-import { BASE_URL } from "@/shared/api/client";
-import type { AuthResponse, LoginCredentials, User } from "../types/auth.types";
-
-interface MockLoginResponse {
-  token: string;
-  user: {
-    id: string;
-    username: string;
-    email: string;
-    name: string;
-    role: string;
-    kennitala?: string;
-    mustResetPassword: boolean;
-    dkToken?: string;
-    companyId?: string;
-  };
-}
-
-interface TokenData {
-  Token: string;
-  Company: string;
-  User: string;
-}
-
-interface EmployeeData {
-  Number: string;
-  Name: string;
-  Email?: string;
-}
-
-const DK_API_TIMEOUT_MS = 5000;
-
-async function getWithToken<T>(path: string, token: string): Promise<T> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), DK_API_TIMEOUT_MS);
-  try {
-    const res = await fetch(`${BASE_URL}${path}`, {
-      signal: controller.signal,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    if (!res.ok) throw new Error(`${res.status}`);
-    return res.json();
-  } finally {
-    clearTimeout(timer);
-  }
-}
+import { usePortalUsersStore } from "@/features/users/store/users.store";
+import type { AuthResponse, LoginCredentials } from "../types/auth.types";
 
 export async function login(credentials: LoginCredentials): Promise<AuthResponse> {
-  const data = await mockClient.post<MockLoginResponse>("/auth/login", credentials);
+  const { users } = usePortalUsersStore.getState();
 
-  // Store JWT so mockClient can use it for subsequent requests
-  localStorage.setItem("dk-auth-token", data.token);
+  const found = users.find(
+    (u) => u.username === credentials.username || u.email === credentials.username,
+  );
 
-  const mockUser = data.user;
-
-  // If the user has a DK Plus token, try to enrich with real employee data
-  if (mockUser.dkToken) {
-    try {
-      const tokens = await getWithToken<TokenData[]>("/Token", mockUser.dkToken);
-      const tokenData = tokens[0];
-      if (tokenData) {
-        const employeeNumber = await getWithToken<string>(
-          `/Token/${tokenData.User}/${tokenData.Company}`,
-          mockUser.dkToken,
-        );
-        const employee = await getWithToken<EmployeeData>(
-          `/general/employee/${employeeNumber}`,
-          mockUser.dkToken,
-        );
-        const user: User = {
-          id: mockUser.id,
-          name: employee.Name,
-          email: employee.Email ?? mockUser.email,
-          kennitala: mockUser.kennitala,
-          role: mockUser.role as User["role"],
-          mustResetPassword: mockUser.mustResetPassword,
-        };
-        return { user, token: data.token };
-      }
-    } catch {
-      // DK API unreachable — fall through to local data
-    }
+  if (!found) {
+    throw new Error("Notandi finnst ekki");
   }
 
-  const user: User = {
-    id: mockUser.id,
-    name: mockUser.name,
-    email: mockUser.email,
-    kennitala: mockUser.kennitala,
-    role: mockUser.role as User["role"],
-    mustResetPassword: mockUser.mustResetPassword,
-    companyId: mockUser.companyId,
+  // Empty password = not yet set, any input accepted (user must set password in Settings)
+  if (found.password && found.password !== credentials.password) {
+    throw new Error("Rangt lykilorð");
+  }
+
+  const user = {
+    id: found.id,
+    name: found.name,
+    email: found.email,
+    kennitala: found.kennitala,
+    role: found.role,
+    mustResetPassword: !found.password, // redirect to settings if no password set
   };
 
-  return { user, token: data.token };
+  // Store a mock token — apiClient falls back to VITE_API_TOKEN for DK API calls
+  const token = `mock-token-${found.id}`;
+  localStorage.setItem("dk-auth-token", token);
+
+  return { user, token };
 }
 
-/**
- * Logs out — clears local state only, no API call needed.
- */
 export async function logout(): Promise<void> {
-  // Nothing to call on the API — the auth store handles clearing localStorage
+  // auth store handles clearing localStorage
 }
