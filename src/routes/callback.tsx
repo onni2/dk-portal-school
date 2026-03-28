@@ -53,7 +53,7 @@ function CallbackPage() {
       .then(async ({ accessToken }) => {
         const userInfo = await fetchAudkenniUserInfo(accessToken);
 
-        const kennitala = userInfo.nationalRegisterId;
+        const kennitala = userInfo.nationalRegisterId?.replace(/-/g, "");
 
         if (!kennitala) {
           setError("Notandi ekki skráður í gáttina — hafðu samband við stjórnanda");
