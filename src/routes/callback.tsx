@@ -10,8 +10,8 @@ import {
   handleAudkenniCallback,
   fetchAudkenniUserInfo,
 } from "@/features/auth/api/audkenni.api";
-import { fetchEmployees } from "@/features/employees/api/employees.api";
 import { useAuthStore } from "@/features/auth/store/auth.store";
+import { apiClient } from "@/shared/api/client";
 import { useRoleStore } from "@/features/licence/store/role.store";
 import { authRoleToUserRole } from "@/features/auth/utils/role-mapping";
 import { mockClient } from "@/shared/api/mockClient";
@@ -77,7 +77,8 @@ function CallbackPage() {
         localStorage.setItem("dk-auth-token", portalData.token);
 
         // Optionally enrich with DK Plus employee info for name/email
-        const employees = await fetchEmployees().catch(() => []);
+        interface EmployeeShape { SSNumber?: string; Name: string; Email?: string }
+        const employees = await apiClient.get<EmployeeShape[]>("/general/employee").catch(() => []);
         const employee = employees.find((e) => e.SSNumber === kennitala);
 
         const user: User = {
