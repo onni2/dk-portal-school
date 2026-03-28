@@ -2,15 +2,15 @@
  * Slide-over panel for viewing and editing a portal user's permissions.
  * Opens from the right when a user row is clicked. Allows toggling permissions and deleting the user.
  * Uses: @/shared/components/Button,
- *       ../api/users.api, ../store/users.store
+ *       ../api/permissions.api, ../store/users.store, ../types/user-permissions.types
  * Exports: UserPanel
  */
 import { useState, useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/shared/components/Button";
-import { updateUserPermissions, deleteUser } from "../api/users.api";
-import { useUsersStore } from "../store/users.store";
-import type { UserPermissions } from "../types/users.types";
+import { loadUserPermissions, saveUserPermissions } from "../api/permissions.api";
+import { usePortalUsersStore } from "../store/users.store";
+import type { UserPermissions } from "../types/user-permissions.types";
+import type { PortalUser } from "../types/users.types";
 
 const PERMISSION_LABELS: { key: keyof UserPermissions; label: string; description: string }[] = [
   { key: "invoices", label: "Reikningsyfirlit", description: "Sér reikninga frá DK Hugbúnaði" },
@@ -23,70 +23,62 @@ const PERMISSION_LABELS: { key: keyof UserPermissions; label: string; descriptio
   { key: "users", label: "Notendur", description: "Getur stjórnað öðrum notendum" },
 ];
 
-export function UserPanel() {
-  const { selectedUser, closeUser } = useUsersStore();
-  const queryClient = useQueryClient();
-  const [permissions, setPermissions] = useState(selectedUser?.permissions);
+interface Props {
+  user: PortalUser;
+  onClose: () => void;
+}
+
+export function UserPanel({ user, onClose }: Props) {
+  const removeUser = usePortalUsersStore((s) => s.removeUser);
+  const [permissions, setPermissions] = useState<UserPermissions>(() =>
+    loadUserPermissions(user.id),
+  );
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    setPermissions(selectedUser?.permissions);
-  }, [selectedUser]);
-
-  if (!selectedUser || !permissions) return null;
+    setPermissions(loadUserPermissions(user.id));
+  }, [user.id]);
 
   function togglePermission(key: keyof UserPermissions) {
-    setPermissions((prev) => prev && { ...prev, [key]: !prev[key] });
+    setPermissions((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
-  async function handleSave() {
-    if (!permissions) return;
+  function handleSave() {
     setSaving(true);
-    await updateUserPermissions(selectedUser!.Number, permissions);
-    await queryClient.invalidateQueries({ queryKey: ["portal-users"] });
+    saveUserPermissions(user.id, permissions);
     setSaving(false);
-    closeUser();
+    onClose();
   }
 
   async function handleDelete() {
-    if (!confirm(`Ertu viss um að þú viljir eyða ${selectedUser!.Name}?`)) return;
+    if (!confirm(`Ertu viss um að þú viljir eyða ${user.name}?`)) return;
     setDeleting(true);
-    await deleteUser(selectedUser!.Number);
-    await queryClient.invalidateQueries({ queryKey: ["portal-users"] });
+    removeUser(user.id);
     setDeleting(false);
-    closeUser();
+    onClose();
   }
 
   return (
     <>
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-40 bg-black/30"
-        onClick={closeUser}
-      />
+      <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} />
 
       {/* Modal */}
       <div className="fixed left-1/2 top-1/2 z-50 flex w-full max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col rounded-[var(--radius-xl)] bg-[var(--color-surface)] shadow-xl max-h-[calc(100vh-4rem)] overflow-hidden">
         {/* Header */}
         <div className="flex items-start justify-between border-b border-[var(--color-border)] p-6">
           <div>
-            <h2 className="text-lg font-bold text-[var(--color-text)]">
-              {selectedUser.Name}
-            </h2>
-            {selectedUser.Email && (
-              <p className="mt-0.5 text-sm text-[var(--color-text-muted)]">
-                {selectedUser.Email}
-              </p>
+            <h2 className="text-lg font-bold text-[var(--color-text)]">{user.name}</h2>
+            {user.email && (
+              <p className="mt-0.5 text-sm text-[var(--color-text-muted)]">{user.email}</p>
             )}
-            {selectedUser.SSNumber && (
-              <p className="mt-1 font-mono text-xs text-[var(--color-text-muted)]">
-                {selectedUser.SSNumber}
-              </p>
+            {user.kennitala && (
+              <p className="mt-1 font-mono text-xs text-[var(--color-text-muted)]">{user.kennitala}</p>
             )}
           </div>
           <button
-            onClick={closeUser}
+            onClick={onClose}
             className="rounded-[var(--radius-md)] p-1.5 text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)]"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -127,7 +119,7 @@ export function UserPanel() {
             {deleting ? "Eyði..." : "Eyða notanda"}
           </Button>
           <div className="flex gap-3">
-            <Button variant="ghost" onClick={closeUser} className="w-28">
+            <Button variant="ghost" onClick={onClose} className="w-28">
               Hætta við
             </Button>
             <Button onClick={handleSave} disabled={saving} className="w-28">

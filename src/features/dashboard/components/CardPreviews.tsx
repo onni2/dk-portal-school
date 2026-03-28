@@ -6,7 +6,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { fetchCustomerTransactions } from "@/features/invoices/api/invoices.api";
-import { fetchTimeclockEmployees } from "@/features/timeclock/api/timeclock.api";
+import { fetchTimeclockSettings } from "@/features/timeclock/api/timeclock.api";
 import { fetchLicence } from "@/features/licence/api/licence.api";
 
 const MODULE_LABELS: Record<string, string> = {
