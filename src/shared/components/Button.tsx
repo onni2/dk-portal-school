@@ -8,12 +8,12 @@ import { cn } from "@/shared/utils/cn";
 
 const variantStyles = {
   primary:
-    "bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)]",
+    "bg-(--color-primary) text-white hover:bg-(--color-primary-hover)",
   secondary:
-    "border border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white",
+    "border border-(--color-primary) text-(--color-primary) hover:bg-(--color-primary) hover:text-white",
   ghost:
-    "border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)]",
-  danger: "bg-[var(--color-error)] text-white hover:opacity-90",
+    "border border-(--color-border) text-(--color-text-secondary) hover:bg-(--color-surface-hover)",
+  danger: "bg-(--color-error) text-white hover:opacity-90",
 } as const;
 
 const sizeStyles = {

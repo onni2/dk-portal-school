@@ -37,7 +37,7 @@ export function PanelSkeleton() {
       {Array.from({ length: 3 }).map((_, i) => (
         <div
           key={i}
-          className="flex items-center justify-between border-t border-[var(--color-border)] py-3 first:border-t-0"
+          className="flex items-center justify-between border-t border-(--color-border) py-3 first:border-t-0"
         >
           <div className="space-y-1.5">
             <Skeleton className="h-4 w-32" />

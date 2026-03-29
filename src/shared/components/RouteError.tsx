@@ -17,11 +17,11 @@ export function RouteError({ error }: { error: unknown }) {
 
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
-      <div className="rounded-[var(--radius-lg)] border border-[var(--color-error)] bg-[var(--color-error-bg)] px-6 py-8">
-        <h1 className="text-lg font-semibold text-[var(--color-error)]">
+      <div className="rounded-[var(--radius-lg)] border border-(--color-error) bg-(--color-error-bg) px-6 py-8">
+        <h1 className="text-lg font-semibold text-(--color-error)">
           Something went wrong
         </h1>
-        <p className="mt-2 text-sm text-[var(--color-error)]">{message}</p>
+        <p className="mt-2 text-sm text-(--color-error)">{message}</p>
         <div className="mt-6 flex justify-center gap-3">
           <Button variant="danger" onClick={() => router.invalidate()}>
             Try again

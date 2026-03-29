@@ -40,10 +40,10 @@ export function EditUserModal({ user, onClose, onSaved }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-        <h2 className="text-lg font-semibold text-[var(--color-text)]">
+        <h2 className="text-lg font-semibold text-(--color-text)">
           Breyta notanda — {user.name}
         </h2>
-        <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+        <p className="mt-1 text-sm text-(--color-text-secondary)">
           Stilltu kennitölu og DK Plus token fyrir þennan notanda.
         </p>
 
@@ -69,11 +69,11 @@ export function EditUserModal({ user, onClose, onSaved }: Props) {
             onChange={(e) => setDkToken(e.target.value)}
             placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
           />
-          <p className="text-xs text-[var(--color-text-muted)]">
+          <p className="text-xs text-(--color-text-muted)">
             Skildu DK Plus token eftir tómt til að halda núverandi gildi.
           </p>
 
-          {error && <p className="text-sm text-[var(--color-error)]">{error}</p>}
+          {error && <p className="text-sm text-(--color-error)">{error}</p>}
 
           <div className="mt-2 flex gap-3">
             <Button type="button" variant="secondary" className="flex-1" onClick={onClose} disabled={loading}>

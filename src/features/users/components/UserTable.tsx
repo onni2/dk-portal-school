@@ -29,7 +29,7 @@ export function UserTable() {
 
   if (isLoading) {
     return (
-      <p className="py-8 text-center text-sm text-[var(--color-text-secondary)]">
+      <p className="py-8 text-center text-sm text-(--color-text-secondary)">
         Hleð notendum...
       </p>
     );
@@ -37,7 +37,7 @@ export function UserTable() {
 
   if (error) {
     return (
-      <p className="py-8 text-center text-sm text-[var(--color-error)]">
+      <p className="py-8 text-center text-sm text-(--color-error)">
         Villa við að sækja notendur.
       </p>
     );
@@ -45,38 +45,38 @@ export function UserTable() {
 
   if (users.length === 0) {
     return (
-      <p className="py-8 text-center text-sm text-[var(--color-text-secondary)]">
+      <p className="py-8 text-center text-sm text-(--color-text-secondary)">
         Engir notendur fundust.
       </p>
     );
   }
 
   return (
-    <div className="overflow-x-auto rounded-[var(--radius-md)] border border-[var(--color-border)]">
+    <div className="overflow-x-auto rounded-[var(--radius-md)] border border-(--color-border)">
       <table className="w-full text-left text-sm">
-        <thead className="border-b border-[var(--color-border)] bg-[var(--color-surface)]">
+        <thead className="border-b border-(--color-border) bg-(--color-surface)">
           <tr>
-            <th className="px-4 py-3 font-medium text-[var(--color-text-secondary)]">Nafn</th>
-            <th className="px-4 py-3 font-medium text-[var(--color-text-secondary)]">Notendanafn</th>
-            <th className="px-4 py-3 font-medium text-[var(--color-text-secondary)]">Netfang</th>
-            <th className="px-4 py-3 font-medium text-[var(--color-text-secondary)]">Hlutverk</th>
-            <th className="px-4 py-3 font-medium text-[var(--color-text-secondary)]">Staða</th>
-            <th className="px-4 py-3 font-medium text-[var(--color-text-secondary)]"></th>
+            <th className="px-4 py-3 font-medium text-(--color-text-secondary)">Nafn</th>
+            <th className="px-4 py-3 font-medium text-(--color-text-secondary)">Notendanafn</th>
+            <th className="px-4 py-3 font-medium text-(--color-text-secondary)">Netfang</th>
+            <th className="px-4 py-3 font-medium text-(--color-text-secondary)">Hlutverk</th>
+            <th className="px-4 py-3 font-medium text-(--color-text-secondary)">Staða</th>
+            <th className="px-4 py-3 font-medium text-(--color-text-secondary)"></th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-[var(--color-border)]">
+        <tbody className="divide-y divide-(--color-border)">
           {users.map((user) => {
             const isSelf = user.id === currentUser?.id;
             const isOtherAdmin = user.role === "admin" && !isSelf;
             return (
-              <tr key={user.id} className="hover:bg-[var(--color-surface-hover)]">
-                <td className="px-4 py-3 font-medium text-[var(--color-text)]">
+              <tr key={user.id} className="hover:bg-(--color-surface-hover)">
+                <td className="px-4 py-3 font-medium text-(--color-text)">
                   {user.name}
                 </td>
-                <td className="px-4 py-3 text-[var(--color-text-secondary)]">
+                <td className="px-4 py-3 text-(--color-text-secondary)">
                   {user.username}
                 </td>
-                <td className="px-4 py-3 text-[var(--color-text-secondary)]">
+                <td className="px-4 py-3 text-(--color-text-secondary)">
                   {user.email}
                 </td>
                 <td className="px-4 py-3">
@@ -85,7 +85,7 @@ export function UserTable() {
                       "inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
                       user.role === "admin"
                         ? "bg-purple-100 text-purple-700"
-                        : "bg-[var(--color-surface)] text-[var(--color-text-secondary)]",
+                        : "bg-(--color-surface) text-(--color-text-secondary)",
                     )}
                   >
                     {user.role === "admin" ? "Stjórnandi" : "Staðlað"}
@@ -108,7 +108,7 @@ export function UserTable() {
                     <button
                       onClick={() => handleRemove(user.id)}
                       disabled={removingId === user.id}
-                      className="text-sm text-[var(--color-error)] hover:underline disabled:opacity-50"
+                      className="text-sm text-(--color-error) hover:underline disabled:opacity-50"
                     >
                       {removingId === user.id ? "Fjarlægi..." : "Fjarlægja"}
                     </button>

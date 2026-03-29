@@ -50,10 +50,10 @@ export function IpWhitelistPanel() {
     <Card>
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h2 className="text-base font-semibold text-[var(--color-text)]">
+          <h2 className="text-base font-semibold text-(--color-text)">
             IP-tölur í hvítlista
           </h2>
-          <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
+          <p className="mt-0.5 text-xs text-(--color-text-muted)">
             Aðeins tæki með þessar IP-tölur mega nota stimpilklukku.
           </p>
         </div>
@@ -63,17 +63,17 @@ export function IpWhitelistPanel() {
       </div>
 
       {entries.length === 0 ? (
-        <p className="py-4 text-center text-sm text-[var(--color-text-muted)]">
+        <p className="py-4 text-center text-sm text-(--color-text-muted)">
           Engar IP-tölur skráðar.
         </p>
       ) : (
-        <ul className="divide-y divide-[var(--color-border)]">
+        <ul className="divide-y divide-(--color-border)">
           {entries.map((entry) => (
             <li key={entry.id} className="flex items-center justify-between py-3">
               <div>
-                <p className="text-sm font-medium text-[var(--color-text)]">{entry.ip}</p>
+                <p className="text-sm font-medium text-(--color-text)">{entry.ip}</p>
                 {entry.label && (
-                  <p className="text-xs text-[var(--color-text-muted)]">{entry.label}</p>
+                  <p className="text-xs text-(--color-text-muted)">{entry.label}</p>
                 )}
               </div>
               <Button
@@ -90,7 +90,7 @@ export function IpWhitelistPanel() {
       )}
 
       {addIpOpen && (
-        <div className="mt-4 flex flex-col gap-3 border-t border-[var(--color-border)] pt-4">
+        <div className="mt-4 flex flex-col gap-3 border-t border-(--color-border) pt-4">
           <Input
             placeholder="IP-tala, t.d. 192.168.1.10"
             value={ip}

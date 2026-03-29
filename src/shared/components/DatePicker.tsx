@@ -131,14 +131,14 @@ export function DatePicker({
 
   return (
     <div ref={ref} className="relative">
-      <div className="flex items-center rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5">
+      <div className="flex items-center rounded-md border border-(--color-border) bg-(--color-surface) px-3 py-1.5">
         <input
           type="text"
           value={inputText}
           onChange={handleInputChange}
           onFocus={() => setOpen(true)}
           placeholder={placeholder ?? "DD.MM YYYY"}
-          className="w-28 bg-transparent text-sm text-[var(--color-text)] outline-none placeholder:text-[var(--color-text-muted)]"
+          className="w-28 bg-transparent text-sm text-(--color-text) outline-none placeholder:text-(--color-text-muted)"
         />
         {value ? (
           <button
@@ -146,14 +146,14 @@ export function DatePicker({
               onChange("");
               setInputText("");
             }}
-            className="ml-2 text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+            className="ml-2 text-(--color-text-muted) hover:text-(--color-text)"
           >
             ×
           </button>
         ) : (
           <button
             onClick={() => setOpen((o) => !o)}
-            className="ml-2 text-[var(--color-text-muted)]"
+            className="ml-2 text-(--color-text-muted)"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -174,34 +174,34 @@ export function DatePicker({
       </div>
 
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-1 w-72 rounded-lg border border-[var(--color-border)] bg-white p-4 shadow-lg">
+        <div className="absolute left-0 top-full z-50 mt-1 w-72 rounded-lg border border-(--color-border) bg-white p-4 shadow-lg">
           {/* Header */}
           <div className="mb-3 flex items-center justify-between">
             <button
               onClick={prevMonth}
-              className="px-1 text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+              className="px-1 text-(--color-text-muted) hover:text-(--color-text)"
             >
               &lt;
             </button>
-            <span className="text-sm font-bold text-[var(--color-text)]">
+            <span className="text-sm font-bold text-(--color-text)">
               {MONTHS[viewMonth]} {viewYear}
             </span>
             <button
               onClick={nextMonth}
-              className="px-1 text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+              className="px-1 text-(--color-text-muted) hover:text-(--color-text)"
             >
               &gt;
             </button>
           </div>
 
           {/* Day headers */}
-          <div className="mb-1 grid grid-cols-7 text-center text-xs text-[var(--color-text-muted)]">
+          <div className="mb-1 grid grid-cols-7 text-center text-xs text-(--color-text-muted)">
             {DAYS.map((d) => (
               <span key={d}>{d}</span>
             ))}
           </div>
 
-          <hr className="mb-2 border-[var(--color-border)]" />
+          <hr className="mb-2 border-(--color-border)" />
 
           {/* Days grid */}
           <div className="grid grid-cols-7 text-center text-sm">
@@ -228,11 +228,11 @@ export function DatePicker({
                     day === null && "invisible",
                     isDisabled &&
                       day !== null &&
-                      "cursor-not-allowed text-[var(--color-text-muted)] opacity-40",
+                      "cursor-not-allowed text-(--color-text-muted) opacity-40",
                     isSelected
                       ? "bg-blue-600 font-semibold text-white"
                       : !isDisabled &&
-                          "text-[var(--color-text)] hover:bg-[var(--color-surface-hover)]",
+                          "text-(--color-text) hover:bg-(--color-surface-hover)",
                   )}
                 >
                   {day}

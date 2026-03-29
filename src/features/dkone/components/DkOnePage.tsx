@@ -11,7 +11,7 @@ export function DkOnePage() {
       title="dkOne"
       description="Yfirlit yfir dkOne lausnina."
     >
-      <p className="text-[var(--color-text-secondary)]">Hér mun koma yfirlit yfir dkOne.</p>
+      <p className="text-(--color-text-secondary)">Hér mun koma yfirlit yfir dkOne.</p>
     </PageTemplate>
   );
 }
