@@ -65,21 +65,21 @@ export function UserPanel({ user, onClose }: Props) {
       <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} />
 
       {/* Modal */}
-      <div className="fixed left-1/2 top-1/2 z-50 flex w-full max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col rounded-[var(--radius-xl)] bg-[var(--color-surface)] shadow-xl max-h-[calc(100vh-4rem)] overflow-hidden">
+      <div className="fixed left-1/2 top-1/2 z-50 flex w-full max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col rounded-[var(--radius-xl)] bg-(--color-surface) shadow-xl max-h-[calc(100vh-4rem)] overflow-hidden">
         {/* Header */}
-        <div className="flex items-start justify-between border-b border-[var(--color-border)] p-6">
+        <div className="flex items-start justify-between border-b border-(--color-border) p-6">
           <div>
-            <h2 className="text-lg font-bold text-[var(--color-text)]">{user.name}</h2>
+            <h2 className="text-lg font-bold text-(--color-text)">{user.name}</h2>
             {user.email && (
-              <p className="mt-0.5 text-sm text-[var(--color-text-muted)]">{user.email}</p>
+              <p className="mt-0.5 text-sm text-(--color-text-muted)">{user.email}</p>
             )}
             {user.kennitala && (
-              <p className="mt-1 font-mono text-xs text-[var(--color-text-muted)]">{user.kennitala}</p>
+              <p className="mt-1 font-mono text-xs text-(--color-text-muted)">{user.kennitala}</p>
             )}
           </div>
           <button
             onClick={onClose}
-            className="rounded-[var(--radius-md)] p-1.5 text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)]"
+            className="rounded-[var(--radius-md)] p-1.5 text-(--color-text-muted) transition-colors hover:bg-(--color-surface-hover) hover:text-(--color-text)"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -89,24 +89,24 @@ export function UserPanel({ user, onClose }: Props) {
 
         {/* Permissions */}
         <div className="flex-1 overflow-y-auto p-6">
-          <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+          <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-(--color-text-muted)">
             Aðgangur að einingum
           </h3>
           <div className="space-y-3">
             {PERMISSION_LABELS.map(({ key, label, description }) => (
               <label
                 key={key}
-                className="flex cursor-pointer items-start gap-3 rounded-[var(--radius-lg)] border border-[var(--color-border)] p-4 transition-colors hover:bg-[var(--color-surface-hover)]"
+                className="flex cursor-pointer items-start gap-3 rounded-[var(--radius-lg)] border border-(--color-border) p-4 transition-colors hover:bg-(--color-surface-hover)"
               >
                 <input
                   type="checkbox"
                   checked={permissions[key]}
                   onChange={() => togglePermission(key)}
-                  className="mt-0.5 h-4 w-4 cursor-pointer rounded accent-[var(--color-primary)]"
+                  className="mt-0.5 h-4 w-4 cursor-pointer rounded accent-(--color-primary)"
                 />
                 <div>
-                  <p className="text-sm font-medium text-[var(--color-text)]">{label}</p>
-                  <p className="text-xs text-[var(--color-text-muted)]">{description}</p>
+                  <p className="text-sm font-medium text-(--color-text)">{label}</p>
+                  <p className="text-xs text-(--color-text-muted)">{description}</p>
                 </div>
               </label>
             ))}
@@ -114,7 +114,7 @@ export function UserPanel({ user, onClose }: Props) {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-[var(--color-border)] p-6">
+        <div className="flex items-center justify-between border-t border-(--color-border) p-6">
           <Button variant="danger" onClick={handleDelete} disabled={deleting}>
             {deleting ? "Eyði..." : "Eyða notanda"}
           </Button>

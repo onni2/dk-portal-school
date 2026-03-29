@@ -13,8 +13,8 @@ import { Button } from "@/shared/components/Button";
 export function NotFound() {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
-      <h1 className="text-6xl font-bold text-[var(--color-text-muted)]">404</h1>
-      <p className="mt-4 text-lg text-[var(--color-text-secondary)]">
+      <h1 className="text-6xl font-bold text-(--color-text-muted)">404</h1>
+      <p className="mt-4 text-lg text-(--color-text-secondary)">
         The page you're looking for doesn't exist.
       </p>
       <Link to="/" className="mt-6">

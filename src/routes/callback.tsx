@@ -106,11 +106,11 @@ function CallbackPage() {
 
   if (error) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[var(--color-background)]">
-        <p className="text-[var(--color-error)]">{error}</p>
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-(--color-background)">
+        <p className="text-(--color-error)">{error}</p>
         <a
           href="/login"
-          className="text-sm text-[var(--color-primary)] underline"
+          className="text-sm text-(--color-primary) underline"
         >
           Til baka í innskráningu
         </a>
@@ -119,10 +119,10 @@ function CallbackPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[var(--color-background)]">
+    <div className="flex min-h-screen items-center justify-center bg-(--color-background)">
       <div className="flex flex-col items-center gap-3">
         <LoadingSpinner />
-        <p className="text-sm text-[var(--color-text-secondary)]">
+        <p className="text-sm text-(--color-text-secondary)">
           Auðkenning í gangi…
         </p>
       </div>
