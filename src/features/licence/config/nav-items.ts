@@ -30,10 +30,16 @@ export const NAV_ITEMS: NavItem[] = [
     children: [
       { label: "Yfirlit áskriftar", to: "/askrift/yfirlit", access: { type: "requiredPermission", permission: "subscription" } },
       { label: "Vörur dk", to: "/askrift/vorur", access: { type: "requiredPermission", permission: "subscription" } },
-      { label: "Öryggi og persónuvernd", to: "/askrift/oryggi", access: { type: "requiredPermission", permission: "subscription" } },
     ],
   },
-  { label: "Hýsing", to: "/hosting", access: { type: "requiredPermission", permission: "hosting" } },
+  {
+    label: "Hýsing",
+    to: "/hosting",
+    access: { type: "requiredPermission", permission: "hosting" },
+    children: [
+      { label: "Öryggi og persónuvernd", to: "/hosting/oryggi", access: { type: "requiredPermission", permission: "hosting" } },
+    ],
+  },
   { label: "POS", to: "/pos", access: { type: "requiredPermission", permission: "pos" } },
   { label: "dkOne", to: "/dkone", access: { type: "requiredPermission", permission: "dkOne" } },
   { label: "dkPlus", to: "/dkplus", access: { type: "requiredPermission", permission: "dkPlus" } },
