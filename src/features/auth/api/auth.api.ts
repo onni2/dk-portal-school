@@ -1,44 +1,55 @@
 /**
- * Auth API: login checks credentials against the portal users store (localStorage).
- * The DK API token (VITE_API_TOKEN) is shared for all users — apiClient uses it automatically.
- * Uses: @/features/users/store/users.store, ../types/auth.types
+ * Auth API functions: login and logout.
+ * Calls the mock backend (Express + PostgreSQL) for username/password auth.
+ * Uses: @/shared/api/mockClient, ../types/auth.types
  * Exports: login, logout
  */
-import { usePortalUsersStore } from "@/features/users/store/users.store";
-import type { AuthResponse, LoginCredentials } from "../types/auth.types";
+import { mockClient } from "@/shared/api/mockClient";
+import type { AuthResponse, LoginCredentials, User } from "../types/auth.types";
+
+interface MockLoginResponse {
+  token: string;
+  companyDkToken?: string | null;
+  user: {
+    id: string;
+    username: string;
+    email: string;
+    name: string;
+    role: string;
+    kennitala?: string;
+    phone?: string;
+    mustResetPassword: boolean;
+    companyId?: string;
+  };
+}
+
 
 export async function login(credentials: LoginCredentials): Promise<AuthResponse> {
-  const { users } = usePortalUsersStore.getState();
+  const data = await mockClient.post<MockLoginResponse>("/auth/login", credentials);
 
-  const found = users.find(
-    (u) => u.username === credentials.username || u.email === credentials.username,
-  );
-
-  if (!found) {
-    throw new Error("Notandi finnst ekki");
+  // Store JWT for mockClient (Express backend)
+  localStorage.setItem("dk-auth-token", data.token);
+  // Store company DK Plus token for apiClient (api.dkplus.is)
+  if (data.companyDkToken) {
+    localStorage.setItem("dk-company-token", data.companyDkToken);
   }
 
-  // Empty password = not yet set, any input accepted (user must set password in Settings)
-  if (found.password && found.password !== credentials.password) {
-    throw new Error("Rangt lykilorð");
-  }
+  const mockUser = data.user;
 
-  const user = {
-    id: found.id,
-    name: found.name,
-    email: found.email,
-    kennitala: found.kennitala,
-    role: found.role,
-    mustResetPassword: !found.password, // redirect to settings if no password set
+  const user: User = {
+    id: mockUser.id,
+    name: mockUser.name,
+    email: mockUser.email,
+    kennitala: mockUser.kennitala,
+    phone: mockUser.phone,
+    role: mockUser.role as User["role"],
+    mustResetPassword: mockUser.mustResetPassword,
+    companyId: mockUser.companyId,
   };
 
-  // Store a mock token — apiClient falls back to VITE_API_TOKEN for DK API calls
-  const token = `mock-token-${found.id}`;
-  localStorage.setItem("dk-auth-token", token);
-
-  return { user, token };
+  return { user, token: data.token };
 }
 
 export async function logout(): Promise<void> {
-  // auth store handles clearing localStorage
+  // Nothing to call on the API — the auth store handles clearing localStorage
 }

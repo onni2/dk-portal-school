@@ -48,6 +48,14 @@ export const mockClient = {
     }).then(handleResponse<T>);
   },
 
+  put<T>(path: string, body: unknown): Promise<T> {
+    return fetch(`${MOCK_API_URL}${path}`, {
+      method: "PUT",
+      headers: authHeaders(),
+      body: JSON.stringify(body),
+    }).then(handleResponse<T>);
+  },
+
   patch<T>(path: string, body: unknown): Promise<T> {
     return fetch(`${MOCK_API_URL}${path}`, {
       method: "PATCH",

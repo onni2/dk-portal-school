@@ -29,8 +29,8 @@ router.get("/ips", requireAuth, async (req, res) => {
 
 // POST /timeclock/ips
 router.post("/ips", requireAuth, async (req, res) => {
-  const { ip, label } = req.body;
-  if (!ip || !label) return res.status(400).json({ message: "Vantar ip eða label" });
+  const { ip, label = "" } = req.body;
+  if (!ip) return res.status(400).json({ message: "Vantar ip" });
   try {
     const id = generateId();
     await pool.query(
@@ -79,8 +79,8 @@ router.get("/phones", requireAuth, async (req, res) => {
 
 // POST /timeclock/phones
 router.post("/phones", requireAuth, async (req, res) => {
-  const { employeeNumber, employeeName, phone } = req.body;
-  if (!employeeNumber || !employeeName || !phone) {
+  const { employeeNumber, employeeName = "", phone } = req.body;
+  if (!employeeNumber || !phone) {
     return res.status(400).json({ message: "Vantar upplýsingar" });
   }
   try {
