@@ -10,11 +10,12 @@ import {
   handleAudkenniCallback,
   fetchAudkenniUserInfo,
 } from "@/features/auth/api/audkenni.api";
-import { fetchEmployees } from "@/features/employees/api/employees.api";
 import { useAuthStore } from "@/features/auth/store/auth.store";
+import { apiClient } from "@/shared/api/client";
 import { useRoleStore } from "@/features/licence/store/role.store";
-import { usePortalUsersStore } from "@/features/users/store/users.store";
 import { authRoleToUserRole } from "@/features/auth/utils/role-mapping";
+import { mockClient } from "@/shared/api/mockClient";
+import type { User } from "@/features/auth/types/auth.types";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 
 export const Route = createFileRoute("/callback")({
@@ -52,42 +53,54 @@ function CallbackPage() {
       .then(async ({ accessToken }) => {
         const userInfo = await fetchAudkenniUserInfo(accessToken);
 
-        const kennitala = userInfo.nationalRegisterId;
+        const kennitala = userInfo.nationalRegisterId?.replace(/-/g, "");
 
-        // Match to a portal user by kennitala — this determines their role
-        const portalUsers = usePortalUsersStore.getState().users;
-        const portalUser = kennitala
-          ? portalUsers.find((u) => u.kennitala === kennitala)
-          : undefined;
-
-        if (!portalUser) {
+        if (!kennitala) {
           setError("Notandi ekki skráður í gáttina — hafðu samband við stjórnanda");
           return;
         }
 
-        // Also fetch DK Plus employee info for name/email if available
-        const employees = await fetchEmployees().catch(() => []);
-        const employee = kennitala
-          ? employees.find((e) => e.SSNumber === kennitala)
-          : undefined;
+        // Match to a portal user by kennitala via the mock backend
+        interface AudkenniLoginResponse {
+          token: string;
+          user: { id: string; username: string; email: string; name: string; role: string; kennitala?: string; phone?: string; mustResetPassword: boolean; companyId?: string };
+        }
+        let portalData: AudkenniLoginResponse;
+        try {
+          portalData = await mockClient.post<AudkenniLoginResponse>("/auth/audkenni", { kennitala });
+        } catch {
+          setError("Notandi ekki skráður í gáttina — hafðu samband við stjórnanda");
+          return;
+        }
 
-        const user = {
-          id: portalUser.id,
-          name: employee?.Name ?? portalUser.name,
-          email: employee?.Email ?? portalUser.email,
+        // Store JWT so subsequent API calls are authenticated
+        localStorage.setItem("dk-auth-token", portalData.token);
+
+        // Optionally enrich with DK Plus employee info for name/email
+        interface EmployeeShape { SSNumber?: string; Name: string; Email?: string }
+        const employees = await apiClient.get<EmployeeShape[]>("/general/employee").catch(() => []);
+        const employee = employees.find((e) => e.SSNumber === kennitala);
+
+        const user: User = {
+          id: portalData.user.id,
+          name: employee?.Name ?? portalData.user.name,
+          email: employee?.Email ?? portalData.user.email,
           kennitala,
-          role: portalUser.role,
-          mustResetPassword: portalUser.mustResetPassword,
+          phone: portalData.user.phone,
+          role: portalData.user.role as User["role"],
+          mustResetPassword: portalData.user.mustResetPassword,
+          companyId: portalData.user.companyId,
         };
 
-        const apiToken = import.meta.env.VITE_API_TOKEN as string | undefined;
-        setAuth(user, apiToken ?? accessToken);
+        setAuth(user, portalData.token);
         setRole(authRoleToUserRole(user.role));
-        navigate({ to: portalUser.mustResetPassword ? "/reset-password" : "/" });
+        navigate({ to: portalData.user.mustResetPassword ? "/reset-password" : "/" });
       })
       .catch((err: unknown) => {
         setError(
-          err instanceof Error ? err.message : "Auðkenning mistókst — reyndu aftur",
+          err instanceof Error
+            ? err.message
+            : "Auðkenning mistókst — reyndu aftur",
         );
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -95,11 +108,11 @@ function CallbackPage() {
 
   if (error) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[var(--color-background)]">
-        <p className="text-[var(--color-error)]">{error}</p>
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-(--color-background)">
+        <p className="text-(--color-error)">{error}</p>
         <a
           href="/login"
-          className="text-sm text-[var(--color-primary)] underline"
+          className="text-sm text-(--color-primary) underline"
         >
           Til baka í innskráningu
         </a>
@@ -108,10 +121,10 @@ function CallbackPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[var(--color-background)]">
+    <div className="flex min-h-screen items-center justify-center bg-(--color-background)">
       <div className="flex flex-col items-center gap-3">
         <LoadingSpinner />
-        <p className="text-sm text-[var(--color-text-secondary)]">
+        <p className="text-sm text-(--color-text-secondary)">
           Auðkenning í gangi…
         </p>
       </div>

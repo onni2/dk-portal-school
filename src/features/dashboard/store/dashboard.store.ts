@@ -1,17 +1,19 @@
 /**
  * Zustand store for dashboard card layout — which cards are shown and in what order.
  * Persists to localStorage so the layout survives page refreshes.
- * Uses: nothing — standalone store
+ * Uses: @/features/users/types/users.types
  * Exports: useDashboardLayout, ALL_CARDS
  */
 import { create } from "zustand";
+import type { UserPermissions } from "@/features/users/types/user-permissions.types";
 
 export interface CardDef {
   id: string;
   title: string;
   description: string;
   to: string;
-  adminOnly?: boolean;
+  /** If set, only users with this permission (or COP role) can see this card */
+  permission?: keyof UserPermissions;
 }
 
 /** Every possible card — users pick which ones to show */
@@ -21,52 +23,56 @@ export const ALL_CARDS: CardDef[] = [
     title: "Reikningar",
     description: "Skoðaðu reikninga og halaðu niður sem PDF.",
     to: "/invoices/",
+    permission: "invoices",
   },
   {
-    id: "vidskiptavinir",
-    title: "Viðskiptavinir",
-    description: "Yfirlit yfir viðskiptavini fyrirtækisins.",
-    to: "/customers/",
+    id: "askrift",
+    title: "Áskrift",
+    description: "Yfirlit yfir áskrift fyrirtækisins hjá DK.",
+    to: "/askrift/yfirlit",
+    permission: "subscription",
   },
   {
-    id: "starfsmenn",
-    title: "Starfsmenn",
-    description: "Skoðaðu starfsmenn og tengdar upplýsingar.",
-    to: "/employees/",
+    id: "hysing",
+    title: "Hýsing",
+    description: "Stjórnaðu hýsingaraðgangi fyrirtækisins.",
+    to: "/hosting",
+    permission: "hosting",
+  },
+  {
+    id: "pos",
+    title: "POS",
+    description: "Yfirlit yfir POS kerfi fyrirtækisins.",
+    to: "/pos",
+    permission: "pos",
+  },
+  {
+    id: "dkone",
+    title: "dkOne",
+    description: "Aðgangur að dkOne kerfinu.",
+    to: "/dkone",
+    permission: "dkOne",
+  },
+  {
+    id: "dkplus",
+    title: "dkPlus",
+    description: "Notendur og API tókn fyrir dkPlus.",
+    to: "/dkplus",
+    permission: "dkPlus",
   },
   {
     id: "stimpilklukka",
     title: "Stimpilklukka",
     description: "Skráðu inn og út og skoðaðu tímaskráningar.",
     to: "/timeclock/",
-  },
-  {
-    id: "leyfi",
-    title: "Leyfi",
-    description: "Yfirlit yfir virk leyfi og kerfisþætti.",
-    to: "/leyfi",
-    adminOnly: true,
-  },
-  {
-    id: "dkplus",
-    title: "dkPlus",
-    description: "Notendur og API tókn fyrir dkPlus.",
-    to: "/dkone",
-    adminOnly: true,
-  },
-  {
-    id: "hysing",
-    title: "Hýsing",
-    description: "Stjórnaðu hýsingaraðgangi fyrirtækisins.",
-    to: "/hysing",
-    adminOnly: true,
+    permission: "timeclock",
   },
   {
     id: "notendur",
     title: "Notendur",
     description: "Stjórnaðu notendum á Mínar síður.",
     to: "/notendur",
-    adminOnly: true,
+    permission: "users",
   },
   {
     id: "hjalp",
@@ -79,11 +85,10 @@ export const ALL_CARDS: CardDef[] = [
     title: "Stillingar",
     description: "Stillingar fyrir Mínar síður.",
     to: "/stillingar",
-    adminOnly: true,
   },
 ];
 
-const DEFAULT_CARD_IDS = ["reikningar", "vidskiptavinir", "stimpilklukka", "leyfi"];
+const DEFAULT_CARD_IDS = ["reikningar", "stimpilklukka"];
 const STORAGE_KEY = "dk-dashboard-cards";
 
 /**

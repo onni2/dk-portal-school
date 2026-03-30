@@ -1,178 +1,195 @@
 /**
  * Modal for inviting a new portal user. Admin fills in name, username, email,
- * and role. On submit a password is generated and shown on screen.
- * Uses: ../api/users.api, @/shared/components/Button, @/shared/components/Input
+ * kennitala, optional hosting account, and module permissions.
+ * On submit the user is added to the portal store with default password "dk".
+ * Uses: ../api/users.api, ../api/permissions.api, @/shared/components/Button,
+ *       @/shared/components/Input, @/mocks/hosting.mock
  * Exports: InviteUserModal
  */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/shared/components/Button";
 import { Input } from "@/shared/components/Input";
 import { inviteUser } from "../api/users.api";
-import type { AuthRole } from "@/features/auth/types/auth.types";
+import { fetchHostingAccounts } from "../api/hosting.api";
+import type { HostingAccount } from "../api/hosting.api";
+import type { UserPermissions } from "../types/user-permissions.types";
+
+const PERMISSION_LABELS: { key: keyof UserPermissions; label: string }[] = [
+  { key: "invoices", label: "Reikningsyfirlit" },
+  { key: "subscription", label: "Áskrift" },
+  { key: "hosting", label: "Hýsing" },
+  { key: "pos", label: "POS" },
+  { key: "dkOne", label: "dkOne" },
+  { key: "dkPlus", label: "dkPlus" },
+  { key: "timeclock", label: "Stimpilklukka" },
+  { key: "users", label: "Notendur" },
+];
+
+const DEFAULT_PERMISSIONS: UserPermissions = {
+  invoices: false,
+  subscription: false,
+  hosting: false,
+  pos: false,
+  dkOne: false,
+  dkPlus: false,
+  timeclock: false,
+  users: false,
+};
 
 interface Props {
   onClose: () => void;
   onInvited: () => void;
 }
 
-type Step = "form" | "success";
-
 export function InviteUserModal({ onClose, onInvited }: Props) {
-  const [step, setStep] = useState<Step>("form");
   const [name, setName] = useState("");
-  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<AuthRole>("standard");
+  const [kennitala, setKennitala] = useState("");
+  const [role, setRole] = useState<"standard" | "admin">("standard");
+  const [hostingUsername, setHostingUsername] = useState("");
+  const [permissions, setPermissions] = useState<UserPermissions>(DEFAULT_PERMISSIONS);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [generatedPassword, setGeneratedPassword] = useState("");
-  const [copied, setCopied] = useState(false);
+  const [hostingAccounts, setHostingAccounts] = useState<HostingAccount[]>([]);
+
+  useEffect(() => {
+    fetchHostingAccounts().then(setHostingAccounts).catch(() => setHostingAccounts([]));
+  }, []);
+
+  function togglePermission(key: keyof UserPermissions) {
+    setPermissions((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setLoading(true);
     try {
-      const { generatedPassword: pwd } = await inviteUser({ name, username, email, role });
-      setGeneratedPassword(pwd);
-      setStep("success");
-      onInvited();
+      const { generatedPassword: pw } = await inviteUser({ name, username: email, email, kennitala, hostingUsername, role, permissions });
+      setGeneratedPassword(pw);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Villa kom upp");
+      setError((err as { message?: string })?.message ?? "Villa kom upp");
     } finally {
       setLoading(false);
     }
   }
 
-  function copyCredentials() {
-    navigator.clipboard.writeText(
-      `Notendanafn: ${username}\nLykilorð: ${generatedPassword}`,
+  if (generatedPassword) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+        <div className="w-full max-w-md rounded-lg border border-(--color-border) bg-(--color-surface) p-6 shadow-lg">
+          <h2 className="mb-2 text-lg font-bold text-(--color-text)">Notandi búinn til</h2>
+          <p className="mb-4 text-sm text-(--color-text-secondary)">
+            Geymdu þetta lykilorð og sendu það til notandans. Það mun ekki sjást aftur.
+          </p>
+          <div className="mb-6 rounded-md bg-(--color-surface-hover) px-4 py-3 font-mono text-base text-(--color-text)">
+            {generatedPassword}
+          </div>
+          <div className="flex justify-end">
+            <Button onClick={() => { onInvited(); onClose(); }}>Loka</Button>
+          </div>
+        </div>
+      </div>
     );
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-        {step === "form" ? (
-          <>
-            <h2 className="text-lg font-semibold text-[var(--color-text)]">
-              Bjóða notanda
-            </h2>
-            <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-              Notandinn fær lykilorð sem hann þarf að breyta við fyrstu innskráningu.
+      <div className="w-full max-w-md rounded-lg border border-(--color-border) bg-(--color-surface) p-6 shadow-lg">
+        <h2 className="mb-4 text-lg font-bold text-(--color-text)">
+          Bjóða notanda
+        </h2>
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <Input
+            label="Nafn"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+          <Input
+            label="Netfang"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="notandi@fyrirtaeki.is"
+            required
+          />
+          <Input
+            label="Kennitala"
+            value={kennitala}
+            onChange={(e) => setKennitala(e.target.value)}
+            placeholder="000000-0000"
+          />
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-(--color-text-secondary)">
+              Hlutverk
+            </label>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value as "standard" | "admin")}
+              className="w-full rounded-md border border-(--color-border) bg-(--color-background) px-3 py-2 text-sm text-(--color-text) outline-none transition-colors focus:border-(--color-primary) focus:ring-1 focus:ring-(--color-primary)"
+            >
+              <option value="standard">Venjulegur notandi</option>
+              <option value="admin">Stjórnandi</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-(--color-text-secondary)">
+              Hýsingaraðgangur
+            </label>
+            <select
+              value={hostingUsername}
+              onChange={(e) => setHostingUsername(e.target.value)}
+              className="w-full rounded-md border border-(--color-border) bg-(--color-background) px-3 py-2 text-sm text-(--color-text) outline-none transition-colors focus:border-(--color-primary) focus:ring-1 focus:ring-(--color-primary)"
+            >
+              <option value="">Enginn hýsingaraðgangur</option>
+              {hostingAccounts.map((acc) => (
+                <option key={acc.username} value={acc.username}>
+                  {acc.displayName}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <p className="mb-2 text-sm font-medium text-(--color-text-secondary)">
+              Aðgangur að einingum
             </p>
-
-            <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-4">
-              <Input
-                label="Nafn"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Jón Jónsson"
-                required
-              />
-              <Input
-                label="Notendanafn"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s/g, ""))}
-                placeholder="jonjonsson"
-                required
-              />
-              <Input
-                label="Netfang"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="jon@dktest.is"
-                required
-              />
-
-              <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium text-[var(--color-text)]">
-                  Hlutverk
+            <div className="grid grid-cols-2 gap-2">
+              {PERMISSION_LABELS.map(({ key, label }) => (
+                <label
+                  key={key}
+                  className="flex cursor-pointer items-center gap-2 text-sm text-(--color-text)"
+                >
+                  <input
+                    type="checkbox"
+                    checked={permissions[key]}
+                    onChange={() => togglePermission(key)}
+                    className="h-4 w-4 rounded border-(--color-border) accent-(--color-primary)"
+                  />
+                  {label}
                 </label>
-                <select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value as AuthRole)}
-                  className="rounded-md border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-                >
-                  <option value="standard">Staðlað (takmarkað aðgengi)</option>
-                  <option value="admin">Stjórnandi (fullt aðgengi)</option>
-                </select>
-              </div>
-
-              {error && (
-                <p className="text-sm text-[var(--color-error)]">{error}</p>
-              )}
-
-              <div className="mt-2 flex gap-3">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="flex-1"
-                  onClick={onClose}
-                  disabled={loading}
-                >
-                  Hætta við
-                </Button>
-                <Button
-                  type="submit"
-                  className="flex-1"
-                  disabled={loading || !name || !username || !email}
-                >
-                  {loading ? "Býr til notanda..." : "Bjóða"}
-                </Button>
-              </div>
-            </form>
-          </>
-        ) : (
-          <>
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-green-600">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              </div>
-              <h2 className="text-lg font-semibold text-[var(--color-text)]">
-                Notandi búinn til
-              </h2>
+              ))}
             </div>
+          </div>
 
-            <p className="mt-3 text-sm text-[var(--color-text-secondary)]">
-              Deildu þessum innskráningarupplýsingum með{" "}
-              <span className="font-medium text-[var(--color-text)]">{name}</span>.
-              Notandinn verður beðinn um að breyta lykilorði við fyrstu innskráningu.
-            </p>
+          {error && (
+            <p className="text-sm text-(--color-error)">{error}</p>
+          )}
 
-            <div className="mt-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4 font-mono text-sm">
-              <div className="flex justify-between">
-                <span className="text-[var(--color-text-secondary)]">Notendanafn</span>
-                <span className="font-semibold text-[var(--color-text)]">{username}</span>
-              </div>
-              <div className="mt-2 flex justify-between">
-                <span className="text-[var(--color-text-secondary)]">Lykilorð</span>
-                <span className="font-semibold text-[var(--color-text)]">{generatedPassword}</span>
-              </div>
-            </div>
-
-            <div className="mt-4 flex gap-3">
-              <Button
-                type="button"
-                variant="secondary"
-                className="flex-1"
-                onClick={copyCredentials}
-              >
-                {copied ? "Afritað!" : "Afrita"}
-              </Button>
-              <Button type="button" className="flex-1" onClick={onClose}>
-                Loka
-              </Button>
-            </div>
-          </>
-        )}
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>
+              Hætta við
+            </Button>
+            <Button type="submit" disabled={loading || !name || !email}>
+              {loading ? "Sendir boð..." : "Senda boð"}
+            </Button>
+          </div>
+        </form>
       </div>
     </div>
   );

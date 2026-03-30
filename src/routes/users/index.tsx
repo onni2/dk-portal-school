@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { UserTable } from "@/features/users/components/UserTable";
 import { InviteUserModal } from "@/features/users/components/InviteUserModal";
+import { useInvalidateUsers } from "@/features/users/api/users.queries";
 import { Button } from "@/shared/components/Button";
 
 export const Route = createFileRoute("/users/")({
@@ -19,13 +20,14 @@ export const Route = createFileRoute("/users/")({
 
 function UsersPage() {
   const [showInvite, setShowInvite] = useState(false);
+  const invalidateUsers = useInvalidateUsers();
 
   return (
     <>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--color-text)]">Notendur</h1>
-          <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+          <h1 className="text-2xl font-bold text-(--color-text)">Notendur</h1>
+          <p className="mt-1 text-sm text-(--color-text-secondary)">
             Stjórnaðu notendum sem hafa aðgang að Mínar síður.
           </p>
         </div>
@@ -37,7 +39,7 @@ function UsersPage() {
       {showInvite && (
         <InviteUserModal
           onClose={() => setShowInvite(false)}
-          onInvited={() => {}}
+          onInvited={() => { void invalidateUsers(); }}
         />
       )}
     </>
