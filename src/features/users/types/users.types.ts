@@ -21,8 +21,6 @@ export interface PortalUser {
   /** Kennitala — used to match Auðkenni (electronic ID) logins to this portal user */
   kennitala?: string;
   phone?: string;
-  /** Personal DK Plus API token — optional, used to fetch real employee info on login */
-  dkToken?: string;
   companyId?: string;
 }
 

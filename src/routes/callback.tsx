@@ -63,7 +63,7 @@ function CallbackPage() {
         // Match to a portal user by kennitala via the mock backend
         interface AudkenniLoginResponse {
           token: string;
-          user: { id: string; username: string; email: string; name: string; role: string; kennitala?: string; phone?: string; mustResetPassword: boolean; dkToken?: string; companyId?: string };
+          user: { id: string; username: string; email: string; name: string; role: string; kennitala?: string; phone?: string; mustResetPassword: boolean; companyId?: string };
         }
         let portalData: AudkenniLoginResponse;
         try {

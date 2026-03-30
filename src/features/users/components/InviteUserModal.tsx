@@ -45,10 +45,12 @@ export function InviteUserModal({ onClose, onInvited }: Props) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [kennitala, setKennitala] = useState("");
+  const [role, setRole] = useState<"standard" | "admin">("standard");
   const [hostingUsername, setHostingUsername] = useState("");
   const [permissions, setPermissions] = useState<UserPermissions>(DEFAULT_PERMISSIONS);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [generatedPassword, setGeneratedPassword] = useState("");
   const [hostingAccounts, setHostingAccounts] = useState<HostingAccount[]>([]);
 
   useEffect(() => {
@@ -64,14 +66,32 @@ export function InviteUserModal({ onClose, onInvited }: Props) {
     setError("");
     setLoading(true);
     try {
-      await inviteUser({ name, username: email, email, kennitala, hostingUsername, role: "standard", permissions });
-      onInvited();
-      onClose();
+      const { generatedPassword: pw } = await inviteUser({ name, username: email, email, kennitala, hostingUsername, role, permissions });
+      setGeneratedPassword(pw);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Villa kom upp");
+      setError((err as { message?: string })?.message ?? "Villa kom upp");
     } finally {
       setLoading(false);
     }
+  }
+
+  if (generatedPassword) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+        <div className="w-full max-w-md rounded-lg border border-(--color-border) bg-(--color-surface) p-6 shadow-lg">
+          <h2 className="mb-2 text-lg font-bold text-(--color-text)">Notandi búinn til</h2>
+          <p className="mb-4 text-sm text-(--color-text-secondary)">
+            Geymdu þetta lykilorð og sendu það til notandans. Það mun ekki sjást aftur.
+          </p>
+          <div className="mb-6 rounded-md bg-(--color-surface-hover) px-4 py-3 font-mono text-base text-(--color-text)">
+            {generatedPassword}
+          </div>
+          <div className="flex justify-end">
+            <Button onClick={() => { onInvited(); onClose(); }}>Loka</Button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -102,6 +122,20 @@ export function InviteUserModal({ onClose, onInvited }: Props) {
             onChange={(e) => setKennitala(e.target.value)}
             placeholder="000000-0000"
           />
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-(--color-text-secondary)">
+              Hlutverk
+            </label>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value as "standard" | "admin")}
+              className="w-full rounded-md border border-(--color-border) bg-(--color-background) px-3 py-2 text-sm text-(--color-text) outline-none transition-colors focus:border-(--color-primary) focus:ring-1 focus:ring-(--color-primary)"
+            >
+              <option value="standard">Venjulegur notandi</option>
+              <option value="admin">Stjórnandi</option>
+            </select>
+          </div>
 
           <div>
             <label className="mb-1 block text-sm font-medium text-(--color-text-secondary)">

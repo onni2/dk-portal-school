@@ -78,6 +78,7 @@ const TEAM_MEMBERS = [
 async function migrate() {
   await pool.query(`ALTER TABLE companies ADD COLUMN IF NOT EXISTS dk_token TEXT`);
   await pool.query(`ALTER TABLE portal_users ADD COLUMN IF NOT EXISTS hosting_username TEXT`);
+  await pool.query(`ALTER TABLE portal_users DROP COLUMN IF EXISTS dk_token`);
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS user_permissions (
@@ -103,10 +104,10 @@ async function migrate() {
     )
   `);
 
-  // Set HR company dk_token from env (only if not already set)
+  // Sync HR company dk_token from env on every startup
   if (process.env.DK_TOKEN) {
     await pool.query(
-      `UPDATE companies SET dk_token = $1 WHERE id = 'hr' AND dk_token IS NULL`,
+      `UPDATE companies SET dk_token = $1 WHERE id = 'hr'`,
       [process.env.DK_TOKEN],
     );
   }
