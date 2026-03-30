@@ -33,4 +33,14 @@ export interface InviteUserInput {
   role: AuthRole;
   kennitala?: string;
   hostingUsername?: string;
+  permissions?: {
+    invoices: boolean;
+    subscription: boolean;
+    hosting: boolean;
+    pos: boolean;
+    dkOne: boolean;
+    dkPlus: boolean;
+    timeclock: boolean;
+    users: boolean;
+  };
 }
