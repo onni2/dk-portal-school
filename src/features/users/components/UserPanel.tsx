@@ -9,7 +9,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/shared/components/Button";
 import { loadUserPermissions, saveUserPermissions, DEFAULT_PERMISSIONS } from "../api/permissions.api";
 import { removeUser } from "../api/users.api";
-import { useInvalidatePermissions } from "../api/users.queries";
+import { useInvalidatePermissions, useInvalidateUsers } from "../api/users.queries";
 import type { UserPermissions } from "../types/user-permissions.types";
 import type { PortalUser } from "../types/users.types";
 
@@ -34,6 +34,7 @@ export function UserPanel({ user, onClose }: Props) {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const invalidatePermissions = useInvalidatePermissions();
+  const invalidateUsers = useInvalidateUsers();
 
   useEffect(() => {
     loadUserPermissions(user.id)
@@ -61,6 +62,7 @@ export function UserPanel({ user, onClose }: Props) {
     setDeleting(true);
     try {
       await removeUser(user.id);
+      void invalidateUsers();
       onClose();
     } finally {
       setDeleting(false);

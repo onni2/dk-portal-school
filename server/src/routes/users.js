@@ -32,8 +32,21 @@ function requireAdmin(req, res, next) {
   next();
 }
 
+// Middleware — admin role OR users permission
+async function requireAdminOrUsersPermission(req, res, next) {
+  if (req.user?.role === "admin") return next();
+  try {
+    const { rows } = await pool.query(
+      "SELECT users FROM user_permissions WHERE user_id = $1",
+      [req.user?.id],
+    );
+    if (rows[0]?.users === true) return next();
+  } catch { /* fall through */ }
+  return res.status(403).json({ message: "Aðeins stjórnendur hafa aðgang" });
+}
+
 // GET /users
-router.get("/", requireAdmin, async (req, res) => {
+router.get("/", requireAdminOrUsersPermission, async (req, res) => {
   try {
     const { rows } = await pool.query(
       "SELECT id, username, email, name, role, status, must_reset_password, kennitala, phone, company_id, created_at FROM portal_users ORDER BY created_at ASC",
@@ -58,7 +71,7 @@ router.get("/", requireAdmin, async (req, res) => {
 });
 
 // POST /users/invite — new user inherits admin's company
-router.post("/invite", requireAdmin, async (req, res) => {
+router.post("/invite", requireAdminOrUsersPermission, async (req, res) => {
   const { username, email, name, role, kennitala, hostingUsername, permissions } = req.body;
   if (!username || !email || !name || !role) {
     return res.status(400).json({ message: "Vantar upplýsingar" });
@@ -166,7 +179,7 @@ router.put("/:id/permissions", requireAdmin, async (req, res) => {
 });
 
 // DELETE /users/:id
-router.delete("/:id", requireAdmin, async (req, res) => {
+router.delete("/:id", requireAdminOrUsersPermission, async (req, res) => {
   if (req.params.id === req.user.id) {
     return res.status(400).json({ message: "Þú getur ekki eytt þínum eigin notanda" });
   }

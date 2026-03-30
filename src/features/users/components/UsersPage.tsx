@@ -10,11 +10,13 @@ import { Button } from "@/shared/components/Button";
 import { UsersTable } from "./UsersTable";
 import { InviteUserModal } from "./InviteUserModal";
 import { UserPanel } from "./UserPanel";
+import { useInvalidateUsers } from "../api/users.queries";
 import type { PortalUser } from "../types/users.types";
 
 export function UsersPage() {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<PortalUser | null>(null);
+  const invalidateUsers = useInvalidateUsers();
 
   return (
     <>
@@ -29,7 +31,7 @@ export function UsersPage() {
       {isInviteOpen && (
         <InviteUserModal
           onClose={() => setIsInviteOpen(false)}
-          onInvited={() => setIsInviteOpen(false)}
+          onInvited={() => { void invalidateUsers(); }}
         />
       )}
       {selectedUser && (

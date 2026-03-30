@@ -37,6 +37,7 @@ router.post("/login", async (req, res) => {
 
     res.json({
       token,
+      companyDkToken: user.company_dk_token ?? null,
       user: {
         id: user.id,
         username: user.username,
@@ -46,7 +47,6 @@ router.post("/login", async (req, res) => {
         kennitala: user.kennitala,
         phone: user.phone,
         mustResetPassword: user.must_reset_password,
-        dkToken: user.company_dk_token,
         companyId: user.company_id,
       },
     });
@@ -84,6 +84,7 @@ router.post("/audkenni", async (req, res) => {
 
     res.json({
       token,
+      companyDkToken: user.company_dk_token ?? null,
       user: {
         id: user.id,
         username: user.username,
@@ -93,7 +94,6 @@ router.post("/audkenni", async (req, res) => {
         kennitala: user.kennitala,
         phone: user.phone,
         mustResetPassword: user.must_reset_password,
-        dkToken: user.company_dk_token,
         companyId: user.company_id,
       },
     });
