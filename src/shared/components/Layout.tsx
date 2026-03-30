@@ -12,6 +12,8 @@ import { useRoleStore } from "@/features/licence/store/role.store";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { logout } from "@/features/auth/api/auth.api";
 import { ProfileDropdown } from "@/features/auth/components/ProfileDropdown";
+import { CompanySelector } from "@/features/company/components/CompanySelector";
+import { NotificationBell } from "@/features/notifications/components/NotificationBell";
 
 /**
  *
@@ -46,24 +48,20 @@ export function Layout({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-screen flex-col bg-[var(--color-background)] text-[var(--color-text)]">
       {/* Header */}
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-surface)] px-6">
-        <div className="flex items-center gap-4">
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-surface)]">
+        <div className="flex w-[var(--sidebar-width)] shrink-0 items-center justify-between px-4">
           <Link to="/" className="flex items-center gap-2">
-            <span className="text-xl font-bold text-[var(--color-primary)]">dk</span>
+            <img src="/src/assets/dk-logo.svg" alt="dk" className="h-8 w-auto" />
             <span className="text-sm text-[var(--color-text-secondary)]">Mínar síður</span>
           </Link>
-
-          <div className="ml-4 rounded-[var(--radius-lg)] border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-text-secondary)]">
-            Fyrirtæki ehf. ▾
-          </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button className="rounded-[var(--radius-lg)] p-1.5 text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)]">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
-            </svg>
-          </button>
+        <div className="flex flex-1 items-center px-1">
+          <CompanySelector />
+        </div>
+
+        <div className="flex items-center gap-3 px-6">
+          <NotificationBell />
           {user && <ProfileDropdown user={user} onLogout={handleLogout} />}
         </div>
       </header>
