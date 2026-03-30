@@ -73,7 +73,7 @@ export function Layout({ children }: { children: ReactNode }) {
             <span className="px-4 pb-1 pt-3 text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-secondary)]">
               Valmynd
             </span>
-            <nav className="nav-scroll flex flex-col gap-1 overflow-y-auto p-3">
+            <nav className="nav-scroll flex flex-col gap-1 overflow-y-auto px-3 pb-3 pt-1">
 
             {navItems.map((item) => {
               const hasChildren = !!item.children?.length;

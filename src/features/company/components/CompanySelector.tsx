@@ -1,12 +1,12 @@
 /**
  * Company selector dropdown in the header. Shows the currently selected company and allows switching between companies.
- * Uses: @/shared/utils/cn, ../store/company.store, ../config/companies
+ * Uses: @/shared/utils/cn, ../store/company.store, ../api/company.queries
  * Exports: CompanySelector
  */
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/shared/utils/cn";
 import { useCompanyStore } from "../store/company.store";
-import { COMPANIES } from "../config/companies";
+import { useCompanies } from "../api/company.queries";
 
 /**
  *
@@ -31,7 +31,8 @@ export function CompanySelector() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const filtered = COMPANIES.filter((c) =>
+  const { data: companies = [], isLoading } = useCompanies();
+  const filtered = companies.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase()),
   );
 
@@ -67,6 +68,7 @@ export function CompanySelector() {
           open ? "max-h-96 opacity-100" : "max-h-0 opacity-0 pointer-events-none",
         )}
       >
+        
           {/* Search */}
           <div className="border-b border-[var(--color-border)] p-2">
             <input
@@ -81,7 +83,9 @@ export function CompanySelector() {
 
           {/* List */}
           <div className="max-h-48 overflow-y-auto">
-            {filtered.length > 0 ? (
+            {isLoading ? (
+              <p className="px-4 py-3 text-sm text-[var(--color-text-muted)]">Hleður...</p>
+            ) : filtered.length > 0 ? (
               filtered.map((company) => (
                 <button
                   key={company.id}
