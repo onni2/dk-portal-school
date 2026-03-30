@@ -15,7 +15,10 @@ router.post("/login", async (req, res) => {
 
   try {
     const { rows } = await pool.query(
-      "SELECT * FROM portal_users WHERE username = $1",
+      `SELECT u.*, c.dk_token AS company_dk_token
+       FROM portal_users u
+       LEFT JOIN companies c ON c.id = u.company_id
+       WHERE u.username = $1`,
       [username],
     );
 
@@ -41,8 +44,9 @@ router.post("/login", async (req, res) => {
         name: user.name,
         role: user.role,
         kennitala: user.kennitala,
+        phone: user.phone,
         mustResetPassword: user.must_reset_password,
-        dkToken: user.dk_token,
+        dkToken: user.company_dk_token,
         companyId: user.company_id,
       },
     });
@@ -61,7 +65,10 @@ router.post("/audkenni", async (req, res) => {
 
   try {
     const { rows } = await pool.query(
-      "SELECT * FROM portal_users WHERE kennitala = $1",
+      `SELECT u.*, c.dk_token AS company_dk_token
+       FROM portal_users u
+       LEFT JOIN companies c ON c.id = u.company_id
+       WHERE u.kennitala = $1`,
       [kennitala],
     );
     const user = rows[0];
@@ -84,8 +91,9 @@ router.post("/audkenni", async (req, res) => {
         name: user.name,
         role: user.role,
         kennitala: user.kennitala,
+        phone: user.phone,
         mustResetPassword: user.must_reset_password,
-        dkToken: user.dk_token,
+        dkToken: user.company_dk_token,
         companyId: user.company_id,
       },
     });
