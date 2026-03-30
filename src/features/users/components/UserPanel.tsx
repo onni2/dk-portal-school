@@ -7,8 +7,9 @@
  */
 import { useState, useEffect } from "react";
 import { Button } from "@/shared/components/Button";
-import { loadUserPermissions, saveUserPermissions } from "../api/permissions.api";
-import { usePortalUsersStore } from "../store/users.store";
+import { loadUserPermissions, saveUserPermissions, DEFAULT_PERMISSIONS } from "../api/permissions.api";
+import { removeUser } from "../api/users.api";
+import { useInvalidatePermissions } from "../api/users.queries";
 import type { UserPermissions } from "../types/user-permissions.types";
 import type { PortalUser } from "../types/users.types";
 
@@ -29,34 +30,41 @@ interface Props {
 }
 
 export function UserPanel({ user, onClose }: Props) {
-  const removeUser = usePortalUsersStore((s) => s.removeUser);
-  const [permissions, setPermissions] = useState<UserPermissions>(() =>
-    loadUserPermissions(user.id),
-  );
+  const [permissions, setPermissions] = useState<UserPermissions>(DEFAULT_PERMISSIONS);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const invalidatePermissions = useInvalidatePermissions();
 
   useEffect(() => {
-    setPermissions(loadUserPermissions(user.id));
+    loadUserPermissions(user.id)
+      .then(setPermissions)
+      .catch(() => setPermissions(DEFAULT_PERMISSIONS));
   }, [user.id]);
 
   function togglePermission(key: keyof UserPermissions) {
     setPermissions((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
-  function handleSave() {
+  async function handleSave() {
     setSaving(true);
-    saveUserPermissions(user.id, permissions);
-    setSaving(false);
-    onClose();
+    try {
+      await saveUserPermissions(user.id, permissions);
+      invalidatePermissions(user.id);
+      onClose();
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function handleDelete() {
     if (!confirm(`Ertu viss um að þú viljir eyða ${user.name}?`)) return;
     setDeleting(true);
-    removeUser(user.id);
-    setDeleting(false);
-    onClose();
+    try {
+      await removeUser(user.id);
+      onClose();
+    } finally {
+      setDeleting(false);
+    }
   }
 
   return (
