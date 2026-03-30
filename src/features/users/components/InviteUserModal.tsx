@@ -6,13 +6,13 @@
  *       @/shared/components/Input, @/mocks/hosting.mock
  * Exports: InviteUserModal
  */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/shared/components/Button";
 import { Input } from "@/shared/components/Input";
 import { inviteUser } from "../api/users.api";
-import { saveUserPermissions } from "../api/permissions.api";
+import { fetchHostingAccounts } from "../api/hosting.api";
+import type { HostingAccount } from "../api/hosting.api";
 import type { UserPermissions } from "../types/user-permissions.types";
-import { MOCK_HOSTING_ACCOUNTS } from "@/mocks/hosting.mock";
 
 const PERMISSION_LABELS: { key: keyof UserPermissions; label: string }[] = [
   { key: "invoices", label: "Reikningsyfirlit" },
@@ -49,6 +49,11 @@ export function InviteUserModal({ onClose, onInvited }: Props) {
   const [permissions, setPermissions] = useState<UserPermissions>(DEFAULT_PERMISSIONS);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [hostingAccounts, setHostingAccounts] = useState<HostingAccount[]>([]);
+
+  useEffect(() => {
+    fetchHostingAccounts().then(setHostingAccounts).catch(() => setHostingAccounts([]));
+  }, []);
 
   function togglePermission(key: keyof UserPermissions) {
     setPermissions((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -59,8 +64,7 @@ export function InviteUserModal({ onClose, onInvited }: Props) {
     setError("");
     setLoading(true);
     try {
-      const { user } = await inviteUser({ name, username: email, email, kennitala, hostingUsername, role: "standard" });
-      saveUserPermissions(user.id, permissions);
+      await inviteUser({ name, username: email, email, kennitala, hostingUsername, role: "standard", permissions });
       onInvited();
       onClose();
     } catch (err) {
@@ -109,7 +113,7 @@ export function InviteUserModal({ onClose, onInvited }: Props) {
               className="w-full rounded-md border border-(--color-border) bg-(--color-background) px-3 py-2 text-sm text-(--color-text) outline-none transition-colors focus:border-(--color-primary) focus:ring-1 focus:ring-(--color-primary)"
             >
               <option value="">Enginn hýsingaraðgangur</option>
-              {MOCK_HOSTING_ACCOUNTS.map((acc) => (
+              {hostingAccounts.map((acc) => (
                 <option key={acc.username} value={acc.username}>
                   {acc.displayName}
                 </option>
