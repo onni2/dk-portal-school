@@ -8,22 +8,16 @@ import { NAV_ITEMS } from "../config/nav-items";
 import { useRoleStore } from "../store/role.store";
 import { filterNavItems } from "../utils/filter-nav";
 import { useAuthStore } from "@/features/auth/store/auth.store";
-import { loadUserPermissions } from "@/features/users/api/permissions.api";
+import { useUserPermissions } from "@/features/users/api/users.queries";
 
-/**
- *
- */
 export function useVisibleNavItems() {
   const { data: licence, isLoading } = useLicence();
   const role = useRoleStore((s) => s.role);
   const user = useAuthStore((s) => s.user);
+  const { data: userPermissions = null } = useUserPermissions(user?.id);
 
-  const userPermissions = user ? loadUserPermissions(user.id) : null;
-
-  // COP sees everything — no need to wait for licence
   if (role === "cop") return NAV_ITEMS;
 
-  // While loading, show only alwaysVisible items
   if (isLoading || !licence) {
     return NAV_ITEMS.filter((item) => item.access.type === "alwaysVisible");
   }
