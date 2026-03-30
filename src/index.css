@@ -1,47 +1,56 @@
 @import "tailwindcss";
 
-/* ============================================
-   DK Portal — Design Tokens
+/* ============================================================
+   DK Hugbúnaður — Design Tokens
 
-   Design team (Ágústa, Þóra): fill in values
-   from Figma. Everyone else: use these variables,
-   never hardcode colors/sizes in components.
-   ============================================ */
+   Einn staður fyrir alla liti, leturgerðir og stærðir.
+   Components nota ALLTAF þessar breytur — aldrei harðkóðað.
+   ============================================================ */
 
 :root {
-  /* --- Colors --- */
-  --color-primary: #2563eb;
-  --color-primary-hover: #1d4ed8;
-  --color-primary-light: #dbeafe;
+  /* --- Leturgerðir ---
+     IBM Plex Sans: fyrirsagnir og UI element
+     Avenir Next: meginmál (innbyggt í macOS/Office365, fallback á IBM Plex Sans)
+  */
+  --font-heading: "IBM Plex Sans", "Avenir Next", "Avenir", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Avenir Next Pro", "Avenir Next", "Avenir", "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
 
-  --color-background: #f3f4f6;
+  /* --- Vörumerkislitirnir ---
+     Pantone 2728  #4743F7 — aðalblár
+     Pantone 2756  #040B60 — dökk navy
+     #F0F2F2              — bakgrunnur
+     Pantone 7451  #87A1FF — ljós blár
+     Pantone 353   #70F9AE — grænn accent
+  */
+  --color-brand-primary: #4743f7;
+  --color-brand-navy: #040b60;
+  --color-brand-light-blue: #87a1ff;
+  --color-brand-green: #70f9ae;
+  --color-brand-background: #f0f2f2;
+
+  /* --- UI litir (nota vörumerkislitina sem grunn) --- */
+  --color-primary: var(--color-brand-primary);
+  --color-primary-hover: #3835d4;
+  --color-primary-light: #ededfe;
+
+  --color-background: var(--color-brand-background);
   --color-surface: #ffffff;
-  --color-surface-hover: #f9fafb;
+  --color-surface-hover: #f5f5f8;
 
-  --color-text: #111827;
-  --color-text-secondary: #6b7280;
+  --color-text: var(--color-brand-navy);
+  --color-text-secondary: #4b5563;
   --color-text-muted: #9ca3af;
 
-  --color-border: #e5e7eb;
-  --color-border-light: #f3f4f6;
+  --color-border: #e2e2ea;
+  --color-border-light: #f0f2f2;
 
-  /* Status colors */
-  --color-status-open: #16a34a;
-  --color-status-open-bg: #f0fdf4;
-  --color-status-waiting: #d97706;
-  --color-status-waiting-bg: #fffbeb;
-  --color-status-closed: #7c3aed;
-  --color-status-closed-bg: #f5f3ff;
-
+  /* --- Stöðulitirnir --- */
   --color-error: #dc2626;
   --color-error-bg: #fef2f2;
   --color-success: #16a34a;
   --color-success-bg: #f0fdf4;
   --color-warning: #d97706;
   --color-warning-bg: #fffbeb;
-
-  /* --- Typography --- */
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 
   /* --- Border radius --- */
   --radius-sm: 0.25rem;
@@ -50,8 +59,8 @@
   --radius-xl: 1rem;
 
   /* --- Shadows --- */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-sm: 0 1px 2px rgba(4, 11, 96, 0.06);
+  --shadow-md: 0 4px 6px rgba(4, 11, 96, 0.08);
 
   /* --- Sidebar --- */
   --sidebar-width: 240px;
@@ -69,4 +78,13 @@
 .nav-scroll::-webkit-scrollbar-thumb {
   background: var(--color-border);
   border-radius: 99px;
+}
+/* Allt notar body font by default */
+* {
+  font-family: var(--font-body);
+}
+
+/* Fyrirsagnir nota heading font */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
 }

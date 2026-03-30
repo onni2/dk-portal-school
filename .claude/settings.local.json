@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "Bash(git fetch:*)",
+      "Bash(git checkout:*)",
+      "Bash(curl -s -H \"Authorization: Bearer edbbac2c-77de-4312-806d-783e71d277e2\" \"https://api.dkplus.is/api/v1/Product/page/1/5\")",
+      "Bash(curl -s -H \"Authorization: Bearer edbbac2c-77de-4312-806d-783e71d277e2\" \"https://api.dkplus.is/api/v1/Product/dkl-2750\")",
+      "Bash(curl -s -H \"Authorization: Bearer edbbac2c-77de-4312-806d-783e71d277e2\" \"https://api.dkplus.is/api/v1/Product/page/1/5?categoryId=5\")",
+      "Bash(curl -s -H \"Authorization: Bearer edbbac2c-77de-4312-806d-783e71d277e2\" \"https://api.dkplus.is/api/v1/Product?group=grunnur\")",
+      "Bash(curl -s -H \"Authorization: Bearer edbbac2c-77de-4312-806d-783e71d277e2\" \"https://api.dkplus.is/api/v1/ProductCategory\")",
+      "Bash(python3 -m json.tool)",
+      "Bash(curl -s -H 'Authorization: Bearer edbbac2c-77de-4312-806d-783e71d277e2' https://api.dkplus.is/api/v1/ProductCategory)",
+      "Bash(curl -s -H \"Authorization: Bearer edbbac2c-77de-4312-806d-783e71d277e2\" \"https://api.dkplus.is/api/v1/sales/invoice/page/1/100?customer=9999999999&includeLines=true&createdAfter=2026-02-01&createdBefore=2026-02-28\")",
+      "Bash(python -m json.tool)",
+      "Bash(curl -s -H 'Authorization: Bearer edbbac2c-77de-4312-806d-783e71d277e2' \"https://api.dkplus.is/api/v1/sales/invoice/page/1/100?customer=9999999999&includeLines=true&createdAfter=2026-02-01&createdBefore=2026-02-28\")",
+      "Bash(curl -s -H \"Authorization: Bearer edbbac2c-77de-4312-806d-783e71d277e2\" \"https://api.dkplus.is/api/v1/sales/invoice/page/1/10?customer=9999999999&includeLines=true\")",
+      "Bash(curl -s -H \"Authorization: Bearer edbbac2c-77de-4312-806d-783e71d277e2\" \"https://api.dkplus.is/api/v1/Product/page/1/500\")",
+      "Bash(npx tsc:*)",
+      "Bash(npx eslint:*)",
+      "Bash(xargs grep:*)",
+      "Bash(xargs sed:*)",
+      "Bash(grep -v \"^$\")"
+    ]
+  }
+}

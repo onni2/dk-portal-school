@@ -46,7 +46,7 @@ export function Layout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-[var(--color-background)] text-[var(--color-text)]">
+    <div className="flex h-screen flex-col bg-(--color-background) text-(--color-text)">
       {/* Header */}
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-surface)]">
         <div className="flex w-[var(--sidebar-width)] shrink-0 items-center justify-between px-4">
@@ -77,91 +77,89 @@ export function Layout({ children }: { children: ReactNode }) {
 
             {navItems.map((item) => {
               const hasChildren = !!item.children?.length;
-              const isActive = hasChildren
-                ? item.children!.some((child) => currentPath === child.to)
-                : item.to === "/"
-                  ? currentPath === "/"
-                  : currentPath.startsWith(item.to);
-              const isOpen = openItems.includes(item.to);
+                const isActive = hasChildren
+                  ? item.children!.some((child) => currentPath.startsWith(child.to))
+                  : item.to === "/"
+                    ? currentPath === "/"
+                    : currentPath.startsWith(item.to);
+                const isOpen = openItems.includes(item.to);
 
-              return (
-                <div key={item.to}>
-                  {/* Top-level item */}
-                  {hasChildren ? (
-                    <button
-                      onClick={() => toggleItem(item.to)}
-                      className={cn(
-                        "flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-[var(--color-surface-hover)]",
-                        isActive
-                          ? "text-[var(--color-primary)]"
-                          : "text-[var(--color-text)] hover:bg-[var(--color-surface-hover)]",
-                      )}
-                    >
-                      {item.label}
-                      <svg
+                return (
+                  <div key={item.to}>
+                    {hasChildren ? (
+                      <button
+                        onClick={() => toggleItem(item.to)}
                         className={cn(
-                          "h-3 w-3 shrink-0 text-[var(--color-text-secondary)] transition-transform duration-200",
-                          isOpen && "rotate-180",
+                          "flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-[var(--color-surface-hover)]",
+                          isActive
+                            ? "text-[var(--color-primary)]"
+                            : "text-[var(--color-text)]",
                         )}
-                        viewBox="0 0 10 6"
-                        fill="none"
                       >
-                        <path
-                          d="M1 1l4 4 4-4"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </button>
-                  ) : (
-                    <Link
-                      to={item.to}
-                      className={cn(
-                        "flex items-center rounded-xl px-3 py-2 text-sm font-medium transition-colors",
-                        isActive
-                          ? "text-[var(--color-primary)]"
-                          : "text-[var(--color-text)] hover:bg-[var(--color-surface-hover)]",
-                      )}
-                    >
-                      {item.label}
-                    </Link>
-                  )}
+                        {item.label}
+                        <svg
+                          className={cn(
+                            "h-3 w-3 shrink-0 text-[var(--color-text-secondary)] transition-transform duration-200",
+                            isOpen && "rotate-180",
+                          )}
+                          viewBox="0 0 10 6"
+                          fill="none"
+                        >
+                          <path
+                            d="M1 1l4 4 4-4"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </button>
+                    ) : (
+                      <Link
+                        to={item.to}
+                        className={cn(
+                          "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                          isActive
+                            ? "text-[var(--color-primary)]"
+                            : "text-[var(--color-text)] hover:bg-[var(--color-surface-hover)]",
+                        )}
+                      >
+                        {item.label}
+                      </Link>
+                    )}
 
-                  {/* Sub-items */}
-                  {hasChildren && (
-                    <div
-                      className={cn(
-                        "overflow-hidden transition-all duration-300 ease-in-out",
-                        isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0",
-                      )}
-                    >
-                      <div className="mt-0.5 flex flex-col">
-                      {item.children!.map((child) => {
-                        const childActive = currentPath === child.to;
-                        return (
-                          <Link
-                            key={child.to}
-                            to={child.to}
-                            className={cn(
-                              "flex items-center gap-2 rounded-lg py-2 pl-8 pr-3 text-[13px] transition-colors",
-                              childActive
-                                ? "font-medium text-[var(--color-primary)]"
-                                : "text-[var(--color-text)] hover:bg-[var(--color-surface-hover)]",
-                            )}
-                          >
-                            <span className={cn("text-xs", childActive ? "text-[var(--color-primary)]" : "text-[var(--color-text-muted)]")}>•</span>
-                            {child.label}
-                          </Link>
-                        );
-                      })}
+                    {/* Sub-items with animated dropdown and left border line */}
+                    {hasChildren && (
+                      <div
+                        className={cn(
+                          "overflow-hidden transition-all duration-300 ease-in-out",
+                          isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0",
+                        )}
+                      >
+                        <div className="ml-3 mt-1 flex flex-col gap-1 border-l border-[var(--color-border)] pl-3">
+                          {item.children!.map((child) => {
+                            const childActive = currentPath.startsWith(child.to);
+                            return (
+                              <Link
+                                key={child.to}
+                                to={child.to}
+                                className={cn(
+                                  "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                                  childActive
+                                    ? "text-[var(--color-primary)]"
+                                    : "text-[var(--color-text)] hover:bg-[var(--color-surface-hover)]",
+                                )}
+                              >
+                                {child.label}
+                              </Link>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                    )}
+                  </div>
+                );
+              })}
             </nav>
           </div>
 
