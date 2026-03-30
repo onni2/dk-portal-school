@@ -46,6 +46,32 @@ const SEED_USERS = [
   // },
 ];
 
+const SEED_COMPANIES = [
+  { id: "1001nott",  name: "1001 Nott" },
+  { id: "akurey",    name: "Akurey ehf." },
+  { id: "bokhald",   name: "Bokhald ehf." },
+];
+
+const SEED_COMPANY_USERS = [
+  // 1001 Nott — owner + one staff member
+  { id: "cu-1", username: "nott.admin",  password: "Nott1234!", email: "admin@1001nott.is",  name: "Björn Gunnarsson",   role: "admin",    status: "active", must_reset_password: true,  kennitala: "1111111119", company_id: "1001nott" },
+  { id: "cu-2", username: "nott.staff",  password: "Staff123!",  email: "staff@1001nott.is",  name: "Sigrún Ólafsdóttir", role: "standard", status: "active", must_reset_password: true,  kennitala: "2222222229", company_id: "1001nott" },
+  // Akurey
+  { id: "cu-3", username: "akurey.admin", password: "Akurey1!",  email: "admin@akurey.is",   name: "Gunnar Sigurðsson",  role: "admin",    status: "active", must_reset_password: true,  kennitala: "3333333339", company_id: "akurey" },
+  // Bokhald
+  { id: "cu-4", username: "bokhald.admin", password: "Bokhald1!", email: "admin@bokhald.is", name: "Helga Magnúsdóttir", role: "admin",    status: "active", must_reset_password: true,  kennitala: "4444444449", company_id: "bokhald" },
+];
+
+const SEED_POS_SERVICES = [
+  { id: "ps-1", company_id: "1001nott", name: "1001Nott", display: "dkPos service - 1001Nott", server: "AKUREY-WS-01", state: "stopped", mode: "auto",     path: "C:\\dkPos\\1001Nott\\1001Nott\\dkPosService.exe" },
+  { id: "ps-2", company_id: "akurey",   name: "Akurey",   display: "dkPos service - Akurey",   server: "AKUREY-WS-02", state: "running", mode: "auto",     path: "C:\\dkPos\\Akurey\\Akurey\\dkPosService.exe" },
+];
+
+const SEED_POS_REST = [
+  { id: "pr-1", company_id: "1001nott", name: "1001Nott", display: "dkPos REST server - 1001Nott", server: "AKUREY-REST-01", state: "stopped", mode: "disabled", path: "C:\\dkPos\\1001Nott\\1001Nott\\dkRESTServer.exe" },
+  { id: "pr-2", company_id: "akurey",   name: "Akurey",   display: "dkPos REST server - Akurey",   server: "AKUREY-REST-02", state: "running", mode: "auto",     path: "C:\\dkPos\\Akurey\\Akurey\\dkRESTServer.exe" },
+];
+
 const SEED_HOSTING_ACCOUNTS = [
   { id: "ha-1", company_id: "hr", username: "fyr.agusta",  display_name: "fyr.agusta" },
   { id: "ha-2", company_id: "hr", username: "fyr.bjorn",   display_name: "fyr.bjorn" },
@@ -103,6 +129,76 @@ async function migrate() {
       created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS pos_services (
+      id         TEXT PRIMARY KEY,
+      company_id TEXT NOT NULL REFERENCES companies(id),
+      name       TEXT NOT NULL,
+      display    TEXT NOT NULL,
+      server     TEXT NOT NULL,
+      state      TEXT NOT NULL DEFAULT 'stopped',
+      mode       TEXT NOT NULL DEFAULT 'auto',
+      path       TEXT NOT NULL
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS pos_rest (
+      id         TEXT PRIMARY KEY,
+      company_id TEXT NOT NULL REFERENCES companies(id),
+      name       TEXT NOT NULL,
+      display    TEXT NOT NULL,
+      server     TEXT NOT NULL,
+      state      TEXT NOT NULL DEFAULT 'stopped',
+      mode       TEXT NOT NULL DEFAULT 'auto',
+      path       TEXT NOT NULL
+    )
+  `);
+
+  // Ensure mock companies exist (idempotent)
+  for (const company of SEED_COMPANIES) {
+    await pool.query(
+      `INSERT INTO companies (id, name) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+      [company.id, company.name],
+    );
+  }
+
+  // Seed mock company users (idempotent)
+  for (const user of SEED_COMPANY_USERS) {
+    const hashed = await bcrypt.hash(user.password, 10);
+    await pool.query(
+      `INSERT INTO portal_users
+        (id, username, password, email, name, role, status, must_reset_password, kennitala, company_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+       ON CONFLICT DO NOTHING`,
+      [user.id, user.username, hashed, user.email, user.name,
+       user.role, user.status, user.must_reset_password, user.kennitala, user.company_id],
+    );
+    const isAdmin = user.role === "admin";
+    await pool.query(
+      `INSERT INTO user_permissions (user_id, invoices, subscription, hosting, pos, dk_one, dk_plus, timeclock, users)
+       VALUES ($1, $2, $2, $2, $2, $2, $2, $2, $2)
+       ON CONFLICT DO NOTHING`,
+      [user.id, isAdmin],
+    );
+  }
+
+  // Seed POS data (idempotent)
+  for (const entry of SEED_POS_SERVICES) {
+    await pool.query(
+      `INSERT INTO pos_services (id, company_id, name, display, server, state, mode, path)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT DO NOTHING`,
+      [entry.id, entry.company_id, entry.name, entry.display, entry.server, entry.state, entry.mode, entry.path],
+    );
+  }
+  for (const entry of SEED_POS_REST) {
+    await pool.query(
+      `INSERT INTO pos_rest (id, company_id, name, display, server, state, mode, path)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT DO NOTHING`,
+      [entry.id, entry.company_id, entry.name, entry.display, entry.server, entry.state, entry.mode, entry.path],
+    );
+  }
 
   // Sync HR company dk_token from env on every startup
   if (process.env.DK_TOKEN) {
