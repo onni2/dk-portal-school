@@ -6,6 +6,7 @@ const seed = require("./seed");
 const authRouter = require("./routes/auth");
 const usersRouter = require("./routes/users");
 const timeclockRouter = require("./routes/timeclock");
+const companiesRouter = require("./routes/companies");
 
 const app = express();
 
@@ -29,6 +30,7 @@ app.use((req, res, next) => {
 app.use("/auth", authRouter);
 app.use("/users", usersRouter);
 app.use("/timeclock", timeclockRouter);
+app.use("/companies", companiesRouter);
 
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
