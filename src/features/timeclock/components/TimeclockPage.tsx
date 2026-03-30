@@ -7,10 +7,7 @@ import { Suspense } from "react";
 import { TimeclockSettingsCard } from "./TimeclockSettingsCard";
 import { IpWhitelistPanel } from "./IpWhitelistPanel";
 import { EmployeePhonesPanel } from "./EmployeePhonesPanel";
-import {
-  SettingsSkeleton,
-  PanelSkeleton,
-} from "./TimeclockSkeletons";
+import { SettingsSkeleton, PanelSkeleton } from "./TimeclockSkeletons";
 
 export function TimeclockPage() {
   return (

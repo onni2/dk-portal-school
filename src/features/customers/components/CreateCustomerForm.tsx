@@ -54,17 +54,15 @@ export function CreateCustomerForm() {
   }
 
   if (!open) {
-    return (
-      <Button onClick={() => setOpen(true)}>+ Nýr viðskiptavinur</Button>
-    );
+    return <Button onClick={() => setOpen(true)}>+ Nýr viðskiptavinur</Button>;
   }
 
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-6"
+      className="rounded-[var(--radius-lg)] border border-(--color-border) bg-(--color-surface) p-6"
     >
-      <h2 className="mb-4 text-lg font-semibold text-[var(--color-text)]">
+      <h2 className="mb-4 text-lg font-semibold text-(--color-text)">
         Nýr viðskiptavinur
       </h2>
 
@@ -123,14 +121,14 @@ export function CreateCustomerForm() {
       </div>
 
       {mutation.isError && (
-        <div className="mt-4 rounded-[var(--radius-md)] bg-[var(--color-error-bg)] px-4 py-3 text-sm text-[var(--color-error)]">
+        <div className="mt-4 rounded-[var(--radius-md)] bg-(--color-error-bg) px-4 py-3 text-sm text-(--color-error)">
           Villa:{" "}
           {(mutation.error as { message?: string })?.message ?? "Óþekkt villa"}
         </div>
       )}
 
       {mutation.isSuccess && (
-        <div className="mt-4 rounded-[var(--radius-md)] bg-[var(--color-success-bg)] px-4 py-3 text-sm text-[var(--color-success)]">
+        <div className="mt-4 rounded-[var(--radius-md)] bg-(--color-success-bg) px-4 py-3 text-sm text-(--color-success)">
           Viðskiptavinur stofnaður!
         </div>
       )}

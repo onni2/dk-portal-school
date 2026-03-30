@@ -21,9 +21,11 @@ export async function fetchCustomerTransactions(): Promise<
  *
  */
 export async function fetchInvoicePdf(invoiceNumber: string): Promise<void> {
-  const blob = await apiClient.getBlob(
-    `/sales/invoice/${invoiceNumber}/pdf`,
-  );
+  const blob = await apiClient.getBlob(`/sales/invoice/${invoiceNumber}/pdf`);
   const url = URL.createObjectURL(blob);
-  window.open(url, "_blank");
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `reikningur-${invoiceNumber}.pdf`;
+  a.click();
+  URL.revokeObjectURL(url);
 }

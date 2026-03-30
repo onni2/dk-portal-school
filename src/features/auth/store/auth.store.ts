@@ -52,6 +52,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   clearAuth: () => {
     localStorage.removeItem(STORAGE_KEY_USER);
     localStorage.removeItem(STORAGE_KEY_TOKEN);
+    localStorage.removeItem("dk-company-token");
     set({ user: null, token: null, isAuthenticated: false });
   },
 

@@ -20,8 +20,11 @@ import {
   rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import { useAuthStore } from "@/features/auth/store/auth.store";
+import { useRoleStore } from "@/features/licence/store/role.store";
 import { ALL_CARDS, useDashboardLayout } from "../store/dashboard.store";
 import { SortableDashboardCard } from "./DashboardCard";
+import { DEFAULT_PERMISSIONS } from "@/features/users/api/permissions.api";
+import { useUserPermissions } from "@/features/users/api/users.queries";
 
 /**
  * The "+" card at the end of the grid — click to add or remove cards.
@@ -29,11 +32,15 @@ import { SortableDashboardCard } from "./DashboardCard";
 function AddCardTile() {
   const { cardIds, addCard, removeCard } = useDashboardLayout();
   const [open, setOpen] = useState(false);
-  const isAdmin = useAuthStore((s) => s.user?.role === "admin");
+  const user = useAuthStore((s) => s.user);
+  const role = useRoleStore((s) => s.role);
+  const { data: userPermissions = DEFAULT_PERMISSIONS } = useUserPermissions(user?.id);
 
-  const availableCards = ALL_CARDS.filter(
-    (card) => !card.adminOnly || isAdmin,
-  );
+  const availableCards = ALL_CARDS.filter((card) => {
+    if (!card.permission) return true;
+    if (role === "cop") return true;
+    return userPermissions[card.permission] === true;
+  });
 
   return (
     <div
@@ -58,7 +65,7 @@ function AddCardTile() {
               Loka
             </button>
           </div>
-          <div className="flex flex-col gap-1">
+          <div className="flex max-h-48 flex-col gap-1 overflow-y-auto">
             {availableCards.map((card) => {
               const isAdded = cardIds.includes(card.id);
               return (
@@ -92,7 +99,9 @@ function AddCardTile() {
  */
 export function DashboardGrid() {
   const { cardIds, setCardIds } = useDashboardLayout();
-  const isAdmin = useAuthStore((s) => s.user?.role === "admin");
+  const user = useAuthStore((s) => s.user);
+  const role = useRoleStore((s) => s.role);
+  const { data: userPermissions = DEFAULT_PERMISSIONS } = useUserPermissions(user?.id);
 
   const sensors = useSensors(useSensor(PointerSensor));
 
@@ -111,7 +120,11 @@ export function DashboardGrid() {
   const visibleCards = cardIds
     .map((id) => ALL_CARDS.find((c) => c.id === id))
     .filter(Boolean)
-    .filter((card) => !card!.adminOnly || isAdmin) as typeof ALL_CARDS;
+    .filter((card) => {
+      if (!card!.permission) return true;
+      if (role === "cop") return true;
+      return userPermissions[card!.permission] === true;
+    }) as typeof ALL_CARDS;
 
   return (
     <div>

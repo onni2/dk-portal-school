@@ -16,9 +16,9 @@ const UUID_RE =
  *
  */
 function authHeaders(): Record<string, string> {
-  // Only use the stored token if it looks like a real UUID — guards against
-  // stale mock tokens (e.g. "mock-token-u1-...") that the real API rejects.
-  const stored = localStorage.getItem("dk-auth-token");
+  // Use the company DK Plus token (UUID) for api.dkplus.is calls.
+  // Falls back to VITE_API_TOKEN for local dev without a backend.
+  const stored = localStorage.getItem("dk-company-token");
   const token =
     (stored && UUID_RE.test(stored) ? stored : null) ??
     import.meta.env.VITE_API_TOKEN ??

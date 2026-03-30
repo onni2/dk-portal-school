@@ -1,14 +1,14 @@
 /**
- * Fetches the company licence from the API to find out which modules are enabled.
- * Uses: @/shared/api/client, ../types/licence.types
+ * Fetches the company licence — currently returns mock data.
+ * To connect to the real API: replace the mock body with `return apiClient.get<LicenceResponse>("/company/licence");`
+ * Uses: @/mocks/handlers, @/mocks/licence.mock, ../types/licence.types
  * Exports: fetchLicence
  */
-import { apiClient } from "@/shared/api/client";
+import { delay } from "@/mocks/handlers";
+import { MOCK_LICENCE } from "@/mocks/licence.mock";
 import type { LicenceResponse } from "../types/licence.types";
 
-/**
- *
- */
 export async function fetchLicence(): Promise<LicenceResponse> {
-  return apiClient.get<LicenceResponse>("/company/licence");
+  await delay(300);
+  return MOCK_LICENCE;
 }

@@ -186,9 +186,7 @@ async function pollOnce(
   });
   if (!res.ok) throw new Error("Auðkenning mistókst — reyndu aftur");
 
-  const data = (await res.json()) as
-    | { tokenId: string }
-    | AudkenniSession;
+  const data = (await res.json()) as { tokenId: string } | AudkenniSession;
 
   if ("tokenId" in data && data.tokenId) {
     return { status: "success", tokenId: data.tokenId };
@@ -282,7 +280,9 @@ function buildStep2Callbacks(
     if (inputName && inputName in values) {
       return {
         ...cb,
-        input: [{ name: inputName, value: values[inputName] as string | number }],
+        input: [
+          { name: inputName, value: values[inputName] as string | number },
+        ],
       };
     }
     return cb;
