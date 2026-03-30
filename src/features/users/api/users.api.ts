@@ -1,47 +1,36 @@
 /**
- * Portal user management: invite and remove users from the local store.
- * Uses localStorage via the portal users store — no backend required.
- * Uses: ../store/users.store, ../types/users.types
- * Exports: fetchUsers, inviteUser, updateUser, removeUser
+ * Portal user management: invite, remove, update, and password reset.
+ * All operations call the mock backend API (Express + PostgreSQL via Neon).
+ * Uses: @/shared/api/mockClient, ../types/users.types
+ * Exports: fetchUsers, inviteUser, updateUser, removeUser, resetPassword
  */
-import { usePortalUsersStore } from "../store/users.store";
+import { mockClient } from "@/shared/api/mockClient";
 import type { InviteUserInput, PortalUser } from "../types/users.types";
 
+interface InviteResponse {
+  user: PortalUser;
+  generatedPassword: string;
+}
+
 export async function fetchUsers(): Promise<PortalUser[]> {
-  return usePortalUsersStore.getState().users;
+  return mockClient.get<PortalUser[]>("/users");
 }
 
 export async function inviteUser(
   input: InviteUserInput,
 ): Promise<{ user: PortalUser; generatedPassword: string }> {
-  const newUser: PortalUser = {
-    id: crypto.randomUUID(),
-    username: input.username,
-    email: input.email,
-    name: input.name,
-    role: input.role,
-    password: "dk",
-    status: "active",
-    mustResetPassword: true,
-    createdAt: new Date().toISOString(),
-    kennitala: input.kennitala,
-  };
-
-  usePortalUsersStore.getState().addUser(newUser);
-
-  // Password is empty — user sets their own in Settings on first login
-  return { user: newUser, generatedPassword: "" };
+  return mockClient.post<InviteResponse>("/users/invite", input);
 }
 
 export async function updateUser(
   id: string,
-  data: Partial<PortalUser>,
+  data: { kennitala?: string; phone?: string },
 ): Promise<void> {
-  usePortalUsersStore.getState().updateUser(id, data);
+  return mockClient.patch<void>(`/users/${id}`, data);
 }
 
 export async function removeUser(id: string): Promise<void> {
-  usePortalUsersStore.getState().removeUser(id);
+  return mockClient.delete<void>(`/users/${id}`);
 }
 
 export async function resetPassword(
@@ -49,14 +38,8 @@ export async function resetPassword(
   newPassword: string,
   currentPassword?: string,
 ): Promise<void> {
-  const { users, updateUser } = usePortalUsersStore.getState();
-  const user = users.find((u) => u.id === userId);
-  if (!user) throw new Error("Notandi finnst ekki");
-
-  // Verify current password only if one is already set
-  if (user.password && currentPassword !== user.password) {
-    throw new Error("Rangt núverandi lykilorð");
-  }
-
-  updateUser(userId, { password: newPassword, mustResetPassword: false });
+  return mockClient.post<void>(`/users/${userId}/reset-password`, {
+    currentPassword,
+    newPassword,
+  });
 }
