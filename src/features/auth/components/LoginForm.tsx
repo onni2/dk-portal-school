@@ -94,11 +94,14 @@ export function LoginForm() {
     }
   }
 
-  async function handleKortSubmit() {
+  async function handleKortSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
     setError("");
     setLoading(true);
+    setPolling(false);
+    setPollCount(0);
     try {
-      await initiateAudkenniLogin("card", "", () => {
+      await initiateAudkenniLogin("card", undefined, () => {
         setPolling(true);
         setPollCount((n) => n + 1);
       });
@@ -108,6 +111,7 @@ export function LoginForm() {
         err instanceof Error ? err.message : "Tenging við Auðkenni mistókst",
       );
       setLoading(false);
+      setPolling(false);
     }
   }
 
@@ -290,65 +294,66 @@ export function LoginForm() {
             )}
 
             {activeTab === "kort" && (
-              <div className="flex flex-col gap-4">
-                {/* Security notice row */}
-                <div className="flex items-center justify-between rounded-md border border-(--color-border) px-3 py-2">
-                  <span className="text-sm text-(--color-text-secondary)">
-                    Næsta skref fer fram hjá auðkennisþjónustu.
-                  </span>
-                  <span className="ml-3 rounded border border-(--color-border) px-2 py-0.5 text-xs font-semibold text-(--color-text-muted)">
-                    ÖRUGGT
-                  </span>
-                </div>
-
-                {/* Preparation info box */}
-                <div className="flex gap-3 rounded-md border border-amber-200 bg-amber-50 p-4">
-                  <span className="mt-0.5 text-amber-500">
+              <>
+                {polling ? (
+                  <div className="flex flex-col items-center gap-4 py-4 text-center">
                     <svg
+                      className="h-10 w-10 animate-spin text-(--color-primary)"
                       xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
                       fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+                      viewBox="0 0 24 24"
                     >
-                      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                      <line x1="12" y1="9" x2="12" y2="13" />
-                      <line x1="12" y1="17" x2="12.01" y2="17" />
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                     </svg>
-                  </span>
-                  <div>
-                    <p className="text-sm font-semibold text-(--color-text)">
-                      Undirbúningur
+                    <p className="text-sm font-medium text-(--color-text)">
+                      Nexus Smart ID er að vinna...
                     </p>
-                    <p className="mt-1 text-sm text-(--color-text-secondary)">
-                      Gakktu úr skugga um að kortalesari sé tengdur og skilríki
-                      séu í lesara áður en þú heldur áfram.
+                    <p className="text-xs text-(--color-text-muted)">
+                      Staðfestu auðkenningu í Nexus Smart ID Desktop appinu
                     </p>
+                    {error && (
+                      <p className="text-sm text-(--color-error)">{error}</p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={handleCancel}
+                      className="text-sm text-(--color-text-muted) underline underline-offset-2 hover:text-(--color-text-secondary)"
+                    >
+                      Hætta við
+                    </button>
                   </div>
-                </div>
-
-                {error && (
-                  <p className="text-sm text-(--color-error)">{error}</p>
+                ) : (
+                  <form onSubmit={handleKortSubmit} className="flex flex-col gap-4">
+                    {/* Preparation info box */}
+                    <div className="flex gap-3 rounded-md border border-amber-200 bg-amber-50 p-4">
+                      <span className="mt-0.5 text-amber-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                          <line x1="12" y1="9" x2="12" y2="13" />
+                          <line x1="12" y1="17" x2="12.01" y2="17" />
+                        </svg>
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold text-(--color-text)">Undirbúningur</p>
+                        <p className="mt-1 text-sm text-(--color-text-secondary)">
+                          Gakktu úr skugga um að kortalesari sé tengdur og skilríki séu í lesara áður en þú heldur áfram.
+                        </p>
+                      </div>
+                    </div>
+                    {error && (
+                      <p className="text-sm text-(--color-error)">{error}</p>
+                    )}
+                    <Button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full"
+                    >
+                      {loading ? "Tengist Auðkenni..." : "Halda áfram"}
+                    </Button>
+                  </form>
                 )}
-
-                <Button
-                  type="button"
-                  disabled={loading}
-                  onClick={handleKortSubmit}
-                  className="w-full"
-                >
-                  {loading ? "Tengist Auðkenni..." : "Halda áfram"}
-                </Button>
-
-                <p className="text-xs text-(--color-text-muted)">
-                  Þú gætir verið beðinn um að velja skilríki eða slá inn PIN í
-                  kerfisglugga.
-                </p>
-              </div>
+              </>
             )}
           </div>
         </div>
