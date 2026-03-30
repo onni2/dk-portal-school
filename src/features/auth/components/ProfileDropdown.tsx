@@ -47,7 +47,7 @@ export function ProfileDropdown({ user, onLogout }: ProfileDropdownProps) {
         {/* Person icon */}
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-4 w-4 text-[var(--color-primary)]"
+          className="h-4 w-4 text-(--color-primary)"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -63,7 +63,7 @@ export function ProfileDropdown({ user, onLogout }: ProfileDropdownProps) {
         <svg
           xmlns="http://www.w3.org/2000/svg"
           className={cn(
-            "h-3 w-3 transition-transform text-[var(--color-text-muted)]",
+            "h-3 w-3 transition-transform text-(--color-text-muted)",
             open && "rotate-180",
           )}
           viewBox="0 0 20 20"
@@ -79,19 +79,19 @@ export function ProfileDropdown({ user, onLogout }: ProfileDropdownProps) {
 
       {/* Dropdown panel */}
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg">
+        <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-[var(--radius-lg)] border border-(--color-border) bg-(--color-surface) shadow-lg">
           <div className="p-4">
             {/* Avatar + name + kennitala */}
             <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary)] text-sm font-bold text-white">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-(--color-primary) text-sm font-bold text-white">
                 {initial}
               </div>
               <div>
-                <p className="font-semibold text-[var(--color-text)]">
+                <p className="font-semibold text-(--color-text)">
                   {user.name}
                 </p>
                 {user.kennitala && (
-                  <p className="text-xs text-[var(--color-text-muted)]">
+                  <p className="text-xs text-(--color-text-muted)">
                     {user.kennitala}
                   </p>
                 )}
@@ -100,7 +100,7 @@ export function ProfileDropdown({ user, onLogout }: ProfileDropdownProps) {
 
             {/* Language selector */}
             <div className="mb-4">
-              <p className="mb-2 text-xs text-[var(--color-text-secondary)]">
+              <p className="mb-2 text-xs text-(--color-text-secondary)">
                 Velja annað tungumál
               </p>
               <div className="flex gap-2">
@@ -109,8 +109,8 @@ export function ProfileDropdown({ user, onLogout }: ProfileDropdownProps) {
                   className={cn(
                     "rounded-[var(--radius-md)] border px-3 py-1 text-sm font-medium transition-colors",
                     lang === "IS"
-                      ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white"
-                      : "border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)]",
+                      ? "border-(--color-primary) bg-(--color-primary) text-white"
+                      : "border-(--color-border) text-(--color-text-secondary) hover:bg-(--color-surface-hover)",
                   )}
                 >
                   IS
@@ -120,8 +120,8 @@ export function ProfileDropdown({ user, onLogout }: ProfileDropdownProps) {
                   className={cn(
                     "rounded-[var(--radius-md)] border px-3 py-1 text-sm font-medium transition-colors",
                     lang === "EN"
-                      ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white"
-                      : "border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)]",
+                      ? "border-(--color-primary) bg-(--color-primary) text-white"
+                      : "border-(--color-border) text-(--color-text-secondary) hover:bg-(--color-surface-hover)",
                   )}
                 >
                   EN
@@ -135,7 +135,7 @@ export function ProfileDropdown({ user, onLogout }: ProfileDropdownProps) {
                 setOpen(false);
                 onLogout();
               }}
-              className="w-full rounded-[var(--radius-md)] bg-[var(--color-primary)] py-2 text-sm font-medium text-white transition-colors hover:bg-[var(--color-primary-hover)]"
+              className="w-full rounded-[var(--radius-md)] bg-(--color-primary) py-2 text-sm font-medium text-white transition-colors hover:bg-(--color-primary-hover)"
             >
               Útskrá
             </button>

@@ -22,7 +22,10 @@ export const Route = createFileRoute("/invoices/")({
  */
 function ReikningarPage() {
   return (
-    <PageTemplate title="Reikningar" description="Færslur viðskiptavina">
+    <PageTemplate
+      title="Reikningsyfirlit"
+      description="Reikningayfirlitiðsýnir upplýsingar um útgefna reikninga, greiðslustöðu og aðrar tengdar færslur. Til að sækja reikning sem PDF skaltu smella á reikninginn í listanum."
+    >
       <InvoiceFilters />
       <Suspense fallback={<LoadingSpinner />}>
         <TransactionTable />

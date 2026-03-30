@@ -47,7 +47,9 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 function RootComponent() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isLoginPage =
-    pathname === "/login" || pathname === "/callback";
+    pathname === "/login" ||
+    pathname === "/callback" ||
+    pathname.startsWith("/reset-password");
 
   if (isLoginPage) {
     return (
