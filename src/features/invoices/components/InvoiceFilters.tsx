@@ -92,7 +92,7 @@ export function InvoiceFilters() {
         <div className="relative w-64">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-muted)]"
+            className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-(--color-text-muted)"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -109,7 +109,7 @@ export function InvoiceFilters() {
             placeholder="Leita..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] py-1.5 pl-9 pr-3 text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-muted)]"
+            className="w-full rounded-[var(--radius-md)] border border-(--color-border) bg-(--color-surface) py-1.5 pl-9 pr-3 text-sm text-(--color-text) placeholder:text-(--color-text-muted)"
           />
         </div>
       </div>

@@ -11,7 +11,7 @@ export function DkPlusPage() {
       title="dkPlus"
       description="Yfirlit yfir dkPlus lausnina."
     >
-      <p className="text-[var(--color-text-secondary)]">Hér mun koma yfirlit yfir dkPlus.</p>
+      <p className="text-(--color-text-secondary)">Hér mun koma yfirlit yfir dkPlus.</p>
     </PageTemplate>
   );
 }

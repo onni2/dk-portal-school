@@ -11,7 +11,7 @@ export function ZohoPage() {
       title="Zoho mál"
       description="Yfirlit yfir sendar beiðnir og mál hjá DK þjónustudeild."
     >
-      <p className="text-[var(--color-text-secondary)]">Hér mun koma yfirlit yfir Zoho mál sem hafa verið send á hjalp@dk.is.</p>
+      <p className="text-(--color-text-secondary)">Hér mun koma yfirlit yfir Zoho mál sem hafa verið send á hjalp@dk.is.</p>
     </PageTemplate>
   );
 }

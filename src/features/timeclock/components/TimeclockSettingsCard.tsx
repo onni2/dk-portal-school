@@ -28,15 +28,15 @@ export function TimeclockSettingsCard() {
     <Card>
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h2 className="text-base font-semibold text-[var(--color-text)]">
+          <h2 className="text-base font-semibold text-(--color-text)">
             Stillingar
           </h2>
           <div className="group relative">
-            <span className="flex h-4 w-4 cursor-default items-center justify-center rounded-full border border-[var(--color-text-muted)] text-[10px] font-bold leading-none text-[var(--color-text-muted)]">
+            <span className="flex h-4 w-4 cursor-default items-center justify-center rounded-full border border-(--color-text-muted) text-[10px] font-bold leading-none text-(--color-text-muted)">
               i
             </span>
-            <div className="pointer-events-none absolute left-1/2 top-6 z-10 w-64 -translate-x-1/2 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-xs text-[var(--color-text-secondary)] opacity-0 shadow-md transition-opacity group-hover:opacity-100">
-              <p className="mb-1 font-semibold text-[var(--color-text)]">
+            <div className="pointer-events-none absolute left-1/2 top-6 z-10 w-64 -translate-x-1/2 rounded-[var(--radius-md)] border border-(--color-border) bg-(--color-surface) p-3 text-xs text-(--color-text-secondary) opacity-0 shadow-md transition-opacity group-hover:opacity-100">
+              <p className="mb-1 font-semibold text-(--color-text)">
                 Um stillingar
               </p>
               <p>
@@ -45,7 +45,7 @@ export function TimeclockSettingsCard() {
                 virkt, hvernig tímar eru slétttaðir og hvaða reiti starfsmenn
                 þurfa að fylla út þegar þeir stimpla sig inn.
               </p>
-              <p className="mt-1.5 text-[var(--color-text-muted)]">
+              <p className="mt-1.5 text-(--color-text-muted)">
                 Ekki er hægt að breyta þessum stillingum hér — þær eru stilltar
                 í DK.
               </p>
@@ -59,46 +59,46 @@ export function TimeclockSettingsCard() {
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
-          <p className="text-xs text-[var(--color-text-muted)]">Sléttun</p>
-          <p className="text-sm font-medium text-[var(--color-text)]">
+          <p className="text-xs text-(--color-text-muted)">Sléttun</p>
+          <p className="text-sm font-medium text-(--color-text)">
             {ROUND_FACTOR_LABELS[settings.RoundFactor] ?? settings.RoundFactor}
           </p>
         </div>
         <div>
-          <p className="text-xs text-[var(--color-text-muted)]">
+          <p className="text-xs text-(--color-text-muted)">
             Slétta dagvinnuinnslætti
           </p>
-          <p className="text-sm font-medium text-[var(--color-text)]">
+          <p className="text-sm font-medium text-(--color-text)">
             {settings.RoundUpDaytimeAlso ? "Já" : "Nei"}
           </p>
         </div>
         <div>
-          <p className="text-xs text-[var(--color-text-muted)]">Texti</p>
-          <p className="text-sm font-medium text-[var(--color-text)]">
+          <p className="text-xs text-(--color-text-muted)">Texti</p>
+          <p className="text-sm font-medium text-(--color-text)">
             {FIELD_LABELS[settings.Text] ?? settings.Text}
           </p>
         </div>
         <div>
-          <p className="text-xs text-[var(--color-text-muted)]">Verk</p>
-          <p className="text-sm font-medium text-[var(--color-text)]">
+          <p className="text-xs text-(--color-text-muted)">Verk</p>
+          <p className="text-sm font-medium text-(--color-text)">
             {FIELD_LABELS[settings.Project] ?? settings.Project}
           </p>
         </div>
         <div>
-          <p className="text-xs text-[var(--color-text-muted)]">Verkefni</p>
-          <p className="text-sm font-medium text-[var(--color-text)]">
+          <p className="text-xs text-(--color-text-muted)">Verkefni</p>
+          <p className="text-sm font-medium text-(--color-text)">
             {FIELD_LABELS[settings.Phase] ?? settings.Phase}
           </p>
         </div>
         <div>
-          <p className="text-xs text-[var(--color-text-muted)]">Verkliður</p>
-          <p className="text-sm font-medium text-[var(--color-text)]">
+          <p className="text-xs text-(--color-text-muted)">Verkliður</p>
+          <p className="text-sm font-medium text-(--color-text)">
             {FIELD_LABELS[settings.Task] ?? settings.Task}
           </p>
         </div>
       </div>
 
-      <p className="mt-4 text-xs text-[var(--color-text-muted)]">
+      <p className="mt-4 text-xs text-(--color-text-muted)">
         Stillingar eru lesnar úr DK og er ekki hægt að breyta þeim hér.
       </p>
     </Card>

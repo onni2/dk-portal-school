@@ -36,9 +36,9 @@ export function Layout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-[var(--color-background)] text-[var(--color-text)]">
+    <div className="flex h-screen flex-col bg-(--color-background) text-(--color-text)">
       {/* Header */}
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-surface)] px-6">
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-(--color-border) bg-(--color-surface) px-6">
         <div className="flex items-center gap-4">
           <Link to="/" className="flex items-center gap-2">
             <svg
@@ -68,20 +68,20 @@ export function Layout({ children }: { children: ReactNode }) {
                 </clipPath>
               </defs>
             </svg>
-            <span className="text-sm text-[var(--color-text-secondary)]">
+            <span className="text-sm text-(--color-text-secondary)">
               Mínar síður
             </span>
           </Link>
 
           {/* Company selector — placeholder, will be wired to real data */}
-          <div className="ml-4 rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-text-secondary)]">
+          <div className="ml-4 rounded-[var(--radius-md)] border border-(--color-border) px-3 py-1.5 text-sm text-(--color-text-secondary)">
             Fyrirtæki ehf. ▾
           </div>
         </div>
 
         <div className="flex items-center gap-3">
           {/* Bell icon — placeholder, no notifications yet */}
-          <button className="rounded-[var(--radius-md)] p-1.5 text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)]">
+          <button className="rounded-[var(--radius-md)] p-1.5 text-(--color-text-muted) transition-colors hover:bg-(--color-surface-hover) hover:text-(--color-text)">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-5 w-5"
@@ -104,9 +104,9 @@ export function Layout({ children }: { children: ReactNode }) {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <aside className="flex w-[var(--sidebar-width)] shrink-0 flex-col justify-between border-r border-[var(--color-border)] bg-[var(--color-surface)]">
+        <aside className="flex w-[var(--sidebar-width)] shrink-0 flex-col justify-between border-r border-(--color-border) bg-(--color-surface)">
           <nav className="flex flex-col gap-1 p-3">
-            <span className="mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+            <span className="mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-(--color-text-muted)">
               Valmynd
             </span>
             {navItems.map((item) => {
@@ -130,8 +130,8 @@ export function Layout({ children }: { children: ReactNode }) {
                       className={cn(
                         "flex w-full items-center justify-between rounded-[var(--radius-md)] px-3 py-2 text-left text-sm font-medium transition-colors",
                         hasActiveChild
-                          ? "bg-[var(--color-primary)] text-white"
-                          : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)]",
+                          ? "bg-(--color-primary) text-white"
+                          : "text-(--color-text-secondary) hover:bg-(--color-surface-hover) hover:text-(--color-text)",
                       )}
                     >
                       {item.label}
@@ -145,7 +145,7 @@ export function Layout({ children }: { children: ReactNode }) {
                       </span>
                     </button>
                     {isOpen && (
-                      <div className="ml-3 mt-1 flex flex-col gap-1 border-l border-[var(--color-border)] pl-3">
+                      <div className="ml-3 mt-1 flex flex-col gap-1 border-l border-(--color-border) pl-3">
                         {item.children.map((child) => {
                           const isChildActive = currentPath.startsWith(
                             child.to,
@@ -157,8 +157,8 @@ export function Layout({ children }: { children: ReactNode }) {
                               className={cn(
                                 "rounded-[var(--radius-md)] px-3 py-1.5 text-sm font-medium transition-colors",
                                 isChildActive
-                                  ? "bg-[var(--color-primary)] text-white"
-                                  : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)]",
+                                  ? "bg-(--color-primary) text-white"
+                                  : "text-(--color-text-secondary) hover:bg-(--color-surface-hover) hover:text-(--color-text)",
                               )}
                             >
                               {child.label}
@@ -178,8 +178,8 @@ export function Layout({ children }: { children: ReactNode }) {
                   className={cn(
                     "rounded-[var(--radius-md)] px-3 py-2 text-sm font-medium transition-colors",
                     isActive
-                      ? "bg-[var(--color-primary)] text-white"
-                      : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)]",
+                      ? "bg-(--color-primary) text-white"
+                      : "text-(--color-text-secondary) hover:bg-(--color-surface-hover) hover:text-(--color-text)",
                   )}
                 >
                   {item.label}
@@ -188,21 +188,21 @@ export function Layout({ children }: { children: ReactNode }) {
             })}
           </nav>
 
-          <div className="border-t border-[var(--color-border)] p-4">
+          <div className="border-t border-(--color-border) p-4">
             {import.meta.env.DEV && (
               <button
                 onClick={toggleRole}
-                className="mb-3 w-full rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface-hover)]"
+                className="mb-3 w-full rounded-[var(--radius-md)] border border-(--color-border) px-3 py-1.5 text-xs font-medium text-(--color-text-secondary) transition-colors hover:bg-(--color-surface-hover)"
               >
                 Hlutverk: {role === "cop" ? "COP (Admin)" : "Client"} ↔
               </button>
             )}
-            <p className="text-xs text-[var(--color-text-muted)]">
+            <p className="text-xs text-(--color-text-muted)">
               Þarftu hjálp?
             </p>
             <a
               href="/knowledge-base"
-              className="text-xs font-medium text-[var(--color-primary)] hover:underline"
+              className="text-xs font-medium text-(--color-primary) hover:underline"
             >
               Leiðbeiningar (Knowledge Base)
             </a>

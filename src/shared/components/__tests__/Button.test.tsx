@@ -25,6 +25,6 @@ describe("Button", () => {
 
   it("applies the danger variant", () => {
     render(<Button variant="danger">Eyða</Button>);
-    expect(screen.getByText("Eyða")).toHaveClass("bg-[var(--color-error)]");
+    expect(screen.getByText("Eyða")).toHaveClass("bg-(--color-error)");
   });
 });

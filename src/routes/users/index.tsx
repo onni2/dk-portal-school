@@ -26,8 +26,8 @@ function UsersPage() {
     <>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--color-text)]">Notendur</h1>
-          <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+          <h1 className="text-2xl font-bold text-(--color-text)">Notendur</h1>
+          <p className="mt-1 text-sm text-(--color-text-secondary)">
             Stjórnaðu notendum sem hafa aðgang að Mínar síður.
           </p>
         </div>

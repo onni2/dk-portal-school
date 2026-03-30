@@ -10,16 +10,16 @@ describe("Badge", () => {
 
   it("applies success variant styles", () => {
     render(<Badge variant="success">Virkt</Badge>);
-    expect(screen.getByText("Virkt")).toHaveClass("text-[var(--color-success)]");
+    expect(screen.getByText("Virkt")).toHaveClass("text-(--color-success)");
   });
 
   it("applies error variant styles", () => {
     render(<Badge variant="error">Villa</Badge>);
-    expect(screen.getByText("Villa")).toHaveClass("text-[var(--color-error)]");
+    expect(screen.getByText("Villa")).toHaveClass("text-(--color-error)");
   });
 
   it("defaults to the default variant", () => {
     render(<Badge>Staða</Badge>);
-    expect(screen.getByText("Staða")).toHaveClass("text-[var(--color-text-secondary)]");
+    expect(screen.getByText("Staða")).toHaveClass("text-(--color-text-secondary)");
   });
 });

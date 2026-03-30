@@ -52,10 +52,10 @@ export function EmployeePhonesPanel() {
     <Card>
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h2 className="text-base font-semibold text-[var(--color-text)]">
+          <h2 className="text-base font-semibold text-(--color-text)">
             Símanúmer starfsmanna
           </h2>
-          <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
+          <p className="mt-0.5 text-xs text-(--color-text-muted)">
             Starfsmenn nota símanúmer sitt til að skrá sig inn á stimpilklukku.
           </p>
         </div>
@@ -65,18 +65,18 @@ export function EmployeePhonesPanel() {
       </div>
 
       {entries.length === 0 ? (
-        <p className="py-4 text-center text-sm text-[var(--color-text-muted)]">
+        <p className="py-4 text-center text-sm text-(--color-text-muted)">
           Engir starfsmenn með skráð símanúmer.
         </p>
       ) : (
-        <ul className="divide-y divide-[var(--color-border)]">
+        <ul className="divide-y divide-(--color-border)">
           {entries.map((entry) => (
             <li key={entry.id} className="flex items-center justify-between py-3">
               <div>
-                <p className="text-sm font-medium text-[var(--color-text)]">
+                <p className="text-sm font-medium text-(--color-text)">
                   {entry.employeeName || entry.employeeNumber}
                 </p>
-                <p className="text-xs text-[var(--color-text-muted)]">{entry.phone}</p>
+                <p className="text-xs text-(--color-text-muted)">{entry.phone}</p>
               </div>
               <Button
                 size="sm"
@@ -92,7 +92,7 @@ export function EmployeePhonesPanel() {
       )}
 
       {addPhoneOpen && (
-        <div className="mt-4 flex flex-col gap-3 border-t border-[var(--color-border)] pt-4">
+        <div className="mt-4 flex flex-col gap-3 border-t border-(--color-border) pt-4">
           <Input
             placeholder="Númer starfsmanns"
             value={employeeNumber}

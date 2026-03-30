@@ -40,22 +40,22 @@ export function Table<T>({
 }: TableProps<T>) {
   if (data.length === 0) {
     return (
-      <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-8 text-center text-sm text-[var(--color-text-muted)]">
+      <div className="rounded-[var(--radius-lg)] border border-(--color-border) bg-(--color-surface) px-4 py-8 text-center text-sm text-(--color-text-muted)">
         {emptyMessage}
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)]">
+    <div className="overflow-x-auto rounded-[var(--radius-lg)] border border-(--color-border) bg-(--color-surface)">
       <table className="w-full text-left">
         <thead>
-          <tr className="border-b border-[var(--color-border)] bg-[var(--color-background)]">
+          <tr className="border-b border-(--color-border) bg-(--color-background)">
             {columns.map((col, i) => (
               <th
                 key={i}
                 className={cn(
-                  "px-3 py-2.5 text-sm font-semibold text-[var(--color-text)]",
+                  "px-3 py-2.5 text-sm font-semibold text-(--color-text)",
                   col.hideBelow && hiddenClasses[col.hideBelow],
                 )}
               >
@@ -70,7 +70,7 @@ export function Table<T>({
               key={keyFn(row)}
               onClick={() => onRowClick?.(row)}
               className={cn(
-                "border-b border-[var(--color-border-light)] transition-colors last:border-b-0 hover:bg-[var(--color-surface-hover)]",
+                "border-b border-(--color-border-light) transition-colors last:border-b-0 hover:bg-(--color-surface-hover)",
                 onRowClick && "cursor-pointer",
               )}
             >
@@ -92,7 +92,7 @@ export function Table<T>({
       </table>
 
       {footer && (
-        <div className="border-t border-[var(--color-border)] px-4 py-3 text-xs text-[var(--color-text-muted)]">
+        <div className="border-t border-(--color-border) px-4 py-3 text-xs text-(--color-text-muted)">
           {footer}
         </div>
       )}
