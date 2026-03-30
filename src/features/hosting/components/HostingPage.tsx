@@ -11,7 +11,7 @@ export function HostingPage() {
       title="Hýsing"
       description="Yfirlit yfir hýsingarþjónustu fyrirtækisins hjá DK Hugbúnaði."
     >
-      <p className="text-[var(--color-text-secondary)]">Hér mun koma yfirlit yfir hýsingu og fjölþátta auðkenningu.</p>
+      <p className="text-(--color-text-secondary)">Hér mun koma yfirlit yfir hýsingu og fjölþátta auðkenningu.</p>
     </PageTemplate>
   );
 }

@@ -67,18 +67,18 @@ function ResetPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--color-background)]">
-      <header className="flex h-14 items-center border-b border-[var(--color-border)] bg-white px-6">
-        <span className="text-xl font-bold text-[var(--color-primary)]">dk</span>
-        <span className="ml-2 text-sm text-[var(--color-text-secondary)]">Mínar síður</span>
+    <div className="flex min-h-screen flex-col bg-(--color-background)">
+      <header className="flex h-14 items-center border-b border-(--color-border) bg-white px-6">
+        <span className="text-xl font-bold text-(--color-primary)">dk</span>
+        <span className="ml-2 text-sm text-(--color-text-secondary)">Mínar síður</span>
       </header>
 
       <main className="flex flex-1 items-center justify-center px-4 py-12">
         <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-md">
-          <h1 className="text-2xl font-bold text-[var(--color-text)]">
+          <h1 className="text-2xl font-bold text-(--color-text)">
             Breyta lykilorði
           </h1>
-          <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+          <p className="mt-1 text-sm text-(--color-text-secondary)">
             Þú þarft að velja nýtt lykilorð til að halda áfram.
           </p>
 
@@ -111,8 +111,8 @@ function ResetPasswordPage() {
                       passed
                         ? "text-green-600"
                         : newPassword.length > 0
-                          ? "text-[var(--color-error)]"
-                          : "text-[var(--color-text-muted)]"
+                          ? "text-(--color-error)"
+                          : "text-(--color-text-muted)"
                     }`}
                   >
                     <span>{passed ? "✓" : "○"}</span>
@@ -132,13 +132,13 @@ function ResetPasswordPage() {
             />
 
             {confirm.length > 0 && !passwordsMatch && (
-              <p className="text-xs text-[var(--color-error)]">
+              <p className="text-xs text-(--color-error)">
                 Lykilorðin stemma ekki
               </p>
             )}
 
             {error && (
-              <p className="text-sm text-[var(--color-error)]">{error}</p>
+              <p className="text-sm text-(--color-error)">{error}</p>
             )}
 
             <Button

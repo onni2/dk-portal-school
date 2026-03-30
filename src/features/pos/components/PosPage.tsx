@@ -11,7 +11,7 @@ export function PosPage() {
       title="POS"
       description="Yfirlit yfir kassakerfi fyrirtækisins."
     >
-      <p className="text-[var(--color-text-secondary)]">Hér mun koma yfirlit yfir POS kerfið.</p>
+      <p className="text-(--color-text-secondary)">Hér mun koma yfirlit yfir POS kerfið.</p>
     </PageTemplate>
   );
 }

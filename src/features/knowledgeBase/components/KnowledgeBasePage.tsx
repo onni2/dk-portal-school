@@ -11,7 +11,7 @@ export function KnowledgeBasePage() {
       title="Hjálparmiðstöð"
       description="Leiðbeiningar og myndbönd um notkun á vörum DK Hugbúnaðar."
     >
-      <p className="text-[var(--color-text-secondary)]">Hér munu koma leiðbeiningar og hjálparefni.</p>
+      <p className="text-(--color-text-secondary)">Hér munu koma leiðbeiningar og hjálparefni.</p>
     </PageTemplate>
   );
 }
