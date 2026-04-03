@@ -23,7 +23,8 @@ import { useAuthStore } from "@/features/auth/store/auth.store";
 import { useRoleStore } from "@/features/licence/store/role.store";
 import { ALL_CARDS, useDashboardLayout } from "../store/dashboard.store";
 import { SortableDashboardCard } from "./DashboardCard";
-import { loadUserPermissions, DEFAULT_PERMISSIONS } from "@/features/users/api/permissions.api";
+import { DEFAULT_PERMISSIONS } from "@/features/users/api/permissions.api";
+import { useUserPermissions } from "@/features/users/api/users.queries";
 
 /**
  * The "+" card at the end of the grid — click to add or remove cards.
@@ -33,8 +34,7 @@ function AddCardTile() {
   const [open, setOpen] = useState(false);
   const user = useAuthStore((s) => s.user);
   const role = useRoleStore((s) => s.role);
-
-  const userPermissions = user ? loadUserPermissions(user.id) : DEFAULT_PERMISSIONS;
+  const { data: userPermissions = DEFAULT_PERMISSIONS } = useUserPermissions(user?.id);
 
   const availableCards = ALL_CARDS.filter((card) => {
     if (!card.permission) return true;
@@ -101,7 +101,7 @@ export function DashboardGrid() {
   const { cardIds, setCardIds } = useDashboardLayout();
   const user = useAuthStore((s) => s.user);
   const role = useRoleStore((s) => s.role);
-  const userPermissions = user ? loadUserPermissions(user.id) : DEFAULT_PERMISSIONS;
+  const { data: userPermissions = DEFAULT_PERMISSIONS } = useUserPermissions(user?.id);
 
   const sensors = useSensors(useSensor(PointerSensor));
 

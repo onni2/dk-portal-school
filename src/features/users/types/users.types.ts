@@ -21,8 +21,6 @@ export interface PortalUser {
   /** Kennitala — used to match Auðkenni (electronic ID) logins to this portal user */
   kennitala?: string;
   phone?: string;
-  /** Personal DK Plus API token — optional, used to fetch real employee info on login */
-  dkToken?: string;
   companyId?: string;
 }
 
@@ -33,4 +31,14 @@ export interface InviteUserInput {
   role: AuthRole;
   kennitala?: string;
   hostingUsername?: string;
+  permissions?: {
+    invoices: boolean;
+    subscription: boolean;
+    hosting: boolean;
+    pos: boolean;
+    dkOne: boolean;
+    dkPlus: boolean;
+    timeclock: boolean;
+    users: boolean;
+  };
 }
