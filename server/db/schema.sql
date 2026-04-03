@@ -36,3 +36,13 @@ CREATE TABLE IF NOT EXISTS timeclock_employee_phones (
   phone           TEXT NOT NULL,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS notifications (
+  id          TEXT PRIMARY KEY,
+  user_id     TEXT REFERENCES portal_users(id) ON DELETE CASCADE,
+  company_id  TEXT REFERENCES companies(id) ON DELETE CASCADE,
+  title       TEXT NOT NULL,
+  message     TEXT NOT NULL,
+  read        BOOLEAN NOT NULL DEFAULT false,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

@@ -7,6 +7,7 @@ const authRouter = require("./routes/auth");
 const usersRouter = require("./routes/users");
 const timeclockRouter = require("./routes/timeclock");
 const companiesRouter = require("./routes/companies");
+const notificationsRouter = require("./routes/notifications");
 
 const app = express();
 
@@ -31,7 +32,7 @@ app.use("/auth", authRouter);
 app.use("/users", usersRouter);
 app.use("/timeclock", timeclockRouter);
 app.use("/companies", companiesRouter);
-
+app.use("/notifications", notificationsRouter);
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
 const PORT = process.env.PORT || 3001;
