@@ -31,7 +31,7 @@ export interface User {
   kennitala?: string;
   phone?: string;
   mustResetPassword?: boolean;
-  activeCompanyId?: string;
+  companyId?: string;
 }
 
 export interface LoginCredentials {
