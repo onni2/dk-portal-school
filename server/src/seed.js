@@ -99,6 +99,19 @@ async function seed() {
     );
   }
 
+  const SEED_NOTIFICATIONS = [
+    { id: "notif-1", user_id: "1", company_id: "hr", title: "Velkomin/n", message: "Þú ert skráð/ur inn í DK gáttina." },
+    { id: "notif-2", user_id: "1", company_id: "hr", title: "Kerfisvísa", message: "Mundu að uppfæra stillingar fyrirtækis." },
+  ];
+
+  for (const notif of SEED_NOTIFICATIONS) {
+    await pool.query(
+      `INSERT INTO notifications (id, user_id, company_id, title, message)
+       VALUES ($1,$2,$3,$4,$5) ON CONFLICT DO NOTHING`,
+      [notif.id, notif.user_id, notif.company_id, notif.title, notif.message],
+    );
+  }
+  
   console.log("Seeding done.");
 }
 
