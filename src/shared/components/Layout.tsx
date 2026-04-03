@@ -120,7 +120,7 @@ export function Layout({ children }: { children: ReactNode }) {
                         className={cn(
                           "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                           isActive
-                            ? "text-[var(--color-primary)]"
+                            ? "bg-[var(--color-primary)] text-white"
                             : "text-[var(--color-text)] hover:bg-[var(--color-surface-hover)]",
                         )}
                       >
@@ -144,9 +144,9 @@ export function Layout({ children }: { children: ReactNode }) {
                                 key={child.to}
                                 to={child.to}
                                 className={cn(
-                                  "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                                  "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                                   childActive
-                                    ? "text-[var(--color-primary)]"
+                                    ? "bg-[var(--color-primary)] text-white"
                                     : "text-[var(--color-text)] hover:bg-[var(--color-surface-hover)]",
                                 )}
                               >

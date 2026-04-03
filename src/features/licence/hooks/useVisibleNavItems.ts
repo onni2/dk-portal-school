@@ -8,7 +8,7 @@ import { NAV_ITEMS } from "../config/nav-items";
 import { useRoleStore } from "../store/role.store";
 import { filterNavItems } from "../utils/filter-nav";
 import { useAuthStore } from "@/features/auth/store/auth.store";
-import { loadUserPermissions } from "@/features/users/api/permissions.api";
+import type { UserPermissions } from "@/features/users/types/user-permissions.types";
 
 /**
  *
@@ -18,7 +18,9 @@ export function useVisibleNavItems() {
   const role = useRoleStore((s) => s.role);
   const user = useAuthStore((s) => s.user);
 
-  const userPermissions = user ? loadUserPermissions(user.id) : null;
+  const companies = useAuthStore((s) => s.companies);
+  const activeCompany = companies.find((c) => c.id === user?.activeCompanyId);
+  const userPermissions: UserPermissions | null = activeCompany?.permissions ?? null;
 
   // COP sees everything — no need to wait for licence
   if (role === "cop") return NAV_ITEMS;
