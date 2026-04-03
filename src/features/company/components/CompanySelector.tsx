@@ -23,8 +23,9 @@ export function CompanySelector() {
   const setToken = useAuthStore((s) => s.setToken);
   const setActiveCompany = useAuthStore((s) => s.setActiveCompany);
 
-  const activeCompany = companies.find((c) => c.id === user?.activeCompanyId)
-    ?? companies[0];
+  const activeCompany = companies.find((c) => c.id === user?.companyId)
+    ?? companies[0]
+    ?? null;
 
   // Close dropdown when clicking outside
   useEffect(() => {
