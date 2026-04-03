@@ -8,6 +8,7 @@ const usersRouter = require("./routes/users");
 const timeclockRouter = require("./routes/timeclock");
 const companiesRouter = require("./routes/companies");
 const notificationsRouter = require("./routes/notifications");
+const hostingRouter = require("./routes/hosting");
 
 const app = express();
 
@@ -33,6 +34,8 @@ app.use("/users", usersRouter);
 app.use("/timeclock", timeclockRouter);
 app.use("/companies", companiesRouter);
 app.use("/notifications", notificationsRouter);
+app.use("/hosting", hostingRouter);
+
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
 const PORT = process.env.PORT || 3001;

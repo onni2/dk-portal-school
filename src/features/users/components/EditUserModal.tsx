@@ -13,7 +13,6 @@ interface Props {
 export function EditUserModal({ user, onClose, onSaved }: Props) {
   const [kennitala, setKennitala] = useState(user.kennitala ?? "");
   const [phone, setPhone] = useState(user.phone ?? "");
-  const [dkToken, setDkToken] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -25,7 +24,6 @@ export function EditUserModal({ user, onClose, onSaved }: Props) {
       await updateUser(user.id, {
         kennitala: kennitala || undefined,
         phone: phone || undefined,
-        dkToken: dkToken || undefined,
       });
       onSaved(kennitala || undefined, phone || undefined);
       onClose();
@@ -44,7 +42,7 @@ export function EditUserModal({ user, onClose, onSaved }: Props) {
           Breyta notanda — {user.name}
         </h2>
         <p className="mt-1 text-sm text-(--color-text-secondary)">
-          Stilltu kennitölu og DK Plus token fyrir þennan notanda.
+          Stilltu kennitölu og símanúmer fyrir þennan notanda.
         </p>
 
         <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-4">
@@ -62,17 +60,6 @@ export function EditUserModal({ user, onClose, onSaved }: Props) {
             onChange={(e) => setPhone(e.target.value)}
             placeholder="5551234"
           />
-          <Input
-            label="DK Plus token"
-            type="text"
-            value={dkToken}
-            onChange={(e) => setDkToken(e.target.value)}
-            placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-          />
-          <p className="text-xs text-(--color-text-muted)">
-            Skildu DK Plus token eftir tómt til að halda núverandi gildi.
-          </p>
-
           {error && <p className="text-sm text-(--color-error)">{error}</p>}
 
           <div className="mt-2 flex gap-3">

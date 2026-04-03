@@ -2,13 +2,14 @@
  * Table of portal users — shows name, email, and permission checkmarks.
  * Clicking a row opens the UserPanel modal for editing.
  * Uses: @/shared/components/Table, @/shared/components/Button,
- *       ../api/users.queries, ../store/users.store, ../api/permissions.api
+ *       ../api/users.queries, ../api/permissions.api
  * Exports: UsersTable
  */
+import { useQueries } from "@tanstack/react-query";
 import { Table, type Column } from "@/shared/components/Table";
 import { Button } from "@/shared/components/Button";
-import { usePortalUsersStore } from "../store/users.store";
-import { loadUserPermissions } from "../api/permissions.api";
+import { usePortalUsers, permissionsQueryOptions } from "../api/users.queries";
+import { DEFAULT_PERMISSIONS } from "../api/permissions.api";
 import type { UserPermissions } from "../types/user-permissions.types";
 import type { PortalUser } from "../types/users.types";
 
@@ -39,32 +40,32 @@ interface Props {
 }
 
 export function UsersTable({ onSelectUser }: Props) {
-  const users = usePortalUsersStore((s) => s.users);
+  const { data: users = [], isLoading } = usePortalUsers();
+
+  const permissionResults = useQueries({
+    queries: users.map((u) => permissionsQueryOptions(u.id)),
+  });
+
+  const permissionsMap = Object.fromEntries(
+    users.map((u, i) => [u.id, permissionResults[i]?.data ?? DEFAULT_PERMISSIONS]),
+  );
 
   const columns: Column<PortalUser>[] = [
     {
       header: "Nafn",
-      accessor: (u) => (
-        <p className="text-(--color-text-secondary)">{u.name}</p>
-      ),
+      accessor: (u) => <p className="text-(--color-text-secondary)">{u.name}</p>,
     },
     {
       header: "Netfang",
-      accessor: (u) => u.email
-        ? <span className="text-(--color-text-secondary)">{u.email}</span>
-        : <span className="text-(--color-text-muted)">—</span>,
+      accessor: (u) =>
+        u.email
+          ? <span className="text-(--color-text-secondary)">{u.email}</span>
+          : <span className="text-(--color-text-muted)">—</span>,
       hideBelow: "md",
     },
     ...PERMISSION_KEYS.map(({ key, label }) => ({
       header: label,
-      accessor: (u: PortalUser) => {
-        const perms = loadUserPermissions(u.id);
-        return (
-          <div className="flex justify-center">
-            <Checkmark checked={perms[key]} />
-          </div>
-        );
-      },
+      accessor: (u: PortalUser) => <Checkmark checked={permissionsMap[u.id]?.[key] ?? false} />,
       hideBelow: "lg" as const,
     })),
     {
@@ -80,6 +81,8 @@ export function UsersTable({ onSelectUser }: Props) {
       ),
     },
   ];
+
+  if (isLoading) return <p className="text-sm text-(--color-text-muted)">Hleður notendum...</p>;
 
   return (
     <Table

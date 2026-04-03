@@ -1,7 +1,7 @@
 /**
- * Settings page — shows user profile info (name, email, kennitala, phone) and allows password change.
+ * Settings page — shows user profile info and allows phone number and password changes.
  * Uses: @/shared/components/PageTemplate, @/shared/components/Card, @/shared/components/Button,
- *       @/shared/components/Input, @/features/auth/store/auth.store, @/features/users/store/users.store
+ *       @/shared/components/Input, @/features/auth/store/auth.store, @/features/users/api/users.api
  * Exports: SettingsPage
  */
 import { useState } from "react";
@@ -10,51 +10,62 @@ import { Card } from "@/shared/components/Card";
 import { Button } from "@/shared/components/Button";
 import { Input } from "@/shared/components/Input";
 import { useAuthStore } from "@/features/auth/store/auth.store";
-import { usePortalUsersStore } from "@/features/users/store/users.store";
+import { updateUser, resetPassword } from "@/features/users/api/users.api";
 
 export function SettingsPage() {
   const user = useAuthStore((s) => s.user);
   const setAuth = useAuthStore((s) => s.setAuth);
   const token = useAuthStore((s) => s.token);
-  const updateUser = usePortalUsersStore((s) => s.updateUser);
 
   const [phone, setPhone] = useState(user?.phone ?? "");
   const [phoneSaved, setPhoneSaved] = useState(false);
+  const [phoneError, setPhoneError] = useState("");
 
+  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordSaved, setPasswordSaved] = useState(false);
-  const [error, setError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
-  function handlePhoneSave(e: React.FormEvent) {
+  async function handlePhoneSave(e: React.FormEvent) {
     e.preventDefault();
     if (!user) return;
-    updateUser(user.id, { phone });
-    setAuth({ ...user, phone }, token ?? "");
-    setPhoneSaved(true);
-    setTimeout(() => setPhoneSaved(false), 2000);
+    setPhoneError("");
+    try {
+      await updateUser(user.id, { phone });
+      setAuth({ ...user, phone }, token ?? "");
+      setPhoneSaved(true);
+      setTimeout(() => setPhoneSaved(false), 2000);
+    } catch {
+      setPhoneError("Villa við að vista símanúmer");
+    }
   }
 
-  function handlePasswordSave(e: React.FormEvent) {
+  async function handlePasswordSave(e: React.FormEvent) {
     e.preventDefault();
-    setError("");
+    setPasswordError("");
     setPasswordSaved(false);
 
     if (newPassword.length < 6) {
-      setError("Lykilorðið verður að vera að minnsta kosti 6 stafir");
+      setPasswordError("Lykilorðið verður að vera að minnsta kosti 6 stafir");
       return;
     }
     if (newPassword !== confirmPassword) {
-      setError("Lykilorðin stemma ekki");
+      setPasswordError("Lykilorðin stemma ekki");
       return;
     }
     if (!user) return;
 
-    updateUser(user.id, { password: newPassword, mustResetPassword: false });
-    setAuth({ ...user, mustResetPassword: false }, token ?? "");
-    setNewPassword("");
-    setConfirmPassword("");
-    setPasswordSaved(true);
+    try {
+      await resetPassword(user.id, newPassword, currentPassword || undefined);
+      setAuth({ ...user, mustResetPassword: false }, token ?? "");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setPasswordSaved(true);
+    } catch (err: unknown) {
+      setPasswordError((err as { message?: string })?.message ?? "Villa við að vista lykilorð");
+    }
   }
 
   return (
@@ -113,6 +124,7 @@ export function SettingsPage() {
                 </Button>
               </div>
             </form>
+            {phoneError && <p className="mt-2 text-sm text-(--color-error)">{phoneError}</p>}
           </Card>
         </div>
 
@@ -127,6 +139,14 @@ export function SettingsPage() {
               : "Veldu nýtt lykilorð fyrir aðganginn þinn."}
           </p>
           <form onSubmit={handlePasswordSave} className="flex flex-col gap-4">
+            <Input
+              label={user?.mustResetPassword ? "Tímabundið lykilorð" : "Núverandi lykilorð"}
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+            />
             <Input
               label="Nýtt lykilorð"
               type="password"
@@ -143,8 +163,8 @@ export function SettingsPage() {
               placeholder="••••••••"
               required
             />
-            {error && (
-              <p className="text-sm text-(--color-error)">{error}</p>
+            {passwordError && (
+              <p className="text-sm text-(--color-error)">{passwordError}</p>
             )}
             {passwordSaved && (
               <p className="text-sm text-(--color-success)">Lykilorð vistað!</p>

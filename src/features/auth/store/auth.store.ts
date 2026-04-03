@@ -67,7 +67,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   setActiveCompany: (companyId) => {
     set((state) => {
       if (!state.user) return {};
-      const updated = { ...state.user, activeCompanyId: companyId };
+      const updated = { ...state.user, companyId };
       localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(updated));
       return { user: updated };
     });
@@ -77,6 +77,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     localStorage.removeItem(STORAGE_KEY_USER);
     localStorage.removeItem(STORAGE_KEY_TOKEN);
     localStorage.removeItem(STORAGE_KEY_COMPANIES);
+    localStorage.removeItem("dk-company-token");
     set({ user: null, token: null, companies: [], isAuthenticated: false });
   },
 
