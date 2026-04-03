@@ -62,8 +62,8 @@ export function LoginForm() {
     setError("");
     setLoading(true);
     try {
-      const { user, token: authToken } = await login({ username, password });
-      setAuth(user, authToken);
+      const { user, token: authToken, companies } = await login({ username, password });
+      setAuth(user, authToken, companies ?? []);
       setRole(authRoleToUserRole(user.role));
       navigate({ to: user.mustResetPassword ? "/reset-password" : "/" });
     } catch (err) {

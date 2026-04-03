@@ -1,44 +1,48 @@
 /**
- * Auth API: login checks credentials against the portal users store (localStorage).
- * The DK API token (VITE_API_TOKEN) is shared for all users — apiClient uses it automatically.
- * Uses: @/features/users/store/users.store, ../types/auth.types
+ * Auth API: login checks credentials against the backend server.
+ * Uses: ../types/auth.types
  * Exports: login, logout
  */
-import { usePortalUsersStore } from "@/features/users/store/users.store";
 import type { AuthResponse, LoginCredentials } from "../types/auth.types";
 
+const BASE = import.meta.env.VITE_MOCK_API_URL;
+
 export async function login(credentials: LoginCredentials): Promise<AuthResponse> {
-  const { users } = usePortalUsersStore.getState();
+  const res = await fetch(`${BASE}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      username: credentials.username,
+      password: credentials.password,
+    }),
+  });
 
-  const found = users.find(
-    (u) => u.username === credentials.username || u.email === credentials.username,
-  );
-
-  if (!found) {
-    throw new Error("Notandi finnst ekki");
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.message ?? "Innskráning mistókst");
   }
 
-  // Empty password = not yet set, any input accepted (user must set password in Settings)
-  if (found.password && found.password !== credentials.password) {
-    throw new Error("Rangt lykilorð");
-  }
-
-  const user = {
-    id: found.id,
-    name: found.name,
-    email: found.email,
-    kennitala: found.kennitala,
-    role: found.role,
-    mustResetPassword: !found.password, // redirect to settings if no password set
-  };
-
-  // Store a mock token — apiClient falls back to VITE_API_TOKEN for DK API calls
-  const token = `mock-token-${found.id}`;
-  localStorage.setItem("dk-auth-token", token);
-
-  return { user, token };
+  return res.json();
 }
 
 export async function logout(): Promise<void> {
   // auth store handles clearing localStorage
+}
+
+export async function switchCompany(companyId: string): Promise<{ token: string; companyDkToken: string }> {
+  const res = await fetch(`${BASE}/auth/switch-company`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("dk-auth-token") ?? ""}`,
+    },
+    body: JSON.stringify({ companyId }),
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.message ?? "Ekki tókst að skipta um fyrirtæki");
+  }
+
+  return res.json();
 }
