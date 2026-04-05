@@ -51,17 +51,6 @@ export function TicketThread({ ticket, currentUserName }: Props) {
 
         {/* Status + close button */}
         <div className="flex items-center gap-2">
-          {ticket.status === "opið" && (
-            <button
-              type="button"
-              className="flex items-center gap-1.5 rounded-[5px] border border-[#CFD3DB] bg-[#F6F8FC] px-3 py-1.5 text-[12px] text-[#2E7D32] transition-colors hover:bg-[#E8F5E9]"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-              Loka beiðni
-            </button>
-          )}
           {ticket.status === "lokað" && (
             <span className={cn("rounded-[3px] px-2 py-1 text-[10px] font-semibold", status.bg, status.text)}>
               {status.label}
