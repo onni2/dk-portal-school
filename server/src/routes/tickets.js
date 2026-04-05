@@ -3,15 +3,15 @@ const pool = require("../db");
 
 const router = express.Router();
 
-// GET /tickets — fetch all tickets for logged in user
+// GET /tickets — fetch all tickets for logged in user + active company
 router.get("/", async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT id, number, title, preview, status, created_at, updated_at
        FROM zoho_tickets
-       WHERE user_id = $1
+       WHERE user_id = $1 AND company_id = $2
        ORDER BY updated_at DESC`,
-      [req.user.id],
+      [req.user.id, req.user.active_company_id],
     );
     res.json(rows.map((t) => ({
       id: t.id,
@@ -33,14 +33,20 @@ router.get("/:id", async (req, res) => {
   try {
     const { rows: ticketRows } = await pool.query(
       `SELECT id, number, title, preview, status, created_at, updated_at
-       FROM zoho_tickets WHERE id = $1 AND user_id = $2`,
-      [req.params.id, req.user.id],
+       FROM zoho_tickets
+       WHERE id = $1 AND user_id = $2 AND company_id = $3`,
+      [req.params.id, req.user.id, req.user.active_company_id],
     );
-    if (!ticketRows[0]) return res.status(404).json({ message: "Beiðni ekki fundin" });
+
+    if (!ticketRows[0]) {
+      return res.status(404).json({ message: "Beiðni ekki fundin" });
+    }
 
     const { rows: msgRows } = await pool.query(
       `SELECT id, from_type, sender_name, body, sent_at
-       FROM zoho_messages WHERE ticket_id = $1 ORDER BY sent_at ASC`,
+       FROM zoho_messages
+       WHERE ticket_id = $1
+       ORDER BY sent_at ASC`,
       [req.params.id],
     );
 
