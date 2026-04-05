@@ -265,11 +265,11 @@ async function migrate() {
     )
   `);
 
-  // Seed tickets for user "1" (odinn)
+  // Seed tickets for user fdeps33p (thora)
   const SEED_TICKETS = [
-    { id: "tk-1", user_id: "1", number: "62823", title: "Vandamál með innskráningu í POS", preview: "Ég get ekki loggað mig inn í POS kerfið, hvað væri...", status: "opið", created_at: "2026-02-01", updated_at: "2026-02-02" },
-    { id: "tk-2", user_id: "1", number: "86392", title: "Spurning um reikningsfærslu", preview: "Hæ, ég sá reikninginn númer 129775 og viljum a...", status: "opið", created_at: "2026-01-29", updated_at: "2026-01-29" },
-    { id: "tk-3", user_id: "1", number: "21256", title: "Ósk um nýjan notanda", preview: "Við erum að ráða nýjan starfsmann og þurfum að...", status: "lokað", created_at: "2026-01-10", updated_at: "2026-01-15" },
+    { id: "tk-1", user_id: "fdeps33p", company_id: "hr", number: "62823", title: "Vandamál með innskráningu í POS", preview: "Ég get ekki loggað mig inn í POS kerfið, hvað væri...", status: "opið", created_at: "2026-02-01", updated_at: "2026-02-02" },
+    { id: "tk-2", user_id: "fdeps33p", company_id: "hr", number: "86392", title: "Spurning um reikningsfærslu", preview: "Hæ, ég sá reikninginn númer 129775 og viljum a...", status: "opið", created_at: "2026-01-29", updated_at: "2026-01-29" },
+    { id: "tk-3", user_id: "fdeps33p", company_id: "hr", number: "21256", title: "Ósk um nýjan notanda", preview: "Við erum að ráða nýjan starfsmann og þurfum að...", status: "lokað", created_at: "2026-01-10", updated_at: "2026-01-15" },
   ];
 
   const SEED_MESSAGES = [
@@ -286,9 +286,9 @@ async function migrate() {
 
   for (const ticket of SEED_TICKETS) {
     await pool.query(
-      `INSERT INTO zoho_tickets (id, user_id, number, title, preview, status, created_at, updated_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT DO NOTHING`,
-      [ticket.id, ticket.user_id, ticket.number, ticket.title, ticket.preview, ticket.status, ticket.created_at, ticket.updated_at],
+      `INSERT INTO zoho_tickets (id, user_id, company_id, number, title, preview, status, created_at, updated_at)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT DO NOTHING`,
+      [ticket.id, ticket.user_id, ticket.company_id, ticket.number, ticket.title, ticket.preview, ticket.status, ticket.created_at, ticket.updated_at],
     );
   }
 
