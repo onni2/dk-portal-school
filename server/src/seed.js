@@ -239,6 +239,66 @@ async function migrate() {
     WHERE role = 'admin'
     ON CONFLICT DO NOTHING
   `);
+
+  // Zoho tickets tables
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS zoho_tickets (
+      id          TEXT PRIMARY KEY,
+      user_id     TEXT REFERENCES portal_users(id) ON DELETE CASCADE,
+      number      TEXT NOT NULL,
+      title       TEXT NOT NULL,
+      preview     TEXT NOT NULL,
+      status      TEXT NOT NULL DEFAULT 'opið',
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS zoho_messages (
+      id          TEXT PRIMARY KEY,
+      ticket_id   TEXT NOT NULL REFERENCES zoho_tickets(id) ON DELETE CASCADE,
+      from_type   TEXT NOT NULL CHECK (from_type IN ('customer', 'support')),
+      sender_name TEXT NOT NULL,
+      body        TEXT NOT NULL,
+      sent_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  // Seed tickets for user "1" (odinn)
+  const SEED_TICKETS = [
+    { id: "tk-1", user_id: "1", number: "62823", title: "Vandamál með innskráningu í POS", preview: "Ég get ekki loggað mig inn í POS kerfið, hvað væri...", status: "opið", created_at: "2026-02-01", updated_at: "2026-02-02" },
+    { id: "tk-2", user_id: "1", number: "86392", title: "Spurning um reikningsfærslu", preview: "Hæ, ég sá reikninginn númer 129775 og viljum a...", status: "opið", created_at: "2026-01-29", updated_at: "2026-01-29" },
+    { id: "tk-3", user_id: "1", number: "21256", title: "Ósk um nýjan notanda", preview: "Við erum að ráða nýjan starfsmann og þurfum að...", status: "lokað", created_at: "2026-01-10", updated_at: "2026-01-15" },
+  ];
+
+  const SEED_MESSAGES = [
+    { id: "tm-1", ticket_id: "tk-1", from_type: "customer", sender_name: "Jón Jónsson",    body: "Hæ, ég get ekki loggað mig inn í POS kerfið. Ég er að fá villu sem segir 'invalid credentials' en ég er viss um að lykilorðið sé rétt. Gætuð þið hjálpað?", sent_at: "2026-02-01T10:00:00" },
+    { id: "tm-2", ticket_id: "tk-1", from_type: "support",  sender_name: "DK Þjónusta",    body: "Hæ Jón, takk fyrir að hafa samband. Við erum að skoða þetta. Gætirðu staðfest notendanafnið þitt og hvaða útgáfu af POS þú ert að nota?", sent_at: "2026-02-01T11:30:00" },
+    { id: "tm-3", ticket_id: "tk-1", from_type: "customer", sender_name: "Jón Jónsson",    body: "Notendanafnið er jon@fyrirtaeki.is og við erum að nota POS útgáfu 3.2.1.", sent_at: "2026-02-01T12:00:00" },
+    { id: "tm-4", ticket_id: "tk-1", from_type: "support",  sender_name: "DK Þjónusta",    body: "Takk Jón. Við fundum vandamálið — lykilorðið þitt er útrunnið. Við höfum sent þér tölvupóst með leiðbeiningum um að endurstilla það.", sent_at: "2026-02-02T09:00:00" },
+    { id: "tm-5", ticket_id: "tk-2", from_type: "customer", sender_name: "Anna Sigurðardóttir", body: "Hæ, ég sá reikninginn númer 129775 og við viljum að hann verði leiðréttur. Upphæðin stemmir ekki við samninginn okkar.", sent_at: "2026-01-29T08:00:00" },
+    { id: "tm-6", ticket_id: "tk-2", from_type: "support",  sender_name: "DK Þjónusta",    body: "Hæ Anna, við erum að skoða þetta og munum hafa samband við þig innan 24 klukkustunda.", sent_at: "2026-01-29T09:30:00" },
+    { id: "tm-7", ticket_id: "tk-3", from_type: "customer", sender_name: "Magnús Björnsson", body: "Við erum að ráða nýjan starfsmann og þurfum að bæta honum við kerfið. Getið þið hjálpað?", sent_at: "2026-01-10T10:00:00" },
+    { id: "tm-8", ticket_id: "tk-3", from_type: "support",  sender_name: "DK Þjónusta",    body: "Hæ Magnús, við höfum stofnað aðgang fyrir nýja starfsmanninn. Hann mun fá tölvupóst með innskráningarupplýsingum.", sent_at: "2026-01-12T14:00:00" },
+    { id: "tm-9", ticket_id: "tk-3", from_type: "customer", sender_name: "Magnús Björnsson", body: "Frábært, þakka ykkur kærlega!", sent_at: "2026-01-15T09:00:00" },
+  ];
+
+  for (const ticket of SEED_TICKETS) {
+    await pool.query(
+      `INSERT INTO zoho_tickets (id, user_id, number, title, preview, status, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT DO NOTHING`,
+      [ticket.id, ticket.user_id, ticket.number, ticket.title, ticket.preview, ticket.status, ticket.created_at, ticket.updated_at],
+    );
+  }
+
+  for (const msg of SEED_MESSAGES) {
+    await pool.query(
+      `INSERT INTO zoho_messages (id, ticket_id, from_type, sender_name, body, sent_at)
+       VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT DO NOTHING`,
+      [msg.id, msg.ticket_id, msg.from_type, msg.sender_name, msg.body, msg.sent_at],
+    );
+  }
 }
 
 async function seed() {
