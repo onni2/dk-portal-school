@@ -9,6 +9,7 @@ export function useTickets() {
   return useQuery({
     queryKey: ["tickets"],
     queryFn: getTickets,
+    refetchInterval: 30000,
   });
 }
 
@@ -17,5 +18,6 @@ export function useTicket(id: string | null) {
     queryKey: ["ticket", id],
     queryFn: () => getTicket(id!),
     enabled: !!id,
+    refetchInterval: 15000,
   });
 }
