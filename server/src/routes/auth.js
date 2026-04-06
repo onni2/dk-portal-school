@@ -24,13 +24,41 @@ router.post("/login", async (req, res) => {
 
     const user = rows[0];
     if (!user || !(await bcrypt.compare(password, user.password))) {
-      // small delay to slow brute force
       await new Promise((r) => setTimeout(r, 600));
       return res.status(401).json({ message: "Rangt notendanafn eða lykilorð" });
     }
 
+    // Fetch all companies this user belongs to
+    const { rows: companyRows } = await pool.query(
+      `SELECT c.id, c.name, uc.role,
+              uc.invoices, uc.subscription, uc.hosting, uc.pos,
+              uc.dk_one, uc.dk_plus, uc.timeclock, uc.users
+       FROM user_companies uc
+       JOIN companies c ON c.id = uc.company_id
+       WHERE uc.user_id = $1`,
+      [user.id],
+    );
+
+    const companies = companyRows.map((c) => ({
+      id: c.id,
+      name: c.name,
+      role: c.role,
+      permissions: {
+        invoices: c.invoices,
+        subscription: c.subscription,
+        hosting: c.hosting,
+        pos: c.pos,
+        dkOne: c.dk_one,
+        dkPlus: c.dk_plus,
+        timeclock: c.timeclock,
+        users: c.users,
+      },
+    }));
+
+    const activeCompanyId = user.active_company_id ?? companies[0]?.id ?? null;
+
     const token = jwt.sign(
-      { id: user.id, role: user.role, company_id: user.company_id },
+      { id: user.id, role: user.role, active_company_id: activeCompanyId },
       process.env.JWT_SECRET,
       { expiresIn: "8h" },
     );
@@ -47,8 +75,9 @@ router.post("/login", async (req, res) => {
         kennitala: user.kennitala,
         phone: user.phone,
         mustResetPassword: user.must_reset_password,
-        companyId: user.company_id,
+        activeCompanyId,
       },
+      companies,
     });
   } catch (err) {
     console.error(err);
@@ -97,6 +126,43 @@ router.post("/audkenni", async (req, res) => {
         companyId: user.company_id,
       },
     });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Villa á þjóni" });
+  }
+});
+
+// POST /auth/switch-company
+router.post("/switch-company", async (req, res) => {
+  const { companyId } = req.body;
+  if (!companyId) {
+    return res.status(400).json({ message: "Vantar companyId" });
+  }
+
+  try {
+    // Verify user belongs to the company
+    const { rows } = await pool.query(
+      "SELECT * FROM user_companies WHERE user_id = $1 AND company_id = $2",
+      [req.user.id, companyId],
+    );
+
+    if (!rows[0]) {
+      return res.status(403).json({ message: "Notandi hefur ekki aðgang að þessu fyrirtæki" });
+    }
+
+    // Update active company on user
+    await pool.query(
+      "UPDATE portal_users SET active_company_id = $1 WHERE id = $2",
+      [companyId, req.user.id],
+    );
+
+    const token = jwt.sign(
+      { id: req.user.id, role: req.user.role, active_company_id: companyId },
+      process.env.JWT_SECRET,
+      { expiresIn: "8h" },
+    );
+
+    res.json({ token, companyDkToken: null });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Villa á þjóni" });

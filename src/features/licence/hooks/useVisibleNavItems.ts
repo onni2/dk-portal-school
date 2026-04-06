@@ -14,8 +14,14 @@ export function useVisibleNavItems() {
   const { data: licence, isLoading } = useLicence();
   const role = useRoleStore((s) => s.role);
   const user = useAuthStore((s) => s.user);
-  const { data: userPermissions = null } = useUserPermissions(user?.id);
+  const companies = useAuthStore((s) => s.companies);
+  const activeCompany = companies.find((c) => c.id === user?.companyId);
 
+  // Use DB permissions if available, fall back to company permissions
+  const { data: dbPermissions = null } = useUserPermissions(user?.id);
+  const userPermissions = dbPermissions ?? activeCompany?.permissions ?? null;
+
+  // COP sees everything — no need to wait for licence
   if (role === "cop") return NAV_ITEMS;
 
   if (isLoading || !licence) {
