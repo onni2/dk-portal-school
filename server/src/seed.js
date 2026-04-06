@@ -259,7 +259,7 @@ async function migrate() {
       id          TEXT PRIMARY KEY,
       ticket_id   TEXT NOT NULL REFERENCES zoho_tickets(id) ON DELETE CASCADE,
       from_type   TEXT NOT NULL CHECK (from_type IN ('customer', 'support')),
-      sender_name TEXT NOT NULL,
+      sender_user_id TEXT REFERENCES portal_users(id),
       body        TEXT NOT NULL,
       sent_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
@@ -273,15 +273,15 @@ async function migrate() {
   ];
 
   const SEED_MESSAGES = [
-    { id: "tm-1", ticket_id: "tk-1", from_type: "customer", sender_name: "Jón Jónsson",    body: "Hæ, ég get ekki loggað mig inn í POS kerfið. Ég er að fá villu sem segir 'invalid credentials' en ég er viss um að lykilorðið sé rétt. Gætuð þið hjálpað?", sent_at: "2026-02-01T10:00:00" },
-    { id: "tm-2", ticket_id: "tk-1", from_type: "support",  sender_name: "DK Þjónusta",    body: "Hæ Jón, takk fyrir að hafa samband. Við erum að skoða þetta. Gætirðu staðfest notendanafnið þitt og hvaða útgáfu af POS þú ert að nota?", sent_at: "2026-02-01T11:30:00" },
-    { id: "tm-3", ticket_id: "tk-1", from_type: "customer", sender_name: "Jón Jónsson",    body: "Notendanafnið er jon@fyrirtaeki.is og við erum að nota POS útgáfu 3.2.1.", sent_at: "2026-02-01T12:00:00" },
-    { id: "tm-4", ticket_id: "tk-1", from_type: "support",  sender_name: "DK Þjónusta",    body: "Takk Jón. Við fundum vandamálið — lykilorðið þitt er útrunnið. Við höfum sent þér tölvupóst með leiðbeiningum um að endurstilla það.", sent_at: "2026-02-02T09:00:00" },
-    { id: "tm-5", ticket_id: "tk-2", from_type: "customer", sender_name: "Anna Sigurðardóttir", body: "Hæ, ég sá reikninginn númer 129775 og við viljum að hann verði leiðréttur. Upphæðin stemmir ekki við samninginn okkar.", sent_at: "2026-01-29T08:00:00" },
-    { id: "tm-6", ticket_id: "tk-2", from_type: "support",  sender_name: "DK Þjónusta",    body: "Hæ Anna, við erum að skoða þetta og munum hafa samband við þig innan 24 klukkustunda.", sent_at: "2026-01-29T09:30:00" },
-    { id: "tm-7", ticket_id: "tk-3", from_type: "customer", sender_name: "Magnús Björnsson", body: "Við erum að ráða nýjan starfsmann og þurfum að bæta honum við kerfið. Getið þið hjálpað?", sent_at: "2026-01-10T10:00:00" },
-    { id: "tm-8", ticket_id: "tk-3", from_type: "support",  sender_name: "DK Þjónusta",    body: "Hæ Magnús, við höfum stofnað aðgang fyrir nýja starfsmanninn. Hann mun fá tölvupóst með innskráningarupplýsingum.", sent_at: "2026-01-12T14:00:00" },
-    { id: "tm-9", ticket_id: "tk-3", from_type: "customer", sender_name: "Magnús Björnsson", body: "Frábært, þakka ykkur kærlega!", sent_at: "2026-01-15T09:00:00" },
+    { id: "tm-1", ticket_id: "tk-1", from_type: "customer", sender_user_id: "fdeps33p",    body: "Hæ, ég get ekki loggað mig inn í POS kerfið. Ég er að fá villu sem segir 'invalid credentials' en ég er viss um að lykilorðið sé rétt. Gætuð þið hjálpað?", sent_at: "2026-02-01T10:00:00" },
+    { id: "tm-2", ticket_id: "tk-1", from_type: "support",  sender_user_id: null,   body: "Hæ Þóra, takk fyrir að hafa samband. Við erum að skoða þetta. Gætirðu staðfest notendanafnið þitt og hvaða útgáfu af POS þú ert að nota?", sent_at: "2026-02-01T11:30:00" },
+    { id: "tm-3", ticket_id: "tk-1", from_type: "customer", sender_user_id: "fdeps33p",    body: "Notendanafnið er thora@fyrirtaeki.is og við erum að nota POS útgáfu 3.2.1.", sent_at: "2026-02-01T12:00:00" },
+    { id: "tm-4", ticket_id: "tk-1", from_type: "support",  sender_user_id: null,    body: "Takk Þóra. Við fundum vandamálið — lykilorðið þitt er útrunnið. Við höfum sent þér tölvupóst með leiðbeiningum um að endurstilla það.", sent_at: "2026-02-02T09:00:00" },
+    { id: "tm-5", ticket_id: "tk-2", from_type: "customer", sender_user_id: "fdeps33p", body: "Hæ, ég sá reikninginn númer 129775 og við viljum að hann verði leiðréttur. Upphæðin stemmir ekki við samninginn okkar.", sent_at: "2026-01-29T08:00:00" },
+    { id: "tm-6", ticket_id: "tk-2", from_type: "support",  sender_user_id: null,    body: "Hæ Þóra, við erum að skoða þetta og munum hafa samband við þig innan 24 klukkustunda.", sent_at: "2026-01-29T09:30:00" },
+    { id: "tm-7", ticket_id: "tk-3", from_type: "customer", sender_user_id: "fdeps33p", body: "Við erum að ráða nýjan starfsmann og þurfum að bæta honum við kerfið. Getið þið hjálpað?", sent_at: "2026-01-10T10:00:00" },
+    { id: "tm-8", ticket_id: "tk-3", from_type: "support",  sender_user_id: null,    body: "Hæ Þóra, við höfum stofnað aðgang fyrir nýja starfsmanninn. Hann mun fá tölvupóst með innskráningarupplýsingum.", sent_at: "2026-01-12T14:00:00" },
+    { id: "tm-9", ticket_id: "tk-3", from_type: "customer", sender_user_id: "fdeps33p", body: "Frábært, þakka ykkur kærlega!", sent_at: "2026-01-15T09:00:00" },
   ];
 
   for (const ticket of SEED_TICKETS) {
@@ -294,9 +294,9 @@ async function migrate() {
 
   for (const msg of SEED_MESSAGES) {
     await pool.query(
-      `INSERT INTO zoho_messages (id, ticket_id, from_type, sender_name, body, sent_at)
+      `INSERT INTO zoho_messages (id, ticket_id, from_type, sender_user_id, body, sent_at)
        VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT DO NOTHING`,
-      [msg.id, msg.ticket_id, msg.from_type, msg.sender_name, msg.body, msg.sent_at],
+      [msg.id, msg.ticket_id, msg.from_type, msg.sender_user_id, msg.body, msg.sent_at],
     );
   }
 }

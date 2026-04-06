@@ -43,10 +43,13 @@ router.get("/:id", async (req, res) => {
     }
 
     const { rows: msgRows } = await pool.query(
-      `SELECT id, from_type, sender_name, body, sent_at
-       FROM zoho_messages
-       WHERE ticket_id = $1
-       ORDER BY sent_at ASC`,
+      `SELECT m.id, m.from_type,
+        COALESCE(u.name, 'DK Þjónusta') AS sender_name,
+        m.body, m.sent_at
+      FROM zoho_messages m
+      LEFT JOIN portal_users u ON u.id = m.sender_user_id
+      WHERE m.ticket_id = $1
+      ORDER BY m.sent_at ASC`,
       [req.params.id],
     );
 
