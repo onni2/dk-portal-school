@@ -42,7 +42,7 @@ export function ProfileDropdown({ user, onLogout }: ProfileDropdownProps) {
       {/* Trigger button */}
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 rounded-[var(--radius-md)] border border-(--color-border) px-3 py-1.5 text-sm font-medium text-(--color-text) transition-colors hover:bg-(--color-surface-hover)"
+        className="flex items-center gap-2 rounded-[var(--radius-lg)] border border-[var(--color-border)] px-3 py-1.5 text-sm font-medium text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-hover)]"
       >
         {/* Person icon */}
         <svg
