@@ -21,6 +21,13 @@ export default defineConfig({
       // Siggi's note: Auðkenni warns not to let the HTTP handler ACCUMULATE
       // cookies across sessions — cookieDomainRewrite:"" prevents that by
       // stripping the Domain attribute, scoping cookies to the current session only.
+      // Forward /nexus-ms/* to the Nexus plugout server (card channel create + ping)
+      "/nexus-ms": {
+        target: "https://ms.audkenni.is/plugout-server-4.25.4/api/v1",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/nexus-ms/, ""),
+        secure: true,
+      },
       "/audkenni": {
         target: "https://to5vx.audkenni.is:443/sso",
         changeOrigin: true,
