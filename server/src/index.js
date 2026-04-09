@@ -9,6 +9,7 @@ const timeclockRouter = require("./routes/timeclock");
 const companiesRouter = require("./routes/companies");
 const notificationsRouter = require("./routes/notifications");
 const hostingRouter = require("./routes/hosting");
+const ticketsRouter = require("./routes/tickets");
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.use("/timeclock", timeclockRouter);
 app.use("/companies", companiesRouter);
 app.use("/notifications", notificationsRouter);
 app.use("/hosting", hostingRouter);
+app.use("/tickets", ticketsRouter);
 
 app.get("/health", (_req, res) => res.json({ ok: true }));
 

@@ -2,8 +2,8 @@
  * /zoho — Zoho support tickets page
  */
 import { createFileRoute } from "@tanstack/react-router";
-import { ZohoPage } from "@/features/zoho/components/ZohoPage";
+import { TicketsPage } from "@/features/zoho/components/TicketsPage";
 
 export const Route = createFileRoute("/zoho/")({
-  component: ZohoPage,
+  component: TicketsPage,
 });
