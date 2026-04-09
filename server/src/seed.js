@@ -73,11 +73,11 @@ const SEED_POS_REST = [
 ];
 
 const SEED_HOSTING_ACCOUNTS = [
-  { id: "ha-1", company_id: "hr", username: "fyr.agusta",  display_name: "fyr.agusta" },
-  { id: "ha-2", company_id: "hr", username: "fyr.bjorn",   display_name: "fyr.bjorn" },
-  { id: "ha-3", company_id: "hr", username: "fyr.gudrun",  display_name: "fyr.gudrun" },
-  { id: "ha-4", company_id: "hr", username: "fyr.halldor", display_name: "fyr.halldor" },
-  { id: "ha-5", company_id: "hr", username: "fyr.sigrid",  display_name: "fyr.sigrid" },
+  { id: "ha-1", company_id: "hr", username: "fyr.agusta",  display_name: "Ágústa B.",   email: "agusta@fyrirtaeki.is",  has_mfa: true  },
+  { id: "ha-2", company_id: "hr", username: "fyr.bjorn",   display_name: "Björn G.",    email: "bjorn@fyrirtaeki.is",   has_mfa: false },
+  { id: "ha-3", company_id: "hr", username: "fyr.gudrun",  display_name: "Guðrún S.",   email: "gudrun@fyrirtaeki.is",  has_mfa: false },
+  { id: "ha-4", company_id: "hr", username: "fyr.halldor", display_name: "Halldór Þ.",  email: "halldor@fyrirtaeki.is", has_mfa: true  },
+  { id: "ha-5", company_id: "hr", username: "fyr.sigrid",  display_name: "Sigrið M.",   email: "sigrid@fyrirtaeki.is",  has_mfa: false },
 ];
 
 const SEED_IP_WHITELIST = [
@@ -103,6 +103,7 @@ const TEAM_MEMBERS = [
 // Safe to run every startup — all statements are idempotent.
 async function migrate() {
   await pool.query(`ALTER TABLE companies ADD COLUMN IF NOT EXISTS dk_token TEXT`);
+  await pool.query(`ALTER TABLE portal_users ADD COLUMN IF NOT EXISTS company_id TEXT REFERENCES companies(id)`);
   await pool.query(`ALTER TABLE portal_users ADD COLUMN IF NOT EXISTS hosting_username TEXT`);
   await pool.query(`ALTER TABLE portal_users DROP COLUMN IF EXISTS dk_token`);
 
@@ -129,6 +130,9 @@ async function migrate() {
       created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `);
+  await pool.query(`ALTER TABLE hosting_accounts ADD COLUMN IF NOT EXISTS email TEXT`);
+  await pool.query(`ALTER TABLE hosting_accounts ADD COLUMN IF NOT EXISTS has_mfa BOOLEAN NOT NULL DEFAULT false`);
+  await pool.query(`ALTER TABLE hosting_accounts ADD COLUMN IF NOT EXISTS last_restart TIMESTAMPTZ`);
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS pos_services (
@@ -197,6 +201,15 @@ async function migrate() {
       `INSERT INTO pos_rest (id, company_id, name, display, server, state, mode, path)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT DO NOTHING`,
       [entry.id, entry.company_id, entry.name, entry.display, entry.server, entry.state, entry.mode, entry.path],
+    );
+  }
+
+  // Seed hosting accounts (idempotent)
+  for (const acc of SEED_HOSTING_ACCOUNTS) {
+    await pool.query(
+      `INSERT INTO hosting_accounts (id, company_id, username, display_name, email, has_mfa)
+       VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT DO NOTHING`,
+      [acc.id, acc.company_id, acc.username, acc.display_name, acc.email, acc.has_mfa],
     );
   }
 
@@ -335,9 +348,9 @@ async function seed() {
 
   for (const acc of SEED_HOSTING_ACCOUNTS) {
     await pool.query(
-      `INSERT INTO hosting_accounts (id, company_id, username, display_name)
-       VALUES ($1,$2,$3,$4) ON CONFLICT DO NOTHING`,
-      [acc.id, acc.company_id, acc.username, acc.display_name],
+      `INSERT INTO hosting_accounts (id, company_id, username, display_name, email, has_mfa)
+       VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT DO NOTHING`,
+      [acc.id, acc.company_id, acc.username, acc.display_name, acc.email, acc.has_mfa],
     );
   }
 
