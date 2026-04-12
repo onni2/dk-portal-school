@@ -28,7 +28,7 @@ const SEED_USERS = [
     role: "admin",
     status: "active",
     must_reset_password: false,
-    kennitala: "0000000000",
+    kennitala: "0909032330",
     company_id: "hr",
   },
   // Add teammates here:
@@ -105,7 +105,6 @@ async function migrate() {
   await pool.query(`ALTER TABLE companies ADD COLUMN IF NOT EXISTS dk_token TEXT`);
   await pool.query(`ALTER TABLE portal_users ADD COLUMN IF NOT EXISTS hosting_username TEXT`);
   await pool.query(`ALTER TABLE portal_users DROP COLUMN IF EXISTS dk_token`);
-
   await pool.query(`
     CREATE TABLE IF NOT EXISTS user_permissions (
       user_id      TEXT PRIMARY KEY REFERENCES portal_users(id) ON DELETE CASCADE,
@@ -230,6 +229,9 @@ async function migrate() {
       [member.id],
     );
   }
+
+  // Sync kennitala for team members that use Auðkenni test credentials
+  await pool.query(`UPDATE portal_users SET kennitala = '0909032330' WHERE username = 'jon'`);
 
   // Give full permissions to any existing admin without a permissions row
   await pool.query(`
