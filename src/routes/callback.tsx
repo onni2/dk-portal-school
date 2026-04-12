@@ -92,7 +92,7 @@ function CallbackPage() {
           companyId: portalData.user.companyId,
         };
 
-        setAuth(user, portalData.token);
+        setAuth(user, portalData.token, []);
         setRole(authRoleToUserRole(user.role));
         navigate({ to: portalData.user.mustResetPassword ? "/reset-password" : "/" });
       })
