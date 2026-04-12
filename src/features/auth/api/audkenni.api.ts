@@ -340,8 +340,12 @@ export async function initiateAudkenniLogin(
   method: AudkenniMethod,
   phoneOrKennitala?: string,
   onTick?: () => void,
+  onVerificationCode?: (code: string) => void,
 ): Promise<void> {
-  const message = "Innskráning á DK Mínar síður";
+  // 4-digit verification number shown to the user on both the login screen
+  // and inside the Auðkenni app so they can confirm it's the right request.
+  const verificationCode = String(Math.floor(1000 + Math.random() * 9000));
+  const message = `Innskráning á DK Mínar síður - Öryggistala: ${verificationCode}`;
 
   // Step 1 — start api_v203 session (same for both SIM and card)
   const session = await startSession();
@@ -355,6 +359,9 @@ export async function initiateAudkenniLogin(
     message,
   );
   const step2 = await submitCallbacks(session.authId, filledCallbacks);
+
+  // Notify the UI of the verification code now that the request is in flight
+  onVerificationCode?.(verificationCode);
 
   // Step 3 — SIM gets a PollingWaitCallback immediately; cardnew gets a
   // TextOutputCallback containing JavaScript that drives the Nexus app.
