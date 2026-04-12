@@ -1,13 +1,25 @@
 /**
  * Auðkenni REST API authentication flow (api_v203).
  *
- * The flow has 6 steps:
+ * SIM flow (Steps 1–4):
  *   1. POST to authenticate → receive authId + callbacks
- *   2. POST callbacks filled with clientId, phone, auth method → triggers push to user
- *   3. Poll authenticate until the user confirms on their device → receive tokenId
+ *   2. POST callbacks filled with clientId, phone, authMethod=sim → triggers push to phone
+ *   3. Poll authenticate until the user confirms → receive tokenId
  *   4. Navigate to OAuth2 /authorize (session cookie carries the authenticated state)
  *   5. /callback route exchanges the auth code for tokens
  *   6. Fetch userinfo with the access token
+ *
+ * Card flow (cardnew, Steps 1–4):
+ *   1. POST to authenticate → receive authId + callbacks
+ *   2. POST callbacks with authMethod=cardnew (ChoiceCallback value 3)
+ *   3. Auðkenni returns TextOutputCallback containing JavaScript:
+ *      a. Create required DOM elements (#nexusUrl, #loginButton_0, #callback_0)
+ *      b. Execute the JavaScript — it calls the PDA server and opens the Nexus protocol handler
+ *      c. Poll #nexusUrl until the script writes the result into it
+ *      d. Put the nexusUrl value into HiddenValueCallback and submit back to Auðkenni
+ *      e. Poll authenticate with PollingWaitCallback until card op completes
+ *   4. Navigate to OAuth2 /authorize
+ *   5–6. Same as SIM
  *
  * Uses: nothing — standalone, uses Web Crypto API + fetch
  * Exports: AudkenniMethod, AudkenniUserInfo, initiateAudkenniLogin,
@@ -29,9 +41,6 @@ const OAUTH2_BASE = `${BASE_URL}oauth2/realms/root/realms/audkenni`;
 const AUTHORIZE_URL = `${OAUTH2_BASE}/authorize`;
 const TOKEN_URL = `${OAUTH2_BASE}/access_token`;
 const USERINFO_URL = `${OAUTH2_BASE}/userinfo`;
-
-// Nexus Personal Desktop App — PDA server (card flow, com.nexusgroup.plugout:// protocol)
-const PDA_SERVER = "https://pda.audkenni.is/pda/";
 
 const API_HEADERS = {
   "Content-Type": "application/json",
@@ -99,52 +108,6 @@ function generateState(): string {
   const array = new Uint8Array(16);
   crypto.getRandomValues(array);
   return btoa(String.fromCharCode(...array)).replace(/[^a-zA-Z0-9]/g, "");
-}
-
-// ---- Nexus Personal Desktop App helpers (card flow, com.nexusgroup.plugout://) ----
-
-/**
- * POSTs card authentication parameters to the Auðkenni PDA server.
- * Returns:
- *   - protocolUrl: a `com.nexusgroup.plugout://` URL to launch Nexus Personal
- *   - pollUrl:     URL Auðkenni polls server-side to get the card result
- *
- * CORS is open on pda.audkenni.is so no proxy is needed.
- */
-async function pdaAuthenticate(
-  message: string,
-): Promise<{ protocolUrl: string; pollUrl: string }> {
-  const nonce = Math.floor(100000 + Math.random() * 9e15).toString();
-
-  const res = await fetch(`${PDA_SERVER}authenticate`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({
-      lifespan: 120,
-      timeout: 60000,
-      data: message,
-      description: message,
-      image: null,
-      issuer: "",
-      mechanism: "CKM_SHA256_RSA_PKCS",
-      nonce,
-      requester: window.location.href,
-      format: "pkcs7",
-    }),
-  });
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "(no body)");
-    console.error("[PDA] authenticate failed", res.status, body);
-    throw new Error(`Nexus Personal tengst ekki (${res.status})`);
-  }
-
-  const data = (await res.json()) as { url: string; id: string };
-  // data.url is the com.nexusgroup.plugout:// protocol URL returned by the PDA server
-  return {
-    protocolUrl: data.url,
-    pollUrl: `${PDA_SERVER}poll/${data.id}`,
-  };
 }
 
 // ---- Internal REST flow (Steps 1–3) ----
@@ -279,9 +242,10 @@ function buildStep2Callbacks(
     sim: "",
     card: "",
   };
+  // ChoiceCallback indices in api_v203: sim=0, card=1, app=2, cardnew=3, cardold=4
   const authMethodMap: Record<AudkenniMethod, number> = {
     sim: 0,
-    card: 1,
+    card: 3, // cardnew — recommended for all new implementations
   };
   const values: Record<string, string | number> = {
     IDToken1: CLIENT_ID,
@@ -392,8 +356,8 @@ export async function initiateAudkenniLogin(
   );
   const step2 = await submitCallbacks(session.authId, filledCallbacks);
 
-  // Step 3 — SIM gets a PollingWaitCallback immediately; card gets a
-  // HiddenValueCallback containing the Nexus plugout server URL instead.
+  // Step 3 — SIM gets a PollingWaitCallback immediately; cardnew gets a
+  // TextOutputCallback containing JavaScript that drives the Nexus app.
   const pollingCallback = step2.callbacks?.find(
     (cb) => cb.type === "PollingWaitCallback",
   );
@@ -402,47 +366,86 @@ export async function initiateAudkenniLogin(
     // ── SIM path: user confirms on their phone ──
     await pollUntilDone(step2.authId, pollingCallback, onTick);
   } else {
-    // ── Card path: Nexus Smart ID Desktop App ──
-    const nexusCallback = step2.callbacks?.find(
-      (cb) =>
-        cb.type === "HiddenValueCallback" &&
-        cb.output?.some((o) => o.name === "id" && o.value === "nexusUrl"),
+    // ── Card path (cardnew): Auðkenni returns TextOutputCallback with JavaScript ──
+    // The JS calls the PDA server, opens the Nexus protocol handler, and writes
+    // the result into a hidden #nexusUrl DOM element when done.
+
+    const textCallback = step2.callbacks?.find(
+      (cb) => cb.type === "TextOutputCallback",
     );
-    if (!nexusCallback) {
-      throw new Error("Óvænt svar frá Auðkenni — vantar PollingWaitCallback eða nexusUrl");
+    if (!textCallback) {
+      throw new Error("Óvænt svar frá Auðkenni — vantar TextOutputCallback fyrir kortaflæði");
     }
 
-    // 3a. POST to PDA server — get the com.nexusgroup.plugout:// URL and poll URL.
-    //     Auðkenni's tree will poll `pollUrl` server-side once we submit it as IDToken2.
-    const { protocolUrl, pollUrl } = await pdaAuthenticate(message);
+    const scriptContent = textCallback.output?.find(
+      (o) => o.name === "message",
+    )?.value as string | undefined;
+    if (!scriptContent) {
+      throw new Error("Tómt JavaScript í TextOutputCallback frá Auðkenni");
+    }
 
-    // 3b. Launch Nexus Personal Desktop App via custom protocol
-    window.location.assign(protocolUrl);
-    onTick?.();
-
-    // 3c. Submit the PDA poll URL as IDToken2 back to Auðkenni.
-    //     Auðkenni's auth tree polls pda.audkenni.is/pda/poll/<id> server-side
-    //     and returns a PollingWaitCallback for us to wait on.
-    const step3Callbacks = step2.callbacks.map((cb) => {
-      if (
-        cb.type === "HiddenValueCallback" &&
-        cb.output?.some((o) => o.name === "id" && o.value === "nexusUrl")
-      ) {
-        const inputName = cb.input?.[0]?.name ?? "IDToken2";
-        return { ...cb, input: [{ name: inputName, value: pollUrl }] };
-      }
-      return cb;
+    // 3a. Create DOM elements the card script expects (docs section 8.2)
+    const nexusInput = Object.assign(document.createElement("input"), {
+      type: "hidden", id: "nexusUrl", name: "callback_1",
     });
-    const step3 = await submitCallbacks(step2.authId, step3Callbacks);
+    const submitBtn = Object.assign(document.createElement("input"), {
+      type: "submit", id: "loginButton_0", hidden: true,
+    });
+    const callbackDiv = Object.assign(document.createElement("div"), {
+      id: "callback_0",
+    });
+    document.body.append(nexusInput, submitBtn, callbackDiv);
 
-    // 3d. Poll Auðkenni until the card operation is done
-    const step3Polling = step3.callbacks?.find(
-      (cb) => cb.type === "PollingWaitCallback",
-    );
-    if (!step3Polling) {
-      throw new Error("Óvænt svar frá Auðkenni eftir Nexus Personal — vantar PollingWaitCallback");
+    try {
+      // 3b. Execute the script — it opens the Nexus app and writes to #nexusUrl
+      const scriptEl = document.createElement("script");
+      scriptEl.textContent = scriptContent;
+      document.head.appendChild(scriptEl);
+      document.head.removeChild(scriptEl);
+      onTick?.();
+
+      // 3c. Poll #nexusUrl until the script writes the result (max 2 min)
+      const nexusUrl = await new Promise<string>((resolve, reject) => {
+        const interval = setInterval(() => {
+          if (nexusInput.value) {
+            clearInterval(interval);
+            clearTimeout(timer);
+            resolve(nexusInput.value);
+          }
+        }, 500);
+        const timer = setTimeout(() => {
+          clearInterval(interval);
+          reject(new Error("Kortaauðkenning rann út á tíma — reyndu aftur"));
+        }, 120_000);
+      });
+
+      // 3d. Put nexusUrl into HiddenValueCallback and submit back to Auðkenni
+      const step3Callbacks = step2.callbacks.map((cb) => {
+        if (
+          cb.type === "HiddenValueCallback" &&
+          cb.output?.some((o) => o.name === "id" && o.value === "nexusUrl")
+        ) {
+          const inputName = cb.input?.[0]?.name ?? "IDToken2";
+          return { ...cb, input: [{ name: inputName, value: nexusUrl }] };
+        }
+        return cb;
+      });
+      const step3 = await submitCallbacks(step2.authId, step3Callbacks);
+
+      // 3e. Poll Auðkenni until the card operation completes
+      const step3Polling = step3.callbacks?.find(
+        (cb) => cb.type === "PollingWaitCallback",
+      );
+      if (!step3Polling) {
+        throw new Error("Óvænt svar frá Auðkenni eftir kortaauðkenningu — vantar PollingWaitCallback");
+      }
+      await pollUntilDone(step3.authId, step3Polling, onTick);
+    } finally {
+      // Always remove injected DOM elements
+      nexusInput.parentNode?.removeChild(nexusInput);
+      submitBtn.parentNode?.removeChild(submitBtn);
+      callbackDiv.parentNode?.removeChild(callbackDiv);
     }
-    await pollUntilDone(step3.authId, step3Polling, onTick);
   }
 
   // Step 4 — redirect; session cookie carries the auth, no forced re-auth needed
