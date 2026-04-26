@@ -80,7 +80,7 @@ export function ProfileDropdown({ user, onLogout }: ProfileDropdownProps) {
 
       {/* Dropdown panel */}
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-[var(--radius-lg)] border border-(--color-border) bg-(--color-surface) shadow-lg">
+        <div style={{ fontSize: "16px" }} className="absolute right-0 top-full z-50 mt-2 w-72 rounded-[var(--radius-lg)] border border-(--color-border) bg-(--color-surface) shadow-lg">
           <div className="p-4">
             {/* Avatar + name + kennitala */}
             <div className="mb-4 flex items-center gap-3">
@@ -108,15 +108,27 @@ export function ProfileDropdown({ user, onLogout }: ProfileDropdownProps) {
                 <span className="text-sm text-(--color-text-secondary)">{lang === "EN" ? "Text size" : "Stærð texta"}</span>
                 <span className="text-xs font-medium text-(--color-primary)">{fontSize}%</span>
               </div>
-              <input
-                type="range"
-                min={100}
-                max={150}
-                step={10}
-                value={fontSize}
-                onChange={(e) => setFontSize(Number(e.target.value))}
-                className="w-full accent-[var(--color-primary)]"
-              />
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setFontSize(Math.max(100, fontSize - 10))}
+                  disabled={fontSize <= 100}
+                  className="icon-btn border border-(--color-border) text-(--color-text-secondary) font-bold disabled:opacity-30"
+                >−</button>
+                <input
+                  type="range"
+                  min={100}
+                  max={150}
+                  step={10}
+                  value={fontSize}
+                  onChange={(e) => setFontSize(Number(e.target.value))}
+                  className="flex-1 accent-[var(--color-primary)]"
+                />
+                <button
+                  onClick={() => setFontSize(Math.min(150, fontSize + 10))}
+                  disabled={fontSize >= 150}
+                  className="icon-btn border border-(--color-border) text-(--color-text-secondary) font-bold disabled:opacity-30"
+                >+</button>
+              </div>
               <button
                 onClick={toggleHighContrast}
                 className={cn(
