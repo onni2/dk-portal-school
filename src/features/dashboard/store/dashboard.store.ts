@@ -10,7 +10,9 @@ import type { UserPermissions } from "@/features/users/types/user-permissions.ty
 export interface CardDef {
   id: string;
   title: string;
+  titleEn?: string;
   description: string;
+  descriptionEn?: string;
   to: string;
   /** If set, only users with this permission (or COP role) can see this card */
   permission?: keyof UserPermissions;
@@ -21,69 +23,89 @@ export const ALL_CARDS: CardDef[] = [
   {
     id: "reikningar",
     title: "Reikningar",
+    titleEn: "Invoices",
     description: "Skoðaðu reikninga og halaðu niður sem PDF.",
+    descriptionEn: "View and download invoices as PDF.",
     to: "/invoices/",
     permission: "invoices",
   },
   {
     id: "askrift",
     title: "Áskrift",
+    titleEn: "Subscription",
     description: "Yfirlit yfir áskrift fyrirtækisins hjá DK.",
+    descriptionEn: "Overview of the company's subscription with DK.",
     to: "/askrift/yfirlit",
     permission: "subscription",
   },
   {
     id: "hysing",
     title: "Hýsing",
+    titleEn: "Hosting",
     description: "Stjórnaðu hýsingaraðgangi fyrirtækisins.",
+    descriptionEn: "Manage the company's hosting access.",
     to: "/hosting",
     permission: "hosting",
   },
   {
     id: "pos",
     title: "POS",
+    titleEn: "POS",
     description: "Yfirlit yfir POS kerfi fyrirtækisins.",
+    descriptionEn: "Overview of the company's POS system.",
     to: "/pos",
     permission: "pos",
   },
   {
     id: "dkone",
     title: "dkOne",
+    titleEn: "dkOne",
     description: "Aðgangur að dkOne kerfinu.",
+    descriptionEn: "Access the dkOne system.",
     to: "/dkone",
     permission: "dkOne",
   },
   {
     id: "dkplus",
     title: "dkPlus",
+    titleEn: "dkPlus",
     description: "Notendur og API tókn fyrir dkPlus.",
+    descriptionEn: "Users and API tokens for dkPlus.",
     to: "/dkplus",
     permission: "dkPlus",
   },
   {
     id: "stimpilklukka",
     title: "Stimpilklukka",
+    titleEn: "Timeclock",
     description: "Skráðu inn og út og skoðaðu tímaskráningar.",
+    descriptionEn: "Clock in and out and view time entries.",
     to: "/timeclock/",
     permission: "timeclock",
   },
   {
     id: "notendur",
     title: "Notendur",
+    titleEn: "Users",
     description: "Stjórnaðu notendum á Mínar síður.",
+    descriptionEn: "Manage users on My Pages.",
     to: "/notendur",
     permission: "users",
   },
   {
     id: "hjalp",
     title: "Hjálparmiðstöðin",
+    titleEn: "Help Center",
     description: "Leiðbeiningar og myndbönd um notkun á vörum DK.",
+    descriptionEn: "Guides and videos about using DK products.",
     to: "/knowledge-base",
   },
   {
     id: "stillingar",
     title: "Stillingar",
+    titleEn: "Settings",
     description: "Stillingar fyrir Mínar síður.",
+    descriptionEn: "Settings for My Pages.",
     to: "/stillingar",
   },
 ];

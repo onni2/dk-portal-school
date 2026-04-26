@@ -8,11 +8,14 @@ import { CSS } from "@dnd-kit/utilities";
 import { Link } from "@tanstack/react-router";
 import type { CardDef } from "../store/dashboard.store";
 import { CardPreview } from "./CardPreviews";
+import { useLangStore } from "@/shared/store/lang.store";
 
 /**
  *
  */
 export function SortableDashboardCard({ card }: { card: CardDef }) {
+  const lang = useLangStore((s) => s.lang);
+  const title = lang === "EN" && card.titleEn ? card.titleEn : card.title;
   const {
     attributes,
     listeners,
@@ -45,7 +48,7 @@ export function SortableDashboardCard({ card }: { card: CardDef }) {
       </div>
 
       <h3 className="mb-2 pr-6 text-base font-semibold text-gray-800">
-        {card.title}
+        {title}
       </h3>
 
       <div className="mb-4 min-h-10">
@@ -56,7 +59,7 @@ export function SortableDashboardCard({ card }: { card: CardDef }) {
         to={card.to}
         className="inline-block rounded border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
       >
-        Skoða
+        {lang === "EN" ? "View" : "Skoða"}
       </Link>
     </div>
   );

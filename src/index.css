@@ -1,5 +1,46 @@
 @import "tailwindcss";
 
+/* Accessibility: large text mode */
+html.large-text {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+/* Accessibility: high contrast mode */
+html.high-contrast {
+  --color-background: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-hover: #e0e0e0;
+  --color-text: #000000;
+  --color-text-secondary: #1a1a1a;
+  --color-text-muted: #3a3a3a;
+  --color-border: #000000;
+  --color-border-light: #555555;
+  --color-primary: #1a1a9e;
+  --color-primary-hover: #0f0f7a;
+  --color-primary-light: #d0d0ff;
+  --color-error: #b30000;
+  --color-success: #0a5c2a;
+}
+
+/* Accessibility: icon button circle */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  padding: 0.375rem;
+  transition: background-color 0.15s, box-shadow 0.15s;
+}
+.icon-btn:hover {
+  background-color: var(--color-surface-hover);
+  box-shadow: 0 0 0 1px var(--color-border);
+}
+html.high-contrast .icon-btn:hover {
+  background-color: #e0e0e0;
+  box-shadow: 0 0 0 2px #000000;
+}
+
 /* ============================================================
    DK Hugbúnaður — Design Tokens
 

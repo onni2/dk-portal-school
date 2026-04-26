@@ -21,6 +21,7 @@ import {
 } from "@dnd-kit/sortable";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { useRoleStore } from "@/features/licence/store/role.store";
+import { useLangStore } from "@/shared/store/lang.store";
 import { ALL_CARDS, useDashboardLayout } from "../store/dashboard.store";
 import { SortableDashboardCard } from "./DashboardCard";
 import { DEFAULT_PERMISSIONS } from "@/features/users/api/permissions.api";
@@ -34,6 +35,7 @@ function AddCardTile() {
   const [open, setOpen] = useState(false);
   const user = useAuthStore((s) => s.user);
   const role = useRoleStore((s) => s.role);
+  const lang = useLangStore((s) => s.lang);
   const { data: userPermissions = DEFAULT_PERMISSIONS } = useUserPermissions(user?.id);
 
   const availableCards = ALL_CARDS.filter((card) => {
@@ -52,17 +54,17 @@ function AddCardTile() {
           className="flex h-full min-h-24 w-full flex-col items-center justify-center gap-2 text-gray-400 hover:text-gray-600"
         >
           <span className="text-3xl leading-none">+</span>
-          <span className="text-sm">Bæta við spjaldi</span>
+          <span className="text-sm">{lang === "EN" ? "Add card" : "Bæta við spjaldi"}</span>
         </button>
       ) : (
         <div>
           <div className="mb-3 flex items-center justify-between">
-            <p className="text-sm font-medium text-gray-700">Veldu spjöld:</p>
+            <p className="text-sm font-medium text-gray-700">{lang === "EN" ? "Select cards:" : "Veldu spjöld:"}</p>
             <button
               onClick={() => setOpen(false)}
               className="text-xs text-gray-400 hover:text-gray-600"
             >
-              Loka
+              {lang === "EN" ? "Close" : "Loka"}
             </button>
           </div>
           <div className="flex max-h-48 flex-col gap-1 overflow-y-auto">
@@ -83,7 +85,7 @@ function AddCardTile() {
                   <span className="w-4 text-center">
                     {isAdded ? "✓" : "+"}
                   </span>
-                  {card.title}
+                  {lang === "EN" && card.titleEn ? card.titleEn : card.title}
                 </button>
               );
             })}
@@ -101,6 +103,7 @@ export function DashboardGrid() {
   const { cardIds, setCardIds } = useDashboardLayout();
   const user = useAuthStore((s) => s.user);
   const role = useRoleStore((s) => s.role);
+  const lang = useLangStore((s) => s.lang);
   const { data: userPermissions = DEFAULT_PERMISSIONS } = useUserPermissions(user?.id);
 
   const sensors = useSensors(useSensor(PointerSensor));
@@ -128,7 +131,7 @@ export function DashboardGrid() {
 
   return (
     <div>
-      <h1 className="mb-4 text-2xl font-bold">Yfirlit</h1>
+      <h1 className="mb-4 text-2xl font-bold">{lang === "EN" ? "Overview" : "Yfirlit"}</h1>
 
       <DndContext
         sensors={sensors}
