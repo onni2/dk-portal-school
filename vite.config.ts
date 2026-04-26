@@ -28,6 +28,18 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/nexus-ms/, ""),
         secure: true,
       },
+      // Forward /zoho-oauth/* to Zoho accounts server — exchanges refresh tokens for access tokens
+      "/zoho-oauth": {
+        target: "https://accounts.zoho.com",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/zoho-oauth/, ""),
+      },
+      // Forward /zoho-desk/* to Zoho Desk API — avoids CORS in development
+      "/zoho-desk": {
+        target: "https://desk.zoho.com",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/zoho-desk/, ""),
+      },
       "/audkenni": {
         target: "https://to5vx.audkenni.is:443/sso",
         changeOrigin: true,
