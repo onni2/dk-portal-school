@@ -31,80 +31,178 @@ const SEED_USERS = [
     kennitala: "0909032330",
     company_id: "hr",
   },
-  // Add teammates here:
-  // {
-  //   id: "3",
-  //   username: "siggi",
-  //   password: "somepass",
-  //   email: "siggi@dktest.is",
-  //   name: "Siggi Sigurðsson",
-  //   role: "admin",
-  //   status: "active",
-  //   must_reset_password: false,
-  //   kennitala: "0000000000",
-  //   company_id: "hr",
-  // },
 ];
 
 const SEED_COMPANIES = [
-  { id: "1001nott",  name: "1001 Nott" },
-  { id: "akurey",    name: "Akurey ehf." },
-  { id: "bokhald",   name: "Bokhald ehf." },
+  { id: "hr", name: "HR" },
+  { id: "1001nott", name: "1001 Nott" },
+  { id: "akurey", name: "Akurey ehf." },
+  { id: "bokhald", name: "Bokhald ehf." },
 ];
 
 const SEED_COMPANY_USERS = [
-  // 1001 Nott — owner + one staff member
-  { id: "cu-1", username: "nott.admin",  password: "Nott1234!", email: "admin@1001nott.is",  name: "Björn Gunnarsson",   role: "admin",    status: "active", must_reset_password: true,  kennitala: "1111111119", company_id: "1001nott" },
-  { id: "cu-2", username: "nott.staff",  password: "Staff123!",  email: "staff@1001nott.is",  name: "Sigrún Ólafsdóttir", role: "standard", status: "active", must_reset_password: true,  kennitala: "2222222229", company_id: "1001nott" },
-  // Akurey
-  { id: "cu-3", username: "akurey.admin", password: "Akurey1!",  email: "admin@akurey.is",   name: "Gunnar Sigurðsson",  role: "admin",    status: "active", must_reset_password: true,  kennitala: "3333333339", company_id: "akurey" },
-  // Bokhald
-  { id: "cu-4", username: "bokhald.admin", password: "Bokhald1!", email: "admin@bokhald.is", name: "Helga Magnúsdóttir", role: "admin",    status: "active", must_reset_password: true,  kennitala: "4444444449", company_id: "bokhald" },
+  {
+    id: "cu-1",
+    username: "nott.admin",
+    password: "Nott1234!",
+    email: "admin@1001nott.is",
+    name: "Björn Gunnarsson",
+    role: "admin",
+    status: "active",
+    must_reset_password: true,
+    kennitala: "1111111119",
+    company_id: "1001nott",
+  },
+  {
+    id: "cu-2",
+    username: "nott.staff",
+    password: "Staff123!",
+    email: "staff@1001nott.is",
+    name: "Sigrún Ólafsdóttir",
+    role: "standard",
+    status: "active",
+    must_reset_password: true,
+    kennitala: "2222222229",
+    company_id: "1001nott",
+  },
+  {
+    id: "cu-3",
+    username: "akurey.admin",
+    password: "Akurey1!",
+    email: "admin@akurey.is",
+    name: "Gunnar Sigurðsson",
+    role: "admin",
+    status: "active",
+    must_reset_password: true,
+    kennitala: "3333333339",
+    company_id: "akurey",
+  },
+  {
+    id: "cu-4",
+    username: "bokhald.admin",
+    password: "Bokhald1!",
+    email: "admin@bokhald.is",
+    name: "Helga Magnúsdóttir",
+    role: "admin",
+    status: "active",
+    must_reset_password: true,
+    kennitala: "4444444449",
+    company_id: "bokhald",
+  },
 ];
 
 const SEED_POS_SERVICES = [
-  { id: "ps-1", company_id: "1001nott", name: "1001Nott", display: "dkPos service - 1001Nott", server: "AKUREY-WS-01", state: "stopped", mode: "auto",     path: "C:\\dkPos\\1001Nott\\1001Nott\\dkPosService.exe" },
-  { id: "ps-2", company_id: "akurey",   name: "Akurey",   display: "dkPos service - Akurey",   server: "AKUREY-WS-02", state: "running", mode: "auto",     path: "C:\\dkPos\\Akurey\\Akurey\\dkPosService.exe" },
+  {
+    id: "ps-1",
+    company_id: "1001nott",
+    name: "1001Nott",
+    display: "dkPos service - 1001Nott",
+    server: "AKUREY-WS-01",
+    state: "stopped",
+    mode: "auto",
+    path: "C:\\dkPos\\1001Nott\\1001Nott\\dkPosService.exe",
+  },
+  {
+    id: "ps-2",
+    company_id: "akurey",
+    name: "Akurey",
+    display: "dkPos service - Akurey",
+    server: "AKUREY-WS-02",
+    state: "running",
+    mode: "auto",
+    path: "C:\\dkPos\\Akurey\\Akurey\\dkPosService.exe",
+  },
 ];
 
 const SEED_POS_REST = [
-  { id: "pr-1", company_id: "1001nott", name: "1001Nott", display: "dkPos REST server - 1001Nott", server: "AKUREY-REST-01", state: "stopped", mode: "disabled", path: "C:\\dkPos\\1001Nott\\1001Nott\\dkRESTServer.exe" },
-  { id: "pr-2", company_id: "akurey",   name: "Akurey",   display: "dkPos REST server - Akurey",   server: "AKUREY-REST-02", state: "running", mode: "auto",     path: "C:\\dkPos\\Akurey\\Akurey\\dkRESTServer.exe" },
+  {
+    id: "pr-1",
+    company_id: "1001nott",
+    name: "1001Nott",
+    display: "dkPos REST server - 1001Nott",
+    server: "AKUREY-REST-01",
+    state: "stopped",
+    mode: "disabled",
+    path: "C:\\dkPos\\1001Nott\\1001Nott\\dkRESTServer.exe",
+  },
+  {
+    id: "pr-2",
+    company_id: "akurey",
+    name: "Akurey",
+    display: "dkPos REST server - Akurey",
+    server: "AKUREY-REST-02",
+    state: "running",
+    mode: "auto",
+    path: "C:\\dkPos\\Akurey\\Akurey\\dkRESTServer.exe",
+  },
 ];
 
 const SEED_HOSTING_ACCOUNTS = [
-  { id: "ha-1", company_id: "hr", username: "fyr.agusta",  display_name: "fyr.agusta" },
-  { id: "ha-2", company_id: "hr", username: "fyr.bjorn",   display_name: "fyr.bjorn" },
-  { id: "ha-3", company_id: "hr", username: "fyr.gudrun",  display_name: "fyr.gudrun" },
+  { id: "ha-1", company_id: "hr", username: "fyr.agusta", display_name: "fyr.agusta" },
+  { id: "ha-2", company_id: "hr", username: "fyr.bjorn", display_name: "fyr.bjorn" },
+  { id: "ha-3", company_id: "hr", username: "fyr.gudrun", display_name: "fyr.gudrun" },
   { id: "ha-4", company_id: "hr", username: "fyr.halldor", display_name: "fyr.halldor" },
-  { id: "ha-5", company_id: "hr", username: "fyr.sigrid",  display_name: "fyr.sigrid" },
+  { id: "ha-5", company_id: "hr", username: "fyr.sigrid", display_name: "fyr.sigrid" },
 ];
 
 const SEED_IP_WHITELIST = [
   { id: "ip-1", company_id: "hr", ip: "192.168.1.10", label: "Aðalskrifstofa" },
   { id: "ip-2", company_id: "hr", ip: "192.168.1.11", label: "Vörugeymsla" },
-  { id: "ip-3", company_id: "hr", ip: "10.0.0.5",     label: "Útibú norður" },
+  { id: "ip-3", company_id: "hr", ip: "10.0.0.5", label: "Útibú norður" },
 ];
 
 const SEED_EMPLOYEE_PHONES = [
-  { id: "ph-1", company_id: "hr", employee_number: "1", employee_name: "Jón Jónsson",         phone: "5551234" },
-  { id: "ph-2", company_id: "hr", employee_number: "2", employee_name: "Anna Sigurðardóttir",  phone: "6662345" },
-  { id: "ph-3", company_id: "hr", employee_number: "3", employee_name: "Magnús Björnsson",     phone: "7773456" },
+  { id: "ph-1", company_id: "hr", employee_number: "1", employee_name: "Jón Jónsson", phone: "5551234" },
+  { id: "ph-2", company_id: "hr", employee_number: "2", employee_name: "Anna Sigurðardóttir", phone: "6662345" },
+  { id: "ph-3", company_id: "hr", employee_number: "3", employee_name: "Magnús Björnsson", phone: "7773456" },
 ];
 
-// Team members to ensure exist in the DB.
-// All idempotent — ON CONFLICT DO NOTHING skips existing users.
 const TEAM_MEMBERS = [
-  { id: "tm-agusta", username: "agusta", password: "Agusta1!", email: "agusta@dk.is",         name: "Ágústa Björk Schweitz Bergsveinsdóttir", must_reset_password: true },
-  { id: "tm-jon",    username: "jon",    password: "admin321",  email: "admin2@example.is",    name: "Jón Ágústsson",                          must_reset_password: false },
+  {
+    id: "tm-agusta",
+    username: "agusta",
+    password: "Agusta1!",
+    email: "agusta@dk.is",
+    name: "Ágústa Björk Schweitz Bergsveinsdóttir",
+    must_reset_password: true,
+  },
+  {
+    id: "tm-jon",
+    username: "jon",
+    password: "admin321",
+    email: "admin2@example.is",
+    name: "Jón Ágústsson",
+    must_reset_password: false,
+  },
 ];
 
-// Runs ALTER TABLE for columns/tables added after initial deploy.
-// Safe to run every startup — all statements are idempotent.
+const ZOHO_TEST_USER = {
+  id: "fdeps33p",
+  username: "thora",
+  password: "Thora123!",
+  email: "thora@fyrirtaeki.is",
+  name: "Þóra",
+  role: "standard",
+  status: "active",
+  must_reset_password: false,
+  kennitala: "5555555559",
+  company_id: "hr",
+};
+
 async function migrate() {
   await pool.query(`ALTER TABLE companies ADD COLUMN IF NOT EXISTS dk_token TEXT`);
   await pool.query(`ALTER TABLE portal_users ADD COLUMN IF NOT EXISTS hosting_username TEXT`);
   await pool.query(`ALTER TABLE portal_users DROP COLUMN IF EXISTS dk_token`);
+
+  for (const company of SEED_COMPANIES) {
+    await pool.query(
+      `INSERT INTO companies (id, name, dk_token)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (id) DO NOTHING`,
+      [company.id, company.name, company.id === "hr" ? process.env.DK_TOKEN ?? null : null]
+    );
+  }
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS user_permissions (
       user_id      TEXT PRIMARY KEY REFERENCES portal_users(id) ON DELETE CASCADE,
@@ -155,98 +253,122 @@ async function migrate() {
     )
   `);
 
-  // Ensure mock companies exist (idempotent)
-  for (const company of SEED_COMPANIES) {
-    await pool.query(
-      `INSERT INTO companies (id, name) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
-      [company.id, company.name],
-    );
-  }
-
-  // Seed mock company users (idempotent)
   for (const user of SEED_COMPANY_USERS) {
     const hashed = await bcrypt.hash(user.password, 10);
+
     await pool.query(
       `INSERT INTO portal_users
         (id, username, password, email, name, role, status, must_reset_password, kennitala, company_id)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
        ON CONFLICT DO NOTHING`,
-      [user.id, user.username, hashed, user.email, user.name,
-       user.role, user.status, user.must_reset_password, user.kennitala, user.company_id],
+      [
+        user.id,
+        user.username,
+        hashed,
+        user.email,
+        user.name,
+        user.role,
+        user.status,
+        user.must_reset_password,
+        user.kennitala,
+        user.company_id,
+      ]
     );
+
     const isAdmin = user.role === "admin";
+
     await pool.query(
-      `INSERT INTO user_permissions (user_id, invoices, subscription, hosting, pos, dk_one, dk_plus, timeclock, users)
+      `INSERT INTO user_permissions
+        (user_id, invoices, subscription, hosting, pos, dk_one, dk_plus, timeclock, users)
        VALUES ($1, $2, $2, $2, $2, $2, $2, $2, $2)
        ON CONFLICT DO NOTHING`,
-      [user.id, isAdmin],
+      [user.id, isAdmin]
     );
   }
 
-  // Seed POS data (idempotent)
   for (const entry of SEED_POS_SERVICES) {
     await pool.query(
-      `INSERT INTO pos_services (id, company_id, name, display, server, state, mode, path)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT DO NOTHING`,
-      [entry.id, entry.company_id, entry.name, entry.display, entry.server, entry.state, entry.mode, entry.path],
+      `INSERT INTO pos_services
+        (id, company_id, name, display, server, state, mode, path)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+       ON CONFLICT DO NOTHING`,
+      [entry.id, entry.company_id, entry.name, entry.display, entry.server, entry.state, entry.mode, entry.path]
     );
   }
+
   for (const entry of SEED_POS_REST) {
     await pool.query(
-      `INSERT INTO pos_rest (id, company_id, name, display, server, state, mode, path)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT DO NOTHING`,
-      [entry.id, entry.company_id, entry.name, entry.display, entry.server, entry.state, entry.mode, entry.path],
+      `INSERT INTO pos_rest
+        (id, company_id, name, display, server, state, mode, path)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+       ON CONFLICT DO NOTHING`,
+      [entry.id, entry.company_id, entry.name, entry.display, entry.server, entry.state, entry.mode, entry.path]
     );
   }
 
-  // Sync HR company dk_token from env on every startup
   if (process.env.DK_TOKEN) {
-    await pool.query(
-      `UPDATE companies SET dk_token = $1 WHERE id = 'hr'`,
-      [process.env.DK_TOKEN],
-    );
+    await pool.query(`UPDATE companies SET dk_token = $1 WHERE id = 'hr'`, [process.env.DK_TOKEN]);
   }
 
-  // Fix existing users with no company_id — assign them to HR
-  await pool.query(
-    `UPDATE portal_users SET company_id = 'hr' WHERE company_id IS NULL`,
-  );
+  await pool.query(`UPDATE portal_users SET company_id = 'hr' WHERE company_id IS NULL`);
 
-  // Add missing team members
   for (const member of TEAM_MEMBERS) {
     const hashed = await bcrypt.hash(member.password, 10);
+
     await pool.query(
-      `INSERT INTO portal_users (id, username, password, email, name, role, status, must_reset_password, company_id)
+      `INSERT INTO portal_users
+        (id, username, password, email, name, role, status, must_reset_password, company_id)
        VALUES ($1,$2,$3,$4,$5,'admin','active',$6,'hr')
        ON CONFLICT DO NOTHING`,
-      [member.id, member.username, hashed, member.email, member.name, member.must_reset_password],
+      [member.id, member.username, hashed, member.email, member.name, member.must_reset_password]
     );
-    // Give all team members full permissions
+
     await pool.query(
-      `INSERT INTO user_permissions (user_id, invoices, subscription, hosting, pos, dk_one, dk_plus, timeclock, users)
+      `INSERT INTO user_permissions
+        (user_id, invoices, subscription, hosting, pos, dk_one, dk_plus, timeclock, users)
        VALUES ($1, true, true, true, true, true, true, true, true)
        ON CONFLICT DO NOTHING`,
-      [member.id],
+      [member.id]
     );
   }
 
-  // Sync kennitala for team members that use Auðkenni test credentials
+  const zohoHashed = await bcrypt.hash(ZOHO_TEST_USER.password, 10);
+
+  await pool.query(
+    `INSERT INTO portal_users
+      (id, username, password, email, name, role, status, must_reset_password, kennitala, company_id)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+     ON CONFLICT DO NOTHING`,
+    [
+      ZOHO_TEST_USER.id,
+      ZOHO_TEST_USER.username,
+      zohoHashed,
+      ZOHO_TEST_USER.email,
+      ZOHO_TEST_USER.name,
+      ZOHO_TEST_USER.role,
+      ZOHO_TEST_USER.status,
+      ZOHO_TEST_USER.must_reset_password,
+      ZOHO_TEST_USER.kennitala,
+      ZOHO_TEST_USER.company_id,
+    ]
+  );
+
   await pool.query(`UPDATE portal_users SET kennitala = '0909032330' WHERE username = 'jon'`);
 
-  // Give full permissions to any existing admin without a permissions row
   await pool.query(`
-    INSERT INTO user_permissions (user_id, invoices, subscription, hosting, pos, dk_one, dk_plus, timeclock, users)
+    INSERT INTO user_permissions
+      (user_id, invoices, subscription, hosting, pos, dk_one, dk_plus, timeclock, users)
     SELECT id, true, true, true, true, true, true, true, true
     FROM portal_users
     WHERE role = 'admin'
     ON CONFLICT DO NOTHING
   `);
 
-  // Zoho tickets tables
   await pool.query(`
     CREATE TABLE IF NOT EXISTS zoho_tickets (
       id          TEXT PRIMARY KEY,
       user_id     TEXT REFERENCES portal_users(id) ON DELETE CASCADE,
+      company_id  TEXT REFERENCES companies(id),
       number      TEXT NOT NULL,
       title       TEXT NOT NULL,
       preview     TEXT NOT NULL,
@@ -257,48 +379,159 @@ async function migrate() {
   `);
 
   await pool.query(`
+    ALTER TABLE zoho_tickets
+    ADD COLUMN IF NOT EXISTS company_id TEXT REFERENCES companies(id)
+  `);
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS zoho_messages (
-      id          TEXT PRIMARY KEY,
-      ticket_id   TEXT NOT NULL REFERENCES zoho_tickets(id) ON DELETE CASCADE,
-      from_type   TEXT NOT NULL CHECK (from_type IN ('customer', 'support')),
-      sender_user_id TEXT REFERENCES portal_users(id),
-      body        TEXT NOT NULL,
-      sent_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      id              TEXT PRIMARY KEY,
+      ticket_id       TEXT NOT NULL REFERENCES zoho_tickets(id) ON DELETE CASCADE,
+      from_type       TEXT NOT NULL CHECK (from_type IN ('customer', 'support')),
+      sender_user_id  TEXT REFERENCES portal_users(id),
+      body            TEXT NOT NULL,
+      sent_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `);
 
-  // Seed tickets for user fdeps33p (thora)
   const SEED_TICKETS = [
-    { id: "tk-1", user_id: "fdeps33p", company_id: "hr", number: "62823", title: "Vandamál með innskráningu í POS", preview: "Ég get ekki loggað mig inn í POS kerfið, hvað væri...", status: "opið", created_at: "2026-02-01", updated_at: "2026-02-02" },
-    { id: "tk-2", user_id: "fdeps33p", company_id: "hr", number: "86392", title: "Spurning um reikningsfærslu", preview: "Hæ, ég sá reikninginn númer 129775 og viljum a...", status: "opið", created_at: "2026-01-29", updated_at: "2026-01-29" },
-    { id: "tk-3", user_id: "fdeps33p", company_id: "hr", number: "21256", title: "Ósk um nýjan notanda", preview: "Við erum að ráða nýjan starfsmann og þurfum að...", status: "lokað", created_at: "2026-01-10", updated_at: "2026-01-15" },
+    {
+      id: "tk-1",
+      user_id: "fdeps33p",
+      company_id: "hr",
+      number: "62823",
+      title: "Vandamál með innskráningu í POS",
+      preview: "Ég get ekki loggað mig inn í POS kerfið, hvað væri...",
+      status: "opið",
+      created_at: "2026-02-01",
+      updated_at: "2026-02-02",
+    },
+    {
+      id: "tk-2",
+      user_id: "fdeps33p",
+      company_id: "hr",
+      number: "86392",
+      title: "Spurning um reikningsfærslu",
+      preview: "Hæ, ég sá reikninginn númer 129775 og viljum a...",
+      status: "opið",
+      created_at: "2026-01-29",
+      updated_at: "2026-01-29",
+    },
+    {
+      id: "tk-3",
+      user_id: "fdeps33p",
+      company_id: "hr",
+      number: "21256",
+      title: "Ósk um nýjan notanda",
+      preview: "Við erum að ráða nýjan starfsmann og þurfum að...",
+      status: "lokað",
+      created_at: "2026-01-10",
+      updated_at: "2026-01-15",
+    },
   ];
 
   const SEED_MESSAGES = [
-    { id: "tm-1", ticket_id: "tk-1", from_type: "customer", sender_user_id: "fdeps33p",    body: "Hæ, ég get ekki loggað mig inn í POS kerfið. Ég er að fá villu sem segir 'invalid credentials' en ég er viss um að lykilorðið sé rétt. Gætuð þið hjálpað?", sent_at: "2026-02-01T10:00:00" },
-    { id: "tm-2", ticket_id: "tk-1", from_type: "support",  sender_user_id: null,   body: "Hæ Þóra, takk fyrir að hafa samband. Við erum að skoða þetta. Gætirðu staðfest notendanafnið þitt og hvaða útgáfu af POS þú ert að nota?", sent_at: "2026-02-01T11:30:00" },
-    { id: "tm-3", ticket_id: "tk-1", from_type: "customer", sender_user_id: "fdeps33p",    body: "Notendanafnið er thora@fyrirtaeki.is og við erum að nota POS útgáfu 3.2.1.", sent_at: "2026-02-01T12:00:00" },
-    { id: "tm-4", ticket_id: "tk-1", from_type: "support",  sender_user_id: null,    body: "Takk Þóra. Við fundum vandamálið — lykilorðið þitt er útrunnið. Við höfum sent þér tölvupóst með leiðbeiningum um að endurstilla það.", sent_at: "2026-02-02T09:00:00" },
-    { id: "tm-5", ticket_id: "tk-2", from_type: "customer", sender_user_id: "fdeps33p", body: "Hæ, ég sá reikninginn númer 129775 og við viljum að hann verði leiðréttur. Upphæðin stemmir ekki við samninginn okkar.", sent_at: "2026-01-29T08:00:00" },
-    { id: "tm-6", ticket_id: "tk-2", from_type: "support",  sender_user_id: null,    body: "Hæ Þóra, við erum að skoða þetta og munum hafa samband við þig innan 24 klukkustunda.", sent_at: "2026-01-29T09:30:00" },
-    { id: "tm-7", ticket_id: "tk-3", from_type: "customer", sender_user_id: "fdeps33p", body: "Við erum að ráða nýjan starfsmann og þurfum að bæta honum við kerfið. Getið þið hjálpað?", sent_at: "2026-01-10T10:00:00" },
-    { id: "tm-8", ticket_id: "tk-3", from_type: "support",  sender_user_id: null,    body: "Hæ Þóra, við höfum stofnað aðgang fyrir nýja starfsmanninn. Hann mun fá tölvupóst með innskráningarupplýsingum.", sent_at: "2026-01-12T14:00:00" },
-    { id: "tm-9", ticket_id: "tk-3", from_type: "customer", sender_user_id: "fdeps33p", body: "Frábært, þakka ykkur kærlega!", sent_at: "2026-01-15T09:00:00" },
+    {
+      id: "tm-1",
+      ticket_id: "tk-1",
+      from_type: "customer",
+      sender_user_id: "fdeps33p",
+      body: "Hæ, ég get ekki loggað mig inn í POS kerfið. Ég er að fá villu sem segir 'invalid credentials' en ég er viss um að lykilorðið sé rétt. Gætuð þið hjálpað?",
+      sent_at: "2026-02-01T10:00:00",
+    },
+    {
+      id: "tm-2",
+      ticket_id: "tk-1",
+      from_type: "support",
+      sender_user_id: null,
+      body: "Hæ Þóra, takk fyrir að hafa samband. Við erum að skoða þetta. Gætirðu staðfest notendanafnið þitt og hvaða útgáfu af POS þú ert að nota?",
+      sent_at: "2026-02-01T11:30:00",
+    },
+    {
+      id: "tm-3",
+      ticket_id: "tk-1",
+      from_type: "customer",
+      sender_user_id: "fdeps33p",
+      body: "Notendanafnið er thora@fyrirtaeki.is og við erum að nota POS útgáfu 3.2.1.",
+      sent_at: "2026-02-01T12:00:00",
+    },
+    {
+      id: "tm-4",
+      ticket_id: "tk-1",
+      from_type: "support",
+      sender_user_id: null,
+      body: "Takk Þóra. Við fundum vandamálið — lykilorðið þitt er útrunnið. Við höfum sent þér tölvupóst með leiðbeiningum um að endurstilla það.",
+      sent_at: "2026-02-02T09:00:00",
+    },
+    {
+      id: "tm-5",
+      ticket_id: "tk-2",
+      from_type: "customer",
+      sender_user_id: "fdeps33p",
+      body: "Hæ, ég sá reikninginn númer 129775 og við viljum að hann verði leiðréttur. Upphæðin stemmir ekki við samninginn okkar.",
+      sent_at: "2026-01-29T08:00:00",
+    },
+    {
+      id: "tm-6",
+      ticket_id: "tk-2",
+      from_type: "support",
+      sender_user_id: null,
+      body: "Hæ Þóra, við erum að skoða þetta og munum hafa samband við þig innan 24 klukkustunda.",
+      sent_at: "2026-01-29T09:30:00",
+    },
+    {
+      id: "tm-7",
+      ticket_id: "tk-3",
+      from_type: "customer",
+      sender_user_id: "fdeps33p",
+      body: "Við erum að ráða nýjan starfsmann og þurfum að bæta honum við kerfið. Getið þið hjálpað?",
+      sent_at: "2026-01-10T10:00:00",
+    },
+    {
+      id: "tm-8",
+      ticket_id: "tk-3",
+      from_type: "support",
+      sender_user_id: null,
+      body: "Hæ Þóra, við höfum stofnað aðgang fyrir nýja starfsmanninn. Hann mun fá tölvupóst með innskráningarupplýsingum.",
+      sent_at: "2026-01-12T14:00:00",
+    },
+    {
+      id: "tm-9",
+      ticket_id: "tk-3",
+      from_type: "customer",
+      sender_user_id: "fdeps33p",
+      body: "Frábært, þakka ykkur kærlega!",
+      sent_at: "2026-01-15T09:00:00",
+    },
   ];
 
   for (const ticket of SEED_TICKETS) {
     await pool.query(
-      `INSERT INTO zoho_tickets (id, user_id, company_id, number, title, preview, status, created_at, updated_at)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT DO NOTHING`,
-      [ticket.id, ticket.user_id, ticket.company_id, ticket.number, ticket.title, ticket.preview, ticket.status, ticket.created_at, ticket.updated_at],
+      `INSERT INTO zoho_tickets
+        (id, user_id, company_id, number, title, preview, status, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+       ON CONFLICT DO NOTHING`,
+      [
+        ticket.id,
+        ticket.user_id,
+        ticket.company_id,
+        ticket.number,
+        ticket.title,
+        ticket.preview,
+        ticket.status,
+        ticket.created_at,
+        ticket.updated_at,
+      ]
     );
   }
 
   for (const msg of SEED_MESSAGES) {
     await pool.query(
-      `INSERT INTO zoho_messages (id, ticket_id, from_type, sender_user_id, body, sent_at)
-       VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT DO NOTHING`,
-      [msg.id, msg.ticket_id, msg.from_type, msg.sender_user_id, msg.body, msg.sent_at],
+      `INSERT INTO zoho_messages
+        (id, ticket_id, from_type, sender_user_id, body, sent_at)
+       VALUES ($1,$2,$3,$4,$5,$6)
+       ON CONFLICT DO NOTHING`,
+      [msg.id, msg.ticket_id, msg.from_type, msg.sender_user_id, msg.body, msg.sent_at]
     );
   }
 }
@@ -307,71 +540,108 @@ async function seed() {
   await migrate();
 
   const { rows } = await pool.query("SELECT COUNT(*) FROM portal_users");
-  if (parseInt(rows[0].count) > 0) return; // already seeded
+
+  if (parseInt(rows[0].count, 10) > 0) {
+    return;
+  }
 
   console.log("Seeding database...");
 
   await pool.query(
-    `INSERT INTO companies (id, name, dk_token) VALUES ('hr', 'HR', $1) ON CONFLICT DO NOTHING`,
-    [process.env.DK_TOKEN ?? null],
+    `INSERT INTO companies (id, name, dk_token)
+     VALUES ('hr', 'HR', $1)
+     ON CONFLICT DO NOTHING`,
+    [process.env.DK_TOKEN ?? null]
   );
 
   for (const user of SEED_USERS) {
     const hashed = await bcrypt.hash(user.password, 10);
+
     await pool.query(
       `INSERT INTO portal_users
         (id, username, password, email, name, role, status, must_reset_password, kennitala, company_id)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
        ON CONFLICT DO NOTHING`,
-      [user.id, user.username, hashed, user.email, user.name,
-       user.role, user.status, user.must_reset_password, user.kennitala, user.company_id],
+      [
+        user.id,
+        user.username,
+        hashed,
+        user.email,
+        user.name,
+        user.role,
+        user.status,
+        user.must_reset_password,
+        user.kennitala,
+        user.company_id,
+      ]
     );
-    // Admins get all permissions by default
+
     await pool.query(
-      `INSERT INTO user_permissions (user_id, invoices, subscription, hosting, pos, dk_one, dk_plus, timeclock, users)
+      `INSERT INTO user_permissions
+        (user_id, invoices, subscription, hosting, pos, dk_one, dk_plus, timeclock, users)
        VALUES ($1, true, true, true, true, true, true, true, true)
        ON CONFLICT DO NOTHING`,
-      [user.id],
+      [user.id]
     );
   }
 
   for (const acc of SEED_HOSTING_ACCOUNTS) {
     await pool.query(
-      `INSERT INTO hosting_accounts (id, company_id, username, display_name)
-       VALUES ($1,$2,$3,$4) ON CONFLICT DO NOTHING`,
-      [acc.id, acc.company_id, acc.username, acc.display_name],
+      `INSERT INTO hosting_accounts
+        (id, company_id, username, display_name)
+       VALUES ($1,$2,$3,$4)
+       ON CONFLICT DO NOTHING`,
+      [acc.id, acc.company_id, acc.username, acc.display_name]
     );
   }
 
   for (const entry of SEED_IP_WHITELIST) {
     await pool.query(
-      `INSERT INTO timeclock_ip_whitelist (id, company_id, ip, label)
-       VALUES ($1,$2,$3,$4) ON CONFLICT DO NOTHING`,
-      [entry.id, entry.company_id, entry.ip, entry.label],
+      `INSERT INTO timeclock_ip_whitelist
+        (id, company_id, ip, label)
+       VALUES ($1,$2,$3,$4)
+       ON CONFLICT DO NOTHING`,
+      [entry.id, entry.company_id, entry.ip, entry.label]
     );
   }
 
   for (const entry of SEED_EMPLOYEE_PHONES) {
     await pool.query(
-      `INSERT INTO timeclock_employee_phones (id, company_id, employee_number, employee_name, phone)
-       VALUES ($1,$2,$3,$4,$5) ON CONFLICT DO NOTHING`,
-      [entry.id, entry.company_id, entry.employee_number, entry.employee_name, entry.phone],
+      `INSERT INTO timeclock_employee_phones
+        (id, company_id, employee_number, employee_name, phone)
+       VALUES ($1,$2,$3,$4,$5)
+       ON CONFLICT DO NOTHING`,
+      [entry.id, entry.company_id, entry.employee_number, entry.employee_name, entry.phone]
     );
   }
 
   const SEED_NOTIFICATIONS = [
-    { id: "notif-1", user_id: "1", company_id: "hr", title: "Velkomin/n", message: "Þú ert skráð/ur inn í DK gáttina." },
-    { id: "notif-2", user_id: "1", company_id: "hr", title: "Kerfisvísa", message: "Mundu að uppfæra stillingar fyrirtækis." },
+    {
+      id: "notif-1",
+      user_id: "1",
+      company_id: "hr",
+      title: "Velkomin/n",
+      message: "Þú ert skráð/ur inn í DK gáttina.",
+    },
+    {
+      id: "notif-2",
+      user_id: "1",
+      company_id: "hr",
+      title: "Kerfisvísa",
+      message: "Mundu að uppfæra stillingar fyrirtækis.",
+    },
   ];
 
   for (const notif of SEED_NOTIFICATIONS) {
     await pool.query(
-      `INSERT INTO notifications (id, user_id, company_id, title, message)
-       VALUES ($1,$2,$3,$4,$5) ON CONFLICT DO NOTHING`,
-      [notif.id, notif.user_id, notif.company_id, notif.title, notif.message],
+      `INSERT INTO notifications
+        (id, user_id, company_id, title, message)
+       VALUES ($1,$2,$3,$4,$5)
+       ON CONFLICT DO NOTHING`,
+      [notif.id, notif.user_id, notif.company_id, notif.title, notif.message]
     );
   }
-  
+
   console.log("Seeding done.");
 }
 
