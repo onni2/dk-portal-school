@@ -23,7 +23,7 @@ export function useVisibleNavItems() {
   const { data: dbPermissions = null } = useQuery({
     ...permissionsQueryOptions(user?.id ?? ""),
     enabled: !!user?.id,
-    refetchInterval: 30 * 1000,
+    refetchInterval: 5 * 1000,
   });
   const userPermissions = dbPermissions ?? activeCompany?.permissions ?? null;
 
