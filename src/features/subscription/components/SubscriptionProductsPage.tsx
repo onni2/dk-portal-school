@@ -11,6 +11,15 @@ function fmtPrice(n: number) {
   return n.toLocaleString("is-IS") + " kr.";
 }
 
+const HARDCODED_KB_LINKS: Record<string, { view: "product"; productId: string; selectedFolderId: string; articleId: string }> = {
+  "dk Bankakerfi rafræn afstemming": {
+    view: "product",
+    productId: '"691274000000187205"',
+    selectedFolderId: '"691274000027580719"',
+    articleId: '"691274000157348754"',
+  },
+};
+
 export function SubscriptionProductsPage() {
   const { data: groups } = useDkProductGroups();
   const { data: invoices } = useSubscriptionOverview();
@@ -34,11 +43,13 @@ export function SubscriptionProductsPage() {
     setAddProduct(product);
   }
 
-  function goToInstructions(articleId: string | null) {
+  function goToInstructions(articleId: string | null, productDescription?: string) {
     setPanelProduct(null);
     setAddProduct(null);
     if (articleId) {
       navigate({ to: "/knowledge-base", search: { articleId } });
+    } else if (productDescription && HARDCODED_KB_LINKS[productDescription]) {
+      navigate({ to: "/knowledge-base", search: HARDCODED_KB_LINKS[productDescription] });
     } else {
       navigate({ to: "/knowledge-base" });
     }
@@ -47,7 +58,7 @@ export function SubscriptionProductsPage() {
   function handleGoToInstructions() {
     if (!addProduct) return;
     const { articleId } = parseExtraDesc2(addProduct.ExtraDesc2);
-    goToInstructions(articleId);
+    goToInstructions(articleId, addProduct.Description);
   }
 
   return (
@@ -112,7 +123,7 @@ export function SubscriptionProductsPage() {
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            goToInstructions(articleId);
+                            goToInstructions(articleId, product.Description);
                           }}
                           className="rounded-md border border-(--color-border) px-3 py-1.5 text-xs font-medium text-(--color-text-secondary) transition-colors hover:border-(--color-primary) hover:text-(--color-primary)"
                         >
