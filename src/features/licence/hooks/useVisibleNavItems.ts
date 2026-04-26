@@ -28,5 +28,5 @@ export function useVisibleNavItems() {
     return NAV_ITEMS.filter((item) => item.access.type === "alwaysVisible");
   }
 
-  return filterNavItems(NAV_ITEMS, role, licence, userPermissions);
+  return filterNavItems(NAV_ITEMS, role, licence, userPermissions, user?.role);
 }

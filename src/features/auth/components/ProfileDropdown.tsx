@@ -18,7 +18,7 @@ interface ProfileDropdownProps {
  */
 export function ProfileDropdown({ user, onLogout }: ProfileDropdownProps) {
   const [open, setOpen] = useState(false);
-  const { lang, largeText, toggleLargeText, highContrast, toggleHighContrast } = useLangStore();
+  const { lang, fontSize, setFontSize, highContrast, toggleHighContrast } = useLangStore();
   const ref = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -104,18 +104,19 @@ export function ProfileDropdown({ user, onLogout }: ProfileDropdownProps) {
               <p className="mb-2 text-xs text-(--color-text-secondary)">
                 {lang === "EN" ? "Accessibility" : "Aðgengileiki"}
               </p>
-              <button
-                onClick={toggleLargeText}
-                className={cn(
-                  "flex w-full items-center justify-between rounded-[var(--radius-md)] border px-3 py-2 text-sm font-medium transition-colors",
-                  largeText
-                    ? "border-(--color-primary) bg-(--color-primary) text-white"
-                    : "border-(--color-border) text-(--color-text-secondary) hover:bg-(--color-surface-hover)",
-                )}
-              >
-                <span>{lang === "EN" ? "Larger text" : "Stærri texti"}</span>
-                <span className="text-xs">{largeText ? (lang === "EN" ? "On" : "Virkt") : (lang === "EN" ? "Off" : "Óvirkt")}</span>
-              </button>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm text-(--color-text-secondary)">{lang === "EN" ? "Text size" : "Stærð texta"}</span>
+                <span className="text-xs font-medium text-(--color-primary)">{fontSize}%</span>
+              </div>
+              <input
+                type="range"
+                min={100}
+                max={150}
+                step={10}
+                value={fontSize}
+                onChange={(e) => setFontSize(Number(e.target.value))}
+                className="w-full accent-[var(--color-primary)]"
+              />
               <button
                 onClick={toggleHighContrast}
                 className={cn(

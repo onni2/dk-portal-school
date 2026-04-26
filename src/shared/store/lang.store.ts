@@ -5,25 +5,26 @@ type Lang = "IS" | "EN";
 interface LangState {
   lang: Lang;
   setLang: (lang: Lang) => void;
-  largeText: boolean;
-  toggleLargeText: () => void;
+  fontSize: number;
+  setFontSize: (size: number) => void;
   highContrast: boolean;
   toggleHighContrast: () => void;
 }
 
-export const useLangStore = create<LangState>((set, get) => ({
+export const useLangStore = create<LangState>((set) => ({
   lang: "IS",
   setLang: (lang) => set({ lang }),
-  largeText: false,
-  toggleLargeText: () => {
-    const next = !get().largeText;
-    document.documentElement.classList.toggle("large-text", next);
-    set({ largeText: next });
+  fontSize: 100,
+  setFontSize: (size) => {
+    document.documentElement.style.fontSize = size === 100 ? "" : `${size}%`;
+    set({ fontSize: size });
   },
   highContrast: false,
   toggleHighContrast: () => {
-    const next = !get().highContrast;
-    document.documentElement.classList.toggle("high-contrast", next);
-    set({ highContrast: next });
+    set((state) => {
+      const next = !state.highContrast;
+      document.documentElement.classList.toggle("high-contrast", next);
+      return { highContrast: next };
+    });
   },
 }));
