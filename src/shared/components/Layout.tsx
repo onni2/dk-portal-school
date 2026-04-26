@@ -15,6 +15,12 @@ import { ProfileDropdown } from "@/features/auth/components/ProfileDropdown";
 import { CompanySelector } from "@/features/company/components/CompanySelector";
 import { NotificationBell } from "@/features/notifications/components/NotificationBell";
 
+function findActiveChild(children: { to: string }[], path: string): string | null {
+  const matches = children.filter((c) => path === c.to || path.startsWith(c.to + "/"));
+  if (matches.length === 0) return null;
+  return matches.sort((a, b) => b.to.length - a.to.length)[0].to;
+}
+
 /**
  *
  */
@@ -28,7 +34,7 @@ export function Layout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const [openItems, setOpenItems] = useState<string[]>(() =>
     navItems
-      .filter((item) => item.children?.some((child) => child.to === currentPath))
+      .filter((item) => item.children && findActiveChild(item.children, currentPath) !== null)
       .map((item) => item.to),
     );
   const toggleItem = (to: string) =>
@@ -78,7 +84,7 @@ export function Layout({ children }: { children: ReactNode }) {
             {navItems.map((item) => {
               const hasChildren = !!item.children?.length;
                 const isActive = hasChildren
-                  ? item.children!.some((child) => currentPath.startsWith(child.to))
+                  ? findActiveChild(item.children!, currentPath) !== null
                   : item.to === "/"
                     ? currentPath === "/"
                     : currentPath.startsWith(item.to);
@@ -138,7 +144,7 @@ export function Layout({ children }: { children: ReactNode }) {
                       >
                         <div className="ml-3 mt-1 flex flex-col gap-1 border-l border-[var(--color-border)] pl-3">
                           {item.children!.map((child) => {
-                            const childActive = currentPath.startsWith(child.to);
+                            const childActive = findActiveChild(item.children!, currentPath) === child.to;
                             return (
                               <Link
                                 key={child.to}

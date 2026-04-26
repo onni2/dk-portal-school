@@ -72,7 +72,7 @@ describe("IpWhitelistPanel", () => {
   it("removes an entry when Fjarlægja is clicked", async () => {
     render(<IpWhitelistPanel />);
     const removeButtons = screen.getAllByText("Fjarlægja");
-    await userEvent.click(removeButtons[0]);
+    await userEvent.click(removeButtons[0]!);
     expect(screen.queryByText("192.168.1.10")).not.toBeInTheDocument();
   });
 
@@ -106,7 +106,7 @@ describe("IpWhitelistPanel", () => {
   it("removing one entry does not remove the other", async () => {
     render(<IpWhitelistPanel />);
     const removeButtons = screen.getAllByText("Fjarlægja");
-    await userEvent.click(removeButtons[0]);
+    await userEvent.click(removeButtons[0]!);
     expect(screen.queryByText("192.168.1.10")).not.toBeInTheDocument();
     expect(screen.getByText("10.0.0.5")).toBeInTheDocument();
   });
