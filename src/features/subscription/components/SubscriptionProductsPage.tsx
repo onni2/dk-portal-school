@@ -12,7 +12,7 @@ function fmtPrice(n: number) {
 }
 
 const HARDCODED_KB_LINKS: Record<string, { view: "product"; productId: string; selectedFolderId: string; articleId: string }> = {
-  "dk Bankakerfi rafræn afstemming": {
+  "dk Bankakerfi rafræn afstemming áskrift": {
     view: "product",
     productId: '"691274000000187205"',
     selectedFolderId: '"691274000027580719"',
