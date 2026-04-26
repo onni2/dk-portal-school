@@ -1,4 +1,6 @@
 import { Suspense, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { PageTemplate } from "@/shared/components/PageTemplate";
@@ -8,10 +10,29 @@ import { ProductPanel } from "./ProductPanel";
 import type { InvoiceLine, LineGroup } from "../types/overview.types";
 import type { SubscriptionProduct } from "../types/products.types";
 
+const IS_MONTHS = [
+  "Janúar","Febrúar","Mars","Apríl","Maí","Júní",
+  "Júlí","Ágúst","September","Október","Nóvember","Desember",
+];
+
 function formatISK(n: number): string {
   return Math.round(n)
     .toString()
     .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+function StatCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
+  return (
+    <div className="w-fit">
+      <Card padding="none">
+        <div className="px-6 py-5 min-w-72">
+          <p className="text-sm text-(--color-text-muted) mb-1">{label}</p>
+          <p className="text-3xl font-bold text-(--color-primary)">{value}</p>
+          {sub && <p className="mt-1 text-xs text-(--color-text-muted)">{sub}</p>}
+        </div>
+      </Card>
+    </div>
+  );
 }
 
 function PackageCard({
@@ -19,38 +40,42 @@ function PackageCard({
   moduleMap,
 }: {
   lines: InvoiceLine[];
-  moduleMap: Map<string, string[]>;
+  moduleMap: Record<string, string[]>;
 }) {
   if (lines.length === 0) return null;
 
   const total = lines.reduce((sum, l) => sum + (l.TotalAmountWithTax ?? 0), 0);
   const modules = lines.flatMap(
-    (l) => moduleMap.get((l.ItemCode ?? "").toLowerCase()) ?? [],
+    (l) => moduleMap[(l.ItemCode ?? "").toLowerCase()] ?? [],
   );
 
   return (
-    <Card padding="none" className="mb-6">
-      <div className="px-6 pt-5 pb-4">
-        <h3 className="font-bold text-(--color-primary) text-xl mb-3">
+    <Card padding="none">
+      <div className="px-6 pt-4 pb-5">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-semibold uppercase tracking-wider text-(--color-text-muted)">
+            Grunnpakki
+          </p>
+          <span className="rounded-md bg-(--color-primary-light) px-3 py-1 text-sm font-semibold text-(--color-primary) tabular-nums">
+            {formatISK(total)} kr.{" "}
+            <span className="font-normal text-(--color-primary) opacity-70">/mán</span>
+          </span>
+        </div>
+        <h3 className="text-lg font-semibold text-(--color-text) mb-3">
           {lines.map((l) => l.Text ?? l.ItemCode).join(", ")}
         </h3>
         {modules.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className="flex flex-wrap gap-2">
             {modules.map((mod) => (
               <span
                 key={mod}
-                className="text-xs px-3 py-0.5 rounded-full border border-(--color-border) text-(--color-text-secondary)"
+                className="text-xs px-3 py-1 rounded-full bg-(--color-primary-light) text-(--color-primary) font-medium"
               >
                 {mod}
               </span>
             ))}
           </div>
         )}
-        <div className="border-t border-(--color-border) pt-3 flex justify-end">
-          <span className="font-bold text-(--color-text-primary)">
-            Upphæð: {formatISK(total)},-
-          </span>
-        </div>
       </div>
     </Card>
   );
@@ -68,18 +93,17 @@ function LineRow({
       onClick={onInfo}
       className="flex items-center justify-between py-3 px-5 cursor-pointer hover:bg-(--color-surface-hover) transition-colors"
     >
-      <div className="flex items-center gap-2.5 min-w-0 pl-6">
-        <span className="w-2 h-2 rounded-full bg-(--color-primary) shrink-0" />
+      <div className="flex items-center min-w-0">
         <span className="text-sm text-(--color-text) truncate">
           {line.Text ?? line.ItemCode}
         </span>
       </div>
       <div className="flex items-center gap-6 shrink-0 ml-4">
-        <span className="text-sm text-(--color-text-muted) tabular-nums w-16 text-center">
-          {line.Quantity !== 1 ? formatISK(line.Quantity) : ""}
+        <span className="text-sm text-(--color-text-muted) tabular-nums w-10 text-center">
+          × {Math.round(line.Quantity)}
         </span>
-        <span className="text-sm text-(--color-text) tabular-nums w-28 text-right">
-          {line.TotalAmountWithTax > 0 ? formatISK(line.TotalAmountWithTax) : "—"}
+        <span className="text-sm font-medium text-(--color-text) tabular-nums w-28 text-right">
+          {line.TotalAmountWithTax > 0 ? `${formatISK(line.TotalAmountWithTax)} kr.` : "—"}
         </span>
       </div>
     </li>
@@ -92,23 +116,20 @@ function GroupCard({
   onSelect,
 }: {
   group: LineGroup;
-  productMap: Map<string, SubscriptionProduct>;
+  productMap: Record<string, SubscriptionProduct>;
   onSelect: (product: SubscriptionProduct) => void;
 }) {
   return (
-    <Card padding="none" className="mb-4">
+    <Card padding="none">
       <div className="px-5 py-3 border-b border-(--color-border) flex items-center justify-between">
-        <h4 className="text-base font-semibold text-(--color-text)">
-          {group.title}
-        </h4>
-        <div className="flex items-center gap-6 shrink-0 text-xs font-medium text-(--color-text-muted) uppercase tracking-wide">
-          <span className="w-16 text-center">Magn</span>
-          <span className="w-28 text-right">Samtals m/VSK</span>
-        </div>
+        <h4 className="text-base font-semibold text-(--color-text)">{group.title}</h4>
+        <span className="rounded-md bg-(--color-primary-light) px-3 py-1 text-sm font-semibold text-(--color-primary) tabular-nums">
+          {formatISK(group.total)} kr.
+        </span>
       </div>
       <ul className="divide-y divide-(--color-border)">
         {group.lines.map((line) => {
-          const product = productMap.get((line.ItemCode ?? "").toLowerCase());
+          const product = productMap[(line.ItemCode ?? "").toLowerCase()];
           return (
             <LineRow
               key={line.SequenceNumber}
@@ -120,11 +141,6 @@ function GroupCard({
           );
         })}
       </ul>
-      <div className="px-5 py-3 border-t border-(--color-border) flex justify-end">
-        <span className="text-sm font-semibold text-(--color-text)">
-          Samtals: {formatISK(group.total)},-
-        </span>
-      </div>
     </Card>
   );
 }
@@ -133,19 +149,23 @@ function OverviewContent() {
   const { data: invoices } = useSubscriptionOverview();
   const { data: { moduleMap, productMap } } = useProductsData();
   const [selected, setSelected] = useState<SubscriptionProduct | null>(null);
+  const [cancelTarget, setCancelTarget] = useState<SubscriptionProduct | null>(null);
 
   if (invoices.length === 0) {
     return (
       <p className="text-(--color-text-secondary)">
-        Engar áskriftarpantanir fundust fyrir síðasta mánuð.
+        Engar áskriftarpantanir fundust.
       </p>
     );
   }
 
   const { packageLines, groups } = buildOverview(invoices);
 
-  const IS_MONTHS = ["Janúar","Febrúar","Mars","Apríl","Maí","Júní","Júlí","Ágúst","September","Október","Nóvember","Desember"];
-  const invoiceDate = invoices[0]?.InvoiceDate ? new Date(invoices[0].InvoiceDate) : null;
+  const newestDate = invoices.reduce<string | null>((best, inv) => {
+    if (!inv.InvoiceDate) return best;
+    return !best || inv.InvoiceDate > best ? inv.InvoiceDate : best;
+  }, null);
+  const invoiceDate = newestDate ? new Date(newestDate) : null;
   const monthLabel = invoiceDate
     ? `${IS_MONTHS[invoiceDate.getMonth()]} ${invoiceDate.getFullYear()}`
     : "";
@@ -155,9 +175,19 @@ function OverviewContent() {
   const grandTotal = packageTotal + groupsTotal;
 
   return (
-    <div>
-      <p className="text-sm text-(--color-text-muted) mb-4 capitalize">{monthLabel}</p>
+    <div className="space-y-4">
+      <p className="text-sm text-(--color-text-muted)">
+        Mánaðarlegt yfirlit{monthLabel ? ` — ${monthLabel}` : ""}
+      </p>
+
+      <StatCard
+        label="Mánaðarkostnaður"
+        value={`${formatISK(grandTotal)} kr.`}
+        sub="m. vsk"
+      />
+
       <PackageCard lines={packageLines} moduleMap={moduleMap} />
+
       {groups.map((group) => (
         <GroupCard
           key={group.title}
@@ -166,28 +196,60 @@ function OverviewContent() {
           onSelect={setSelected}
         />
       ))}
-      <Card padding="none" className="mt-2">
-        <div className="px-5 py-4 flex items-center justify-between">
-          <p className="text-base font-semibold text-(--color-text)">
-            Heildargreiðsla {monthLabel && `– ${monthLabel}`}
-          </p>
-          <p className="text-xl font-bold text-(--color-text)">
-            {formatISK(grandTotal)} kr.
-          </p>
-        </div>
-      </Card>
+
       {selected && (
-        <ProductPanel product={selected} onClose={() => setSelected(null)} />
+        <ProductPanel
+          product={selected}
+          inSubscription
+          onClose={() => setSelected(null)}
+          onCancelClick={() => {
+            setCancelTarget(selected);
+            setSelected(null);
+          }}
+        />
+      )}
+
+      {cancelTarget && (
+        <>
+          <div className="fixed inset-0 z-50 bg-black/30" onClick={() => setCancelTarget(null)} />
+          <div className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl bg-(--color-surface) shadow-xl">
+            <div className="space-y-4 p-6">
+              <h2 className="text-lg font-semibold text-(--color-text)">Ertu alveg viss?</h2>
+              <p className="text-sm text-(--color-text-secondary)">
+                Á að segja upp áskrift að{" "}
+                <span className="font-medium text-(--color-text)">{cancelTarget.Description}</span>?
+              </p>
+              <div className="flex gap-3 pt-2">
+                <Button
+                  variant="ghost"
+                  onClick={() => setCancelTarget(null)}
+                  className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  Já, segja upp
+                </Button>
+                <Button onClick={() => setCancelTarget(null)} className="flex-1">
+                  Hætta við
+                </Button>
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
 }
 
 export function SubscriptionOverviewPage() {
+  const navigate = useNavigate();
+
   return (
     <PageTemplate
       title="Yfirlit áskriftar"
-      description="Á þessari síðu getur þú skoðað yfirlit yfir áskriftir og tengda reikninga fyrir síðasta mánuð hjá DK Hugbúnaður. Hér sérðu hvaða viðskiptalausn er í notkun, hvaða einingar fylgja og hvernig kostnaður skiptist."
+      actions={
+        <Button onClick={() => navigate({ to: "/askrift/vorur" })}>
+          Bæta við áskrift
+        </Button>
+      }
     >
       <Suspense fallback={<LoadingSpinner />}>
         <OverviewContent />

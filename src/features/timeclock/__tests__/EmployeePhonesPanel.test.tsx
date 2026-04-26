@@ -82,7 +82,7 @@ describe("EmployeePhonesPanel", () => {
   it("removes an entry when Fjarlægja is clicked", async () => {
     render(<EmployeePhonesPanel />);
     const removeButtons = screen.getAllByText("Fjarlægja");
-    await userEvent.click(removeButtons[0]);
+    await userEvent.click(removeButtons[0]!);
     expect(screen.queryByText("Jón Jónsson")).not.toBeInTheDocument();
   });
 
@@ -126,7 +126,7 @@ describe("EmployeePhonesPanel", () => {
   it("removing one entry does not remove the other", async () => {
     render(<EmployeePhonesPanel />);
     const removeButtons = screen.getAllByText("Fjarlægja");
-    await userEvent.click(removeButtons[0]);
+    await userEvent.click(removeButtons[0]!);
     expect(screen.queryByText("Jón Jónsson")).not.toBeInTheDocument();
     expect(screen.getByText("Anna Sigurðardóttir")).toBeInTheDocument();
   });
