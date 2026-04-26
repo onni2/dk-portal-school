@@ -20,7 +20,7 @@ interface Props {
   onClose: () => void;
   onAddClick?: () => void;
   onCancelClick?: () => void;
-  onGoToInstructions?: (articleId: string | null, productName?: string) => void;
+  onGoToInstructions?: (articleId: string | null) => void;
 }
 
 export function ProductPanel({
@@ -104,7 +104,7 @@ export function ProductPanel({
             </Button>
           )}
           {onGoToInstructions && (
-            <Button variant="secondary" onClick={() => onGoToInstructions(articleId, product.Description)} className="w-full">
+            <Button variant="secondary" onClick={() => onGoToInstructions(articleId)} className="w-full">
               Skoða leiðbeiningar
             </Button>
           )}
