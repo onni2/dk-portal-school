@@ -19,6 +19,7 @@ export interface SubscriptionInvoice {
   CNumber: string | null;
   CName: string | null;
   Origin: number;
+  OrderNumber: string | null;
   Reference: string | null;
   Text1: string | null;
   Lines: InvoiceLine[] | null;
