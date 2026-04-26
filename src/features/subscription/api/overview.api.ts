@@ -12,12 +12,12 @@ const SUBSCRIPTION_ORIGIN = 3;
 export const PACKAGE_ITEM_CODES = ["dk-pakki-1", "dk-pakki-2", "dk-pakki-3", "dka-2000"];
 
 const LINE_GROUPS: { title: string; prefixes: string[] }[] = [
+  { title: "Fjárhagur", prefixes: ["dkl-20"] },
   { title: "Hýsing", prefixes: ["v-dk-", "v-qs-"] },
   { title: "Rafræn viðskipti", prefixes: ["nes-ubl"] },
   { title: "Microsoft Office", prefixes: ["v-av-"] },
   { title: "dkPlus", prefixes: ["v-plus-"] },
   { title: "dk One", prefixes: ["dka-"] },
-  { title: "Fjárhagur", prefixes: ["dkl-20"] },
   { title: "Skuldunautar", prefixes: ["dkl-21"] },
   { title: "Lánardrottnar", prefixes: ["dkl-22"] },
   { title: "Birgðir", prefixes: ["dkl-23"] },
@@ -27,15 +27,6 @@ const LINE_GROUPS: { title: string; prefixes: string[] }[] = [
   { title: "Almennt", prefixes: ["dkl-27"] },
 ];
 
-function lastMonthRange(): { after: string; before: string } {
-  const now = new Date();
-  const first = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const last = new Date(now.getFullYear(), now.getMonth(), 0);
-  return {
-    after: first.toISOString().split("T")[0] ?? "",
-    before: last.toISOString().split("T")[0] ?? "",
-  };
-}
 
 function fixEncoding(text: string | null): string | null {
   if (!text) return text;
@@ -97,27 +88,24 @@ export function buildOverview(invoices: SubscriptionInvoice[]): OverviewData {
 }
 
 export interface ProductsData {
-  moduleMap: Map<string, string[]>;
-  productMap: Map<string, SubscriptionProduct>;
+  moduleMap: Record<string, string[]>;
+  productMap: Record<string, SubscriptionProduct>;
 }
 
 export async function fetchProductsData(): Promise<ProductsData> {
   const all = await apiClient.get<SubscriptionProduct[]>("/Product/page/1/500");
-  const moduleMap = new Map<string, string[]>();
-  const productMap = new Map<string, SubscriptionProduct>();
+  const moduleMap: Record<string, string[]> = {};
+  const productMap: Record<string, SubscriptionProduct> = {};
 
   for (const p of all) {
     const key = p.ItemCode.toLowerCase();
-    productMap.set(key, p);
+    productMap[key] = p;
     if (PACKAGE_ITEM_CODES.includes(key)) {
-      moduleMap.set(
-        key,
-        (p.ExtraDesc1 ?? "")
-          .replace(/\n/g, ",")
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean),
-      );
+      moduleMap[key] = (p.ExtraDesc1 ?? "")
+        .replace(/\n/g, ",")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
     }
   }
 
@@ -127,17 +115,15 @@ export async function fetchProductsData(): Promise<ProductsData> {
 export async function fetchSubscriptionOverview(): Promise<
   SubscriptionInvoice[]
 > {
-  const { after, before } = lastMonthRange();
   const params = new URLSearchParams({
     customer: SUBSCRIPTION_CUSTOMER,
     includeLines: "true",
-    dueAfter: after,
-    dueBefore: before,
   });
   const all = await apiClient.get<SubscriptionInvoice[]>(
-    `/sales/invoice/page/1/100?${params}`,
+    `/sales/invoice/page/1/500?${params}`,
   );
-  return all
+
+  const filtered = all
     .filter((inv) => inv.Origin === SUBSCRIPTION_ORIGIN)
     .map((inv) => ({
       ...inv,
@@ -147,4 +133,15 @@ export async function fetchSubscriptionOverview(): Promise<
           Text: fixEncoding(line.Text),
         })) ?? null,
     }));
+
+  // Keep only the latest invoice per subscription order
+  const byOrder = new Map<string, SubscriptionInvoice>();
+  for (const inv of filtered) {
+    const key = inv.OrderNumber ?? inv.Number;
+    const existing = byOrder.get(key);
+    if (!existing || (inv.InvoiceDate ?? "") > (existing.InvoiceDate ?? "")) {
+      byOrder.set(key, inv);
+    }
+  }
+  return Array.from(byOrder.values());
 }
