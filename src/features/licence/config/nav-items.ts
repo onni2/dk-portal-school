@@ -49,6 +49,7 @@ export const NAV_ITEMS: NavItem[] = [
     to: "/hosting",
     access: { type: "requiredPermission", permission: "hosting" },
     children: [
+      { label: "Notendur", to: "/hosting", access: { type: "requiredPermission", permission: "hosting" } },
       { label: "Öryggi og persónuvernd", to: "/hosting/oryggi", access: { type: "requiredPermission", permission: "hosting" } },
     ],
   },
