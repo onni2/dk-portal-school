@@ -54,7 +54,8 @@ function ResetPasswordPage() {
       await resetPassword(user.id, newPassword, currentPassword);
 
       if (user && token) {
-        setAuth({ ...user, mustResetPassword: false }, token);
+        const companies = useAuthStore.getState().companies;
+        setAuth({ ...user, mustResetPassword: false }, token, companies);
       }
 
       navigate({ to: "/" });

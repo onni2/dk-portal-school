@@ -16,6 +16,7 @@ export function SettingsPage() {
   const user = useAuthStore((s) => s.user);
   const setAuth = useAuthStore((s) => s.setAuth);
   const token = useAuthStore((s) => s.token);
+  const companies = useAuthStore((s) => s.companies);
 
   const [phone, setPhone] = useState(user?.phone ?? "");
   const [phoneSaved, setPhoneSaved] = useState(false);
@@ -33,7 +34,7 @@ export function SettingsPage() {
     setPhoneError("");
     try {
       await updateUser(user.id, { phone });
-      setAuth({ ...user, phone }, token ?? "");
+      setAuth({ ...user, phone }, token ?? "", companies);
       setPhoneSaved(true);
       setTimeout(() => setPhoneSaved(false), 2000);
     } catch {
@@ -58,7 +59,7 @@ export function SettingsPage() {
 
     try {
       await resetPassword(user.id, newPassword, currentPassword || undefined);
-      setAuth({ ...user, mustResetPassword: false }, token ?? "");
+      setAuth({ ...user, mustResetPassword: false }, token ?? "", companies);
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
