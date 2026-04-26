@@ -34,13 +34,13 @@ export function SubscriptionProductsPage() {
     setAddProduct(product);
   }
 
-  function goToInstructions(articleId: string | null, productName?: string) {
+  function goToInstructions(articleId: string | null) {
     setPanelProduct(null);
     setAddProduct(null);
     if (articleId) {
       navigate({ to: "/knowledge-base", search: { articleId } });
     } else {
-      navigate({ to: "/knowledge-base", search: { query: productName } });
+      navigate({ to: "/knowledge-base" });
     }
   }
 
@@ -112,7 +112,7 @@ export function SubscriptionProductsPage() {
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            goToInstructions(articleId, product.Description);
+                            goToInstructions(articleId);
                           }}
                           className="rounded-md border border-(--color-border) px-3 py-1.5 text-xs font-medium text-(--color-text-secondary) transition-colors hover:border-(--color-primary) hover:text-(--color-primary)"
                         >
