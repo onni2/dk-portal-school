@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import MiniSearch from "minisearch";
-import { useNavigate } from "@tanstack/react-router";
-import { Route } from "@/routes/knowledge-base/index";
+import { getRouteApi, useNavigate } from "@tanstack/react-router";
+
+const kbRoute = getRouteApi("/knowledge-base/");
 import { Card } from "@/shared/components/Card";
 import { Input } from "@/shared/components/Input";
 import { cn } from "@/shared/utils/cn";
@@ -570,7 +571,7 @@ function ProductView({
 function KnowledgeBaseContent() {
   const { data } = useKbData();
   const navigate = useNavigate({ from: "/knowledge-base/" });
-  const params = Route.useSearch();
+  const params = kbRoute.useSearch();
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
