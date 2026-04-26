@@ -226,6 +226,14 @@ async function migrate() {
     `UPDATE portal_users SET company_id = 'hr' WHERE company_id IS NULL`,
   );
 
+  // Correct company_id for seeded company users (in case they were wrongly assigned to HR)
+  for (const user of SEED_COMPANY_USERS) {
+    await pool.query(
+      `UPDATE portal_users SET company_id = $1 WHERE id = $2`,
+      [user.company_id, user.id],
+    );
+  }
+
   // Add missing team members
   for (const member of TEAM_MEMBERS) {
     const hashed = await bcrypt.hash(member.password, 10);
@@ -252,6 +260,35 @@ async function migrate() {
     WHERE role = 'admin'
     ON CONFLICT DO NOTHING
   `);
+
+  // Ensure user_companies table exists
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS user_companies (
+      user_id    TEXT NOT NULL REFERENCES portal_users(id) ON DELETE CASCADE,
+      company_id TEXT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+      role       TEXT NOT NULL DEFAULT 'admin',
+      invoices   BOOLEAN NOT NULL DEFAULT false,
+      subscription BOOLEAN NOT NULL DEFAULT false,
+      hosting    BOOLEAN NOT NULL DEFAULT false,
+      pos        BOOLEAN NOT NULL DEFAULT false,
+      dk_one     BOOLEAN NOT NULL DEFAULT false,
+      dk_plus    BOOLEAN NOT NULL DEFAULT false,
+      timeclock  BOOLEAN NOT NULL DEFAULT false,
+      users      BOOLEAN NOT NULL DEFAULT false,
+      PRIMARY KEY (user_id, company_id)
+    )
+  `);
+
+  // Give odinn (id=1) admin access to all companies
+  const ALL_COMPANIES = ['hr', '1001nott', 'akurey', 'bokhald'];
+  for (const companyId of ALL_COMPANIES) {
+    await pool.query(
+      `INSERT INTO user_companies (user_id, company_id, role, invoices, subscription, hosting, pos, dk_one, dk_plus, timeclock, users)
+       VALUES ('1', $1, 'admin', true, true, true, true, true, true, true, true)
+       ON CONFLICT DO NOTHING`,
+      [companyId],
+    );
+  }
 
   // Zoho tickets tables
   await pool.query(`

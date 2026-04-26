@@ -24,6 +24,10 @@ function generatePassword() {
   return [...required, ...rest].sort(() => Math.random() - 0.5).join("");
 }
 
+function getCompanyId(req) {
+  return req.user.active_company_id ?? req.user.company_id;
+}
+
 // Middleware — admin only
 function requireAdmin(req, res, next) {
   if (req.user?.role !== "admin") {
@@ -49,7 +53,8 @@ async function requireAdminOrUsersPermission(req, res, next) {
 router.get("/", requireAdminOrUsersPermission, async (req, res) => {
   try {
     const { rows } = await pool.query(
-      "SELECT id, username, email, name, role, status, must_reset_password, kennitala, phone, company_id, created_at FROM portal_users ORDER BY created_at ASC",
+      "SELECT id, username, email, name, role, status, must_reset_password, kennitala, phone, company_id, created_at FROM portal_users WHERE company_id = $1 ORDER BY created_at ASC",
+      [getCompanyId(req)],
     );
     res.json(rows.map((u) => ({
       id: u.id,
@@ -89,7 +94,7 @@ router.post("/invite", requireAdminOrUsersPermission, async (req, res) => {
     const generatedPassword = generatePassword();
     const hashed = await bcrypt.hash(generatedPassword, 10);
     const id = generateId();
-    const companyId = req.user.company_id ?? null;
+    const companyId = getCompanyId(req);
 
     await pool.query(
       `INSERT INTO portal_users (id, username, password, email, name, role, status, must_reset_password, kennitala, hosting_username, company_id)

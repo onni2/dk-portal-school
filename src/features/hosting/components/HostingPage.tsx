@@ -1,6 +1,6 @@
 /**
  * Hosting page — overview of the company's hosted environment users.
- * Admins can create, delete, reset passwords, restart services, and toggle MFA.
+ * Admins can create, delete, reset passwords, and restart services.
  * Uses: ../api/hosting.queries, ../api/hosting.api, @/shared/components/PageTemplate,
  *       @/shared/components/Button, ./CreateHostingUserModal
  * Exports: HostingPage
@@ -13,7 +13,6 @@ import {
   deleteHostingAccount,
   resetHostingPassword,
   restartHostingService,
-  toggleHostingMfa,
 } from "../api/hosting.api";
 import { CreateHostingUserModal } from "./CreateHostingUserModal";
 import type { HostingAccount } from "../types/hosting.types";
@@ -81,17 +80,7 @@ export function HostingPage() {
     }
   }
 
-  async function handleToggleMfa(acc: HostingAccount) {
-    setPendingId(acc.id);
-    try {
-      await toggleHostingMfa(acc.id, !acc.hasMfa);
-      await invalidate();
-    } catch {
-      showError("Villa kom upp.");
-    } finally {
-      setPendingId(null);
-    }
-  }
+
 
   return (
     <PageTemplate
@@ -154,31 +143,9 @@ export function HostingPage() {
                     <td className="px-4 py-3 text-(--color-text)">{acc.displayName}</td>
                     <td className="px-4 py-3 text-(--color-text-secondary)">{acc.email ?? "—"}</td>
                     <td className="px-4 py-3">
-                      <button
-                        onClick={() => handleToggleMfa(acc)}
-                        disabled={busy}
-                        title={acc.hasMfa ? "Slökkva á MFA" : "Kveikja á MFA"}
-                        className="group flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        <span
-                          className={[
-                            "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors duration-200",
-                            acc.hasMfa
-                              ? "bg-green-500 group-hover:bg-green-600"
-                              : "bg-(--color-border) group-hover:bg-(--color-text-secondary)",
-                          ].join(" ")}
-                        >
-                          <span
-                            className={[
-                              "inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform duration-200",
-                              acc.hasMfa ? "translate-x-[18px]" : "translate-x-[3px]",
-                            ].join(" ")}
-                          />
-                        </span>
-                        <span className={`text-xs font-medium ${acc.hasMfa ? "text-green-600 dark:text-green-400" : "text-(--color-text-secondary)"}`}>
-                          {acc.hasMfa ? "Virkt" : "Óvirkt"}
-                        </span>
-                      </button>
+                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${acc.hasMfa ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-(--color-surface-hover) text-(--color-text-secondary)"}`}>
+                        {acc.hasMfa ? "Virkt" : "Óvirkt"}
+                      </span>
                     </td>
                     <td className="px-4 py-3 text-(--color-text-secondary)">
                       {acc.lastRestart
