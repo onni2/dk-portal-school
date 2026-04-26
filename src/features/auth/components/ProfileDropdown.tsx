@@ -138,7 +138,7 @@ export function ProfileDropdown({ user, onLogout }: ProfileDropdownProps) {
                     : "border-(--color-border) text-(--color-text-secondary) hover:bg-(--color-surface-hover)",
                 )}
               >
-                <span>{lang === "EN" ? "High contrast" : "Hátt skerpa"}</span>
+                <span>{lang === "EN" ? "High contrast" : "Há skerpa"}</span>
                 <span className="text-xs">{highContrast ? (lang === "EN" ? "On" : "Virkt") : (lang === "EN" ? "Off" : "Óvirkt")}</span>
               </button>
             </div>

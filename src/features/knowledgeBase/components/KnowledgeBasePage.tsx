@@ -572,8 +572,8 @@ function KnowledgeBaseContent() {
   const { data } = useKbData();
   const navigate = useNavigate({ from: "/knowledge-base/" });
   const params = kbRoute.useSearch();
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [search, setSearch] = useState(params.query ?? "");
+  const [debouncedSearch, setDebouncedSearch] = useState(params.query ?? "");
 
   const { data: videos, isPending: videosPending } = useYoutubeVideos();
 
