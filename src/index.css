@@ -1,11 +1,5 @@
 @import "tailwindcss";
 
-/* Accessibility: large text mode */
-html.large-text {
-  font-size: 1.2rem;
-  font-weight: 600;
-}
-
 /* Accessibility: high contrast mode */
 html.high-contrast {
   --color-background: #ffffff;

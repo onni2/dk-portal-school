@@ -14,13 +14,26 @@ export interface NavItem {
     | { type: "alwaysVisible" }
     | { type: "requiredModules"; modules: LicenceModule[] }
     | { type: "requiredPermission"; permission: keyof UserPermissions }
-    | { type: "copOnly" };
+    | { type: "copOnly" }
+    | { type: "accountantOnly" };
   children?: NavItem[];
 }
 
 export const NAV_ITEMS: NavItem[] = [
   { label: "Yfirlit", labelEn: "Overview", to: "/", access: { type: "alwaysVisible" } },
 
+  // Accountant-only items
+  {
+    label: "Bókari",
+    to: "/accountant",
+    access: { type: "accountantOnly" },
+    children: [
+      { label: "Fyrirtækin mín", to: "/accountant/companies", access: { type: "accountantOnly" } },
+      { label: "Skilastaða", to: "/accountant/submissions", access: { type: "accountantOnly" } },
+    ],
+  },
+
+  // Permission-based items — visible if the admin has granted the user access
   { label: "Reikningsyfirlit", labelEn: "Invoices", to: "/invoices", access: { type: "requiredPermission", permission: "invoices" } },
   {
     label: "Áskrift",
