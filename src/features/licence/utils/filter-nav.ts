@@ -7,6 +7,7 @@
 import type { LicenceResponse, UserRole } from "../types/licence.types";
 import type { NavItem } from "../config/nav-items";
 import type { UserPermissions } from "@/features/users/types/user-permissions.types";
+import type { AuthRole } from "@/features/auth/types/auth.types";
 
 /**
  *
@@ -27,6 +28,7 @@ export function filterNavItems(
   role: UserRole,
   licence: LicenceResponse | undefined,
   userPermissions: UserPermissions | null,
+  authRole?: AuthRole,
 ): NavItem[] {
   // COP always sees everything
   if (role === "cop") return items;
@@ -34,7 +36,8 @@ export function filterNavItems(
   return items.filter((item) => {
     if (item.access.type === "alwaysVisible") return true;
     if (item.access.type === "copOnly") return false;
-
+    if (item.access.type === "accountantOnly") return authRole === "accountant" || authRole === "admin";
+    
     if (item.access.type === "requiredPermission") {
       return userPermissions ? userPermissions[item.access.permission] : false;
     }
