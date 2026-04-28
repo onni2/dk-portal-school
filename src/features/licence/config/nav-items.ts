@@ -39,10 +39,10 @@ export const NAV_ITEMS: NavItem[] = [
   {
     label: "Áskrift",
     to: "/askrift",
-    access: { type: "requiredPermission", permission: "subscription" },
+    access: { type: "licencedModule", module: "dkPlus", permission: "subscription" },
     children: [
-      { label: "Yfirlit áskriftar", to: "/askrift/yfirlit", access: { type: "requiredPermission", permission: "subscription" } },
-      { label: "Vörur dk", to: "/askrift/vorur", access: { type: "requiredPermission", permission: "subscription" } },
+      { label: "Yfirlit áskriftar", to: "/askrift/yfirlit", access: { type: "licencedModule", module: "dkPlus", permission: "subscription" } },
+      { label: "Vörur dk", to: "/askrift/vorur", access: { type: "licencedModule", module: "dkPlus", permission: "subscription" } },
     ],
   },
   {
