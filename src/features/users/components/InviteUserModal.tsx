@@ -11,17 +11,19 @@ import { Button } from "@/shared/components/Button";
 import { Input } from "@/shared/components/Input";
 import { inviteUser } from "../api/users.api";
 import { fetchHostingAccounts } from "../api/hosting.api";
+import { useLicence } from "@/features/licence/api/licence.queries";
+import type { LicenceResponse } from "@/features/licence/types/licence.types";
 import type { HostingAccount } from "../api/hosting.api";
 import type { UserPermissions } from "../types/user-permissions.types";
 
-const PERMISSION_LABELS: { key: keyof UserPermissions; label: string }[] = [
+const PERMISSION_LABELS: { key: keyof UserPermissions; label: string; licenceModule?: keyof LicenceResponse }[] = [
   { key: "invoices", label: "Reikningsyfirlit" },
-  { key: "subscription", label: "Áskrift" },
-  { key: "hosting", label: "Hýsing" },
-  { key: "pos", label: "POS" },
-  { key: "dkOne", label: "dkOne" },
-  { key: "dkPlus", label: "dkPlus" },
-  { key: "timeclock", label: "Stimpilklukka" },
+  { key: "subscription", label: "Áskrift", licenceModule: "dkPlus" },
+  { key: "hosting", label: "Hýsing", licenceModule: "Hosting" },
+  { key: "pos", label: "POS", licenceModule: "POS" },
+  { key: "dkOne", label: "dkOne", licenceModule: "dkOne" },
+  { key: "dkPlus", label: "dkPlus", licenceModule: "dkPlus" },
+  { key: "timeclock", label: "Stimpilklukka", licenceModule: "TimeClock" },
   { key: "users", label: "Notendur" },
 ];
 
@@ -42,6 +44,13 @@ interface Props {
 }
 
 export function InviteUserModal({ onClose, onInvited }: Props) {
+  const { data: licence } = useLicence();
+  const visiblePermissions = PERMISSION_LABELS.filter(({ licenceModule }) => {
+    if (!licenceModule) return true;
+    const entry = licence?.[licenceModule];
+    return entry && typeof entry === "object" && "Enabled" in entry && entry.Enabled;
+  });
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [kennitala, setKennitala] = useState("");
@@ -160,7 +169,7 @@ export function InviteUserModal({ onClose, onInvited }: Props) {
               Aðgangur að einingum
             </p>
             <div className="grid grid-cols-2 gap-2">
-              {PERMISSION_LABELS.map(({ key, label }) => (
+              {visiblePermissions.map(({ key, label }) => (
                 <label
                   key={key}
                   className="flex cursor-pointer items-center gap-2 text-sm text-(--color-text)"

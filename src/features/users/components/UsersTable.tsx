@@ -10,17 +10,19 @@ import { Table, type Column } from "@/shared/components/Table";
 import { Button } from "@/shared/components/Button";
 import { usePortalUsers, permissionsQueryOptions } from "../api/users.queries";
 import { DEFAULT_PERMISSIONS } from "../api/permissions.api";
+import { useLicence } from "@/features/licence/api/licence.queries";
+import type { LicenceResponse } from "@/features/licence/types/licence.types";
 import type { UserPermissions } from "../types/user-permissions.types";
 import type { PortalUser } from "../types/users.types";
 
-const PERMISSION_KEYS: { key: keyof UserPermissions; label: string }[] = [
+const PERMISSION_KEYS: { key: keyof UserPermissions; label: string; licenceModule?: keyof LicenceResponse }[] = [
   { key: "invoices", label: "Reikningsyfirlit" },
-  { key: "subscription", label: "Áskrift" },
-  { key: "hosting", label: "Hýsing" },
-  { key: "pos", label: "POS" },
-  { key: "dkOne", label: "dkOne" },
-  { key: "dkPlus", label: "dkPlus" },
-  { key: "timeclock", label: "Stimpilklukka" },
+  { key: "subscription", label: "Áskrift", licenceModule: "dkPlus" },
+  { key: "hosting", label: "Hýsing", licenceModule: "Hosting" },
+  { key: "pos", label: "POS", licenceModule: "POS" },
+  { key: "dkOne", label: "dkOne", licenceModule: "dkOne" },
+  { key: "dkPlus", label: "dkPlus", licenceModule: "dkPlus" },
+  { key: "timeclock", label: "Stimpilklukka", licenceModule: "TimeClock" },
   { key: "users", label: "Notendur" },
 ];
 
@@ -41,6 +43,13 @@ interface Props {
 
 export function UsersTable({ onSelectUser }: Props) {
   const { data: users = [], isLoading } = usePortalUsers();
+  const { data: licence } = useLicence();
+
+  const visiblePermissions = PERMISSION_KEYS.filter(({ licenceModule }) => {
+    if (!licenceModule) return true;
+    const entry = licence?.[licenceModule];
+    return entry && typeof entry === "object" && "Enabled" in entry && entry.Enabled;
+  });
 
   const permissionResults = useQueries({
     queries: users.map((u) => permissionsQueryOptions(u.id)),
@@ -63,7 +72,7 @@ export function UsersTable({ onSelectUser }: Props) {
           : <span className="text-(--color-text-muted)">—</span>,
       hideBelow: "md",
     },
-    ...PERMISSION_KEYS.map(({ key, label }) => ({
+    ...visiblePermissions.map(({ key, label }) => ({
       header: label,
       accessor: (u: PortalUser) => <Checkmark checked={permissionsMap[u.id]?.[key] ?? false} />,
       hideBelow: "lg" as const,
