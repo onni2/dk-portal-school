@@ -152,10 +152,26 @@ const SEED_IP_WHITELIST = [
 ];
 
 const SEED_EMPLOYEE_PHONES = [
-  { id: "ph-1", company_id: "hr", employee_number: "1", employee_name: "Jón Jónsson", phone: "5551234" },
-  { id: "ph-2", company_id: "hr", employee_number: "2", employee_name: "Anna Sigurðardóttir", phone: "6662345" },
-  { id: "ph-3", company_id: "hr", employee_number: "3", employee_name: "Magnús Björnsson", phone: "7773456" },
+  { id: "ph-1", company_id: "hr", kennitala: "1234567890", employee_name: "Jón Jónsson", phone: "5551234" },
+  { id: "ph-2", company_id: "hr", kennitala: "9876543210", employee_name: "Anna Sigurðardóttir", phone: "6662345" },
+  { id: "ph-3", company_id: "hr", kennitala: "0101754919", employee_name: "Magnús Björnsson", phone: "7773456" },
 ];
+
+// Per-company module access — mirrors what DK's real licence DB would look like
+const SEED_COMPANY_LICENCES = [
+  { company_id: "hr",       timeclock: true,  hosting: true,  pos: true,  dk_one: true,  dk_plus: true  },
+  { company_id: "1001nott", timeclock: true,  hosting: false, pos: true,  dk_one: false, dk_plus: true  },
+  { company_id: "akurey",   timeclock: false, hosting: true,  pos: false, dk_one: true,  dk_plus: false },
+  { company_id: "bokhald",  timeclock: false, hosting: false, pos: false, dk_one: false, dk_plus: true  },
+];
+
+// Fake stimpilklukka site URL per company — null means not set up yet
+const SEED_TIMECLOCK_URLS = {
+  hr:       "https://stimpill.hr.is",
+  "1001nott": null,
+  akurey:   "https://stimpill.akurey.is",
+  bokhald:  null,
+};
 
 const TEAM_MEMBERS = [
   {
@@ -191,6 +207,32 @@ const ZOHO_TEST_USER = {
 
 async function migrate() {
   await pool.query(`ALTER TABLE companies ADD COLUMN IF NOT EXISTS dk_token TEXT`);
+  await pool.query(`ALTER TABLE companies ADD COLUMN IF NOT EXISTS timeclock_url TEXT`);
+
+  // company_licences — one row per company tracking which portal products are active
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS company_licences (
+      company_id  TEXT PRIMARY KEY REFERENCES companies(id),
+      timeclock   BOOLEAN NOT NULL DEFAULT false,
+      hosting     BOOLEAN NOT NULL DEFAULT false,
+      pos         BOOLEAN NOT NULL DEFAULT false,
+      dk_one      BOOLEAN NOT NULL DEFAULT false,
+      dk_plus     BOOLEAN NOT NULL DEFAULT false,
+      valid_until TIMESTAMPTZ
+    )
+  `);
+
+  // Rename employee_number → kennitala in timeclock_employee_phones
+  await pool.query(`
+    ALTER TABLE timeclock_employee_phones
+    ADD COLUMN IF NOT EXISTS kennitala TEXT
+  `);
+  await pool.query(`
+    UPDATE timeclock_employee_phones SET kennitala = employee_number WHERE kennitala IS NULL
+  `);
+  await pool.query(`
+    ALTER TABLE timeclock_employee_phones DROP COLUMN IF EXISTS employee_number
+  `);
   await pool.query(`ALTER TABLE portal_users ADD COLUMN IF NOT EXISTS company_id TEXT REFERENCES companies(id)`);
   await pool.query(`ALTER TABLE portal_users ADD COLUMN IF NOT EXISTS hosting_username TEXT`);
   await pool.query(`ALTER TABLE portal_users DROP COLUMN IF EXISTS dk_token`);
@@ -404,6 +446,29 @@ async function migrate() {
       PRIMARY KEY (user_id, company_id)
     )
   `);
+
+  // Seed company licences (upsert so changes to SEED_COMPANY_LICENCES take effect on restart)
+  for (const lic of SEED_COMPANY_LICENCES) {
+    await pool.query(
+      `INSERT INTO company_licences (company_id, timeclock, hosting, pos, dk_one, dk_plus)
+       VALUES ($1,$2,$3,$4,$5,$6)
+       ON CONFLICT (company_id) DO UPDATE SET
+         timeclock = EXCLUDED.timeclock,
+         hosting   = EXCLUDED.hosting,
+         pos       = EXCLUDED.pos,
+         dk_one    = EXCLUDED.dk_one,
+         dk_plus   = EXCLUDED.dk_plus`,
+      [lic.company_id, lic.timeclock, lic.hosting, lic.pos, lic.dk_one, lic.dk_plus],
+    );
+  }
+
+  // Seed timeclock URLs (upsert)
+  for (const [companyId, url] of Object.entries(SEED_TIMECLOCK_URLS)) {
+    await pool.query(
+      `UPDATE companies SET timeclock_url = $1 WHERE id = $2`,
+      [url, companyId],
+    );
+  }
 
   // Give odinn (id=1) admin access to all companies
   const ALL_COMPANIES = ['hr', '1001nott', 'akurey', 'bokhald'];
@@ -659,10 +724,10 @@ async function seed() {
   for (const entry of SEED_EMPLOYEE_PHONES) {
     await pool.query(
       `INSERT INTO timeclock_employee_phones
-        (id, company_id, employee_number, employee_name, phone)
+        (id, company_id, kennitala, employee_name, phone)
        VALUES ($1,$2,$3,$4,$5)
        ON CONFLICT DO NOTHING`,
-      [entry.id, entry.company_id, entry.employee_number, entry.employee_name, entry.phone]
+      [entry.id, entry.company_id, entry.kennitala, entry.employee_name, entry.phone]
     );
   }
 

@@ -9,16 +9,40 @@ function generateId() {
 
 function requireAuth(req, res, next) {
   if (!req.user) return res.status(401).json({ message: "Ekki innskráður" });
-  if (!req.user.company_id) return res.status(403).json({ message: "Notandi tengdur engum fyrirtæki" });
+  if (!req.user.company_id)
+    return res.status(403).json({ message: "Notandi tengdur engum fyrirtæki" });
   next();
 }
+
+function getCompanyId(req) {
+  return req.user.active_company_id ?? req.user.company_id;
+}
+
+// GET /timeclock/config — company name and timeclock site URL
+router.get("/config", requireAuth, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT name, timeclock_url FROM companies WHERE id = $1`,
+      [getCompanyId(req)],
+    );
+    if (rows.length === 0)
+      return res.status(404).json({ message: "Fyrirtæki ekki fundið" });
+    res.json({
+      companyName: rows[0].name,
+      timeclockUrl: rows[0].timeclock_url ?? null,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Villa á þjóni" });
+  }
+});
 
 // GET /timeclock/ips
 router.get("/ips", requireAuth, async (req, res) => {
   try {
     const { rows } = await pool.query(
       "SELECT id, ip, label, created_at FROM timeclock_ip_whitelist WHERE company_id = $1 ORDER BY created_at ASC",
-      [req.user.company_id],
+      [getCompanyId(req)],
     );
     res.json(rows.map((r) => ({ id: r.id, ip: r.ip, label: r.label })));
   } catch (err) {
@@ -35,7 +59,7 @@ router.post("/ips", requireAuth, async (req, res) => {
     const id = generateId();
     await pool.query(
       "INSERT INTO timeclock_ip_whitelist (id, company_id, ip, label) VALUES ($1,$2,$3,$4)",
-      [id, req.user.company_id, ip, label],
+      [id, getCompanyId(req), ip, label],
     );
     res.status(201).json({ id, ip, label });
   } catch (err) {
@@ -49,7 +73,7 @@ router.delete("/ips/:id", requireAuth, async (req, res) => {
   try {
     await pool.query(
       "DELETE FROM timeclock_ip_whitelist WHERE id = $1 AND company_id = $2",
-      [req.params.id, req.user.company_id],
+      [req.params.id, getCompanyId(req)],
     );
     res.status(204).send();
   } catch (err) {
@@ -62,15 +86,17 @@ router.delete("/ips/:id", requireAuth, async (req, res) => {
 router.get("/phones", requireAuth, async (req, res) => {
   try {
     const { rows } = await pool.query(
-      "SELECT id, employee_number, employee_name, phone FROM timeclock_employee_phones WHERE company_id = $1 ORDER BY created_at ASC",
-      [req.user.company_id],
+      "SELECT id, kennitala, employee_name, phone FROM timeclock_employee_phones WHERE company_id = $1 ORDER BY created_at ASC",
+      [getCompanyId(req)],
     );
-    res.json(rows.map((r) => ({
-      id: r.id,
-      employeeNumber: r.employee_number,
-      employeeName: r.employee_name,
-      phone: r.phone,
-    })));
+    res.json(
+      rows.map((r) => ({
+        id: r.id,
+        kennitala: r.kennitala,
+        employeeName: r.employee_name,
+        phone: r.phone,
+      })),
+    );
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Villa á þjóni" });
@@ -79,17 +105,17 @@ router.get("/phones", requireAuth, async (req, res) => {
 
 // POST /timeclock/phones
 router.post("/phones", requireAuth, async (req, res) => {
-  const { employeeNumber, employeeName = "", phone } = req.body;
-  if (!employeeNumber || !phone) {
-    return res.status(400).json({ message: "Vantar upplýsingar" });
+  const { kennitala, employeeName = "", phone } = req.body;
+  if (!kennitala || !phone) {
+    return res.status(400).json({ message: "Vantar kennitölu og símanúmer" });
   }
   try {
     const id = generateId();
     await pool.query(
-      "INSERT INTO timeclock_employee_phones (id, company_id, employee_number, employee_name, phone) VALUES ($1,$2,$3,$4,$5)",
-      [id, req.user.company_id, employeeNumber, employeeName, phone],
+      "INSERT INTO timeclock_employee_phones (id, company_id, kennitala, employee_name, phone) VALUES ($1,$2,$3,$4,$5)",
+      [id, getCompanyId(req), kennitala, employeeName, phone],
     );
-    res.status(201).json({ id, employeeNumber, employeeName, phone });
+    res.status(201).json({ id, kennitala, employeeName, phone });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Villa á þjóni" });
@@ -101,7 +127,7 @@ router.delete("/phones/:id", requireAuth, async (req, res) => {
   try {
     await pool.query(
       "DELETE FROM timeclock_employee_phones WHERE id = $1 AND company_id = $2",
-      [req.params.id, req.user.company_id],
+      [req.params.id, getCompanyId(req)],
     );
     res.status(204).send();
   } catch (err) {
