@@ -13,6 +13,7 @@ const companiesRouter = require("./routes/companies");
 const notificationsRouter = require("./routes/notifications");
 const hostingRouter = require("./routes/hosting");
 const ticketsRouter = require("./routes/tickets");
+const posRouter = require("./routes/pos");
 
 const app = express();
 
@@ -41,6 +42,7 @@ app.use("/companies", companiesRouter);
 app.use("/notifications", notificationsRouter);
 app.use("/hosting", hostingRouter);
 app.use("/tickets", ticketsRouter);
+app.use("/pos", posRouter);
 
 app.get("/health", (_req, res) => {
   res.json({ ok: true });
