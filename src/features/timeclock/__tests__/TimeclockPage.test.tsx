@@ -3,33 +3,23 @@ import { describe, it, expect, vi } from "vitest";
 import { TimeclockPage } from "../components/TimeclockPage";
 
 vi.mock("../api/timeclock.queries", () => ({
-  useTimeclockSettings: () => ({
-    data: {
-      Enabled: true,
-      RoundFactor: 1,
-      RoundUpDaytimeAlso: false,
-      Text: 1,
-      Project: 0,
-      Phase: 2,
-      Task: 1,
-      Dim1: 0,
-      Dim2: 0,
-      Dim3: 0,
-      SendToProjectTransaction: false,
-    },
+  useTimeclockConfig: () => ({
+    data: { companyName: "HR", timeclockUrl: "https://stimpill.hr.is" },
   }),
   useIpWhitelist: () => ({
     data: [{ id: "1", ip: "192.168.1.1", label: "Skrifstofa" }],
   }),
   useEmployeePhones: () => ({
-    data: [{ id: "1", employeeNumber: "1", employeeName: "Jón Jónsson", phone: "5551234" }],
+    data: [{ id: "1", kennitala: "1234567890", employeeName: "Jón Jónsson", phone: "5551234" }],
   }),
+  useInvalidateIpWhitelist: () => () => Promise.resolve(),
+  useInvalidateEmployeePhones: () => () => Promise.resolve(),
 }));
 
 describe("TimeclockPage", () => {
-  it("renders the settings card", () => {
+  it("renders the company card", () => {
     render(<TimeclockPage />);
-    expect(screen.getByText("Stillingar")).toBeInTheDocument();
+    expect(screen.getByText("HR")).toBeInTheDocument();
   });
 
   it("renders the IP whitelist panel", () => {
@@ -44,7 +34,7 @@ describe("TimeclockPage", () => {
 
   it("renders all three sections together", () => {
     render(<TimeclockPage />);
-    expect(screen.getByText("Stillingar")).toBeInTheDocument();
+    expect(screen.getByText("HR")).toBeInTheDocument();
     expect(screen.getByText("IP-tölur í hvítlista")).toBeInTheDocument();
     expect(screen.getByText("Símanúmer starfsmanna")).toBeInTheDocument();
   });

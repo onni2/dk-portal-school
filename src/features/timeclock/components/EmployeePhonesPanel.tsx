@@ -1,6 +1,6 @@
 /**
  * Panel for viewing and managing employee phone numbers used to clock in at kiosks.
- * Data is stored in Neon, scoped per company.
+ * Data is stored in Neon, scoped per company. Employees are identified by kennitala.
  * Uses: @/shared/components/Button, @/shared/components/Card, @/shared/components/Input,
  *       ../api/timeclock.queries, ../api/timeclock.api, ../store/timeclock.store
  * Exports: EmployeePhonesPanel
@@ -9,7 +9,10 @@ import { useState } from "react";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { Input } from "@/shared/components/Input";
-import { useEmployeePhones, useInvalidateEmployeePhones } from "../api/timeclock.queries";
+import {
+  useEmployeePhones,
+  useInvalidateEmployeePhones,
+} from "../api/timeclock.queries";
 import { addEmployeePhone, removeEmployeePhone } from "../api/timeclock.api";
 import { useTimeclockStore } from "../store/timeclock.store";
 
@@ -17,19 +20,19 @@ export function EmployeePhonesPanel() {
   const { data: entries } = useEmployeePhones();
   const invalidate = useInvalidateEmployeePhones();
   const { addPhoneOpen, setAddPhoneOpen } = useTimeclockStore();
-  const [employeeNumber, setEmployeeNumber] = useState("");
+  const [kennitala, setKennitala] = useState("");
   const [employeeName, setEmployeeName] = useState("");
   const [phone, setPhone] = useState("");
   const [saving, setSaving] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
 
   async function handleAdd() {
-    if (!employeeNumber.trim() || !phone.trim()) return;
+    if (!kennitala.trim() || !phone.trim()) return;
     setSaving(true);
     try {
-      await addEmployeePhone(employeeNumber.trim(), employeeName.trim(), phone.trim());
+      await addEmployeePhone(kennitala.trim(), employeeName.trim(), phone.trim());
       await invalidate();
-      setEmployeeNumber("");
+      setKennitala("");
       setEmployeeName("");
       setPhone("");
       setAddPhoneOpen(false);
@@ -74,9 +77,11 @@ export function EmployeePhonesPanel() {
             <li key={entry.id} className="flex items-center justify-between py-3">
               <div>
                 <p className="text-sm font-medium text-(--color-text)">
-                  {entry.employeeName || entry.employeeNumber}
+                  {entry.employeeName || entry.kennitala}
                 </p>
-                <p className="text-xs text-(--color-text-muted)">{entry.phone}</p>
+                <p className="text-xs text-(--color-text-muted)">
+                  {entry.kennitala} · {entry.phone}
+                </p>
               </div>
               <Button
                 size="sm"
@@ -94,9 +99,9 @@ export function EmployeePhonesPanel() {
       {addPhoneOpen && (
         <div className="mt-4 flex flex-col gap-3 border-t border-(--color-border) pt-4">
           <Input
-            placeholder="Númer starfsmanns"
-            value={employeeNumber}
-            onChange={(e) => setEmployeeNumber(e.target.value)}
+            placeholder="Kennitala (10 tölustafir)"
+            value={kennitala}
+            onChange={(e) => setKennitala(e.target.value)}
           />
           <Input
             placeholder="Nafn (valkvætt)"
@@ -109,10 +114,19 @@ export function EmployeePhonesPanel() {
             onChange={(e) => setPhone(e.target.value)}
           />
           <div className="flex gap-2">
-            <Button variant="primary" size="sm" onClick={handleAdd} disabled={saving || !employeeNumber.trim() || !phone.trim()}>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleAdd}
+              disabled={saving || !kennitala.trim() || !phone.trim()}
+            >
               {saving ? "Vista..." : "Vista"}
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => setAddPhoneOpen(false)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setAddPhoneOpen(false)}
+            >
               Hætta við
             </Button>
           </div>
