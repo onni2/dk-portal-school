@@ -32,9 +32,17 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       throw redirect({ to: "/login" });
     }
   },
-  loader: ({ context: { queryClient } }) => {
+  loader: async ({ context: { queryClient } }) => {
     if (!useAuthStore.getState().isAuthenticated) return;
-    return queryClient.ensureQueryData(licenceQueryOptions);
+    try {
+      return await queryClient.ensureQueryData(licenceQueryOptions);
+    } catch (err: unknown) {
+      if (typeof err === "object" && err !== null && "status" in err && (err as { status: number }).status === 401) {
+        useAuthStore.getState().clearAuth();
+        throw redirect({ to: "/login" });
+      }
+      throw err;
+    }
   },
   component: RootComponent,
   notFoundComponent: NotFound,

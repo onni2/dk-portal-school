@@ -20,6 +20,7 @@ interface MockLoginResponse {
     phone?: string;
     mustResetPassword: boolean;
     companyId?: string;
+    activeCompanyId?: string;
   };
   companies: CompanyMembership[];
 }
@@ -46,7 +47,7 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
     phone: mockUser.phone,
     role: mockUser.role as User["role"],
     mustResetPassword: mockUser.mustResetPassword,
-    companyId: mockUser.companyId,
+    companyId: mockUser.companyId ?? mockUser.activeCompanyId,
   };
 
   return { user, token: data.token, companies: data.companies ?? [] };

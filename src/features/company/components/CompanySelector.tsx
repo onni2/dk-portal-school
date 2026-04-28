@@ -9,6 +9,7 @@ import { cn } from "@/shared/utils/cn";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { switchCompany } from "../api/company.api";
 import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "@tanstack/react-router";
 
 /**
  *
@@ -18,6 +19,7 @@ export function CompanySelector() {
   const [search, setSearch] = useState("");
   const [switching, setSwitching] = useState(false);
   const queryClient = useQueryClient();
+  const router = useRouter();
   const ref = useRef<HTMLDivElement>(null);
 
   const companies = useAuthStore((s) => s.companies);
@@ -55,7 +57,8 @@ export function CompanySelector() {
       setToken(token);
       setActiveCompany(companyId);
       setOpen(false);
-      queryClient.invalidateQueries();
+      await queryClient.invalidateQueries();
+      await router.invalidate();
     } catch (err) {
       console.error("Failed to switch company", err);
     } finally {
