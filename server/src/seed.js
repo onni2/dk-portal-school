@@ -112,6 +112,26 @@ const SEED_POS_SERVICES = [
     mode: "auto",
     path: "C:\\dkPos\\Akurey\\Akurey\\dkPosService.exe",
   },
+  {
+    id: "ps-hr-1",
+    company_id: "hr",
+    name: "Búð 1",
+    display: "Búð 1 - dkPOS Services",
+    server: "DK-WS-01",
+    state: "running",
+    mode: "auto",
+    path: "C:\\dkPos\\HR\\Bud1\\dkPosService.exe",
+  },
+  {
+    id: "ps-hr-2",
+    company_id: "hr",
+    name: "Búð 2",
+    display: "Búð 2 - dkPOS Services",
+    server: "DK-WS-02",
+    state: "stopped",
+    mode: "auto",
+    path: "C:\\dkPos\\HR\\Bud2\\dkPosService.exe",
+  },
 ];
 
 const SEED_POS_REST = [
@@ -135,6 +155,33 @@ const SEED_POS_REST = [
     mode: "auto",
     path: "C:\\dkPos\\Akurey\\Akurey\\dkRESTServer.exe",
   },
+  {
+    id: "pr-hr-1",
+    company_id: "hr",
+    name: "Búð 1",
+    display: "Búð 1 - REST POS",
+    server: "DK-REST-01",
+    state: "running",
+    mode: "auto",
+    path: "C:\\dkPos\\HR\\Bud1\\dkRESTServer.exe",
+  },
+  {
+    id: "pr-hr-2",
+    company_id: "hr",
+    name: "Búð 2",
+    display: "Búð 2 - REST POS",
+    server: "DK-REST-02",
+    state: "stopped",
+    mode: "auto",
+    path: "C:\\dkPos\\HR\\Bud2\\dkRESTServer.exe",
+  },
+];
+
+const SEED_POS_LOGS = [
+  { id: "pl-1", service_id: "ps-hr-1", service_type: "dkpos", company_id: "hr", description: "Service State Changed: Running", executed_by: "Magnús", created_at: "2026-10-02T14:02:00Z" },
+  { id: "pl-2", service_id: "ps-hr-1", service_type: "dkpos", company_id: "hr", description: "Service State Changed: Stopped", executed_by: "Agent", created_at: "2026-10-02T13:50:00Z" },
+  { id: "pl-3", service_id: "ps-hr-1", service_type: "dkpos", company_id: "hr", description: "Service State Changed: Running", executed_by: "Magnús", created_at: "2025-01-01T12:30:00Z" },
+  { id: "pl-4", service_id: "ps-hr-1", service_type: "dkpos", company_id: "hr", description: "Service State Changed: Stopped", executed_by: "Magnús", created_at: "2025-01-01T12:25:00Z" },
 ];
 
 const SEED_HOSTING_ACCOUNTS = [
@@ -257,6 +304,18 @@ async function migrate() {
     )
   `);
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS pos_logs (
+      id           TEXT PRIMARY KEY,
+      service_id   TEXT NOT NULL,
+      service_type TEXT NOT NULL DEFAULT 'dkpos',
+      company_id   TEXT NOT NULL REFERENCES companies(id),
+      description  TEXT NOT NULL,
+      executed_by  TEXT NOT NULL,
+      created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
   for (const user of SEED_COMPANY_USERS) {
     const hashed = await bcrypt.hash(user.password, 10);
 
@@ -307,6 +366,15 @@ async function migrate() {
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
        ON CONFLICT DO NOTHING`,
       [entry.id, entry.company_id, entry.name, entry.display, entry.server, entry.state, entry.mode, entry.path]
+    );
+  }
+
+  for (const entry of SEED_POS_LOGS) {
+    await pool.query(
+      `INSERT INTO pos_logs (id, service_id, service_type, company_id, description, executed_by, created_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7)
+       ON CONFLICT DO NOTHING`,
+      [entry.id, entry.service_id, entry.service_type, entry.company_id, entry.description, entry.executed_by, entry.created_at]
     );
   }
 
