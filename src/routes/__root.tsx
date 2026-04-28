@@ -16,6 +16,8 @@ import { Layout } from "@/shared/components/Layout";
 import { NotFound } from "@/shared/components/NotFound";
 import { RouteError } from "@/shared/components/RouteError";
 import { licenceQueryOptions } from "@/features/licence/api/licence.queries";
+import { kbDataQueryOptions } from "@/features/knowledgeBase/api/knowledgeBase.queries";
+import { youtubeVideosQueryOptions } from "@/features/knowledgeBase/api/youtube.queries";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 
 export interface RouterContext {
@@ -34,6 +36,11 @@ export const Route = createRootRouteWithContext<RouterContext>()({
   },
   loader: async ({ context: { queryClient } }) => {
     if (!useAuthStore.getState().isAuthenticated) return;
+    // Fire-and-forget background prefetches — warm the cache while the user
+    // browses other pages so Hjálparmiðstöð loads instantly when visited.
+    void queryClient.prefetchQuery(kbDataQueryOptions);
+    void queryClient.prefetchQuery(youtubeVideosQueryOptions);
+
     try {
       return await queryClient.ensureQueryData(licenceQueryOptions);
     } catch (err: unknown) {
