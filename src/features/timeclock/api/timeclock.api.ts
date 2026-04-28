@@ -1,20 +1,18 @@
 /**
- * API functions for timeclock settings and web config.
- * IP whitelist and phone numbers are stored in the mock backend (Neon DB), scoped per company.
- * Uses: @/shared/api/client, @/shared/api/mockClient, ../types/timeclock.types
- * Exports: fetchTimeclockSettings, fetchIpWhitelist, addIpEntry, removeIpEntry,
+ * API functions for timeclock — all backed by the Neon mock DB, scoped per company.
+ * Uses: @/shared/api/mockClient, ../types/timeclock.types
+ * Exports: fetchTimeclockConfig, fetchIpWhitelist, addIpEntry, removeIpEntry,
  *          fetchEmployeePhones, addEmployeePhone, removeEmployeePhone
  */
-import { apiClient } from "@/shared/api/client";
 import { mockClient } from "@/shared/api/mockClient";
 import type {
-  TimeclockSettings,
+  TimeclockConfig,
   IpWhitelistEntry,
   EmployeePhoneEntry,
 } from "../types/timeclock.types";
 
-export async function fetchTimeclockSettings(): Promise<TimeclockSettings> {
-  return apiClient.get<TimeclockSettings>("/TimeClock/settings");
+export async function fetchTimeclockConfig(): Promise<TimeclockConfig> {
+  return mockClient.get<TimeclockConfig>("/timeclock/config");
 }
 
 // --- IP Whitelist ---
@@ -23,7 +21,10 @@ export async function fetchIpWhitelist(): Promise<IpWhitelistEntry[]> {
   return mockClient.get<IpWhitelistEntry[]>("/timeclock/ips");
 }
 
-export async function addIpEntry(ip: string, label: string): Promise<IpWhitelistEntry> {
+export async function addIpEntry(
+  ip: string,
+  label: string,
+): Promise<IpWhitelistEntry> {
   return mockClient.post<IpWhitelistEntry>("/timeclock/ips", { ip, label });
 }
 
@@ -38,11 +39,15 @@ export async function fetchEmployeePhones(): Promise<EmployeePhoneEntry[]> {
 }
 
 export async function addEmployeePhone(
-  employeeNumber: string,
+  kennitala: string,
   employeeName: string,
   phone: string,
 ): Promise<EmployeePhoneEntry> {
-  return mockClient.post<EmployeePhoneEntry>("/timeclock/phones", { employeeNumber, employeeName, phone });
+  return mockClient.post<EmployeePhoneEntry>("/timeclock/phones", {
+    kennitala,
+    employeeName,
+    phone,
+  });
 }
 
 export async function removeEmployeePhone(id: string): Promise<void> {
