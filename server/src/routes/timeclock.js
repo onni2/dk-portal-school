@@ -9,7 +9,7 @@ function generateId() {
 
 function requireAuth(req, res, next) {
   if (!req.user) return res.status(401).json({ message: "Ekki innskráður" });
-  if (!req.user.company_id)
+  if (!getCompanyId(req))
     return res.status(403).json({ message: "Notandi tengdur engum fyrirtæki" });
   next();
 }

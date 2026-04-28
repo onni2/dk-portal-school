@@ -228,7 +228,15 @@ async function migrate() {
     ADD COLUMN IF NOT EXISTS kennitala TEXT
   `);
   await pool.query(`
-    UPDATE timeclock_employee_phones SET kennitala = employee_number WHERE kennitala IS NULL
+    DO $$
+    BEGIN
+      IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'timeclock_employee_phones' AND column_name = 'employee_number'
+      ) THEN
+        UPDATE timeclock_employee_phones SET kennitala = employee_number WHERE kennitala IS NULL;
+      END IF;
+    END $$
   `);
   await pool.query(`
     ALTER TABLE timeclock_employee_phones DROP COLUMN IF EXISTS employee_number
