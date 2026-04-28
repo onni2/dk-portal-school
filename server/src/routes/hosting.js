@@ -10,7 +10,7 @@ function requireAuth(req, res, next) {
 }
 
 function getCompanyId(req) {
-  return req.user.active_company_id ?? getCompanyId(req);
+  return req.user.active_company_id ?? req.user.company_id;
 }
 
 function mapAccount(r) {
@@ -44,7 +44,9 @@ router.get("/accounts", requireAuth, async (req, res) => {
 router.post("/accounts", requireAuth, async (req, res) => {
   const { username, displayName, email } = req.body;
   if (!username || !displayName) {
-    return res.status(400).json({ message: "Notendanafn og nafn eru nauðsynleg" });
+    return res
+      .status(400)
+      .json({ message: "Notendanafn og nafn eru nauðsynleg" });
   }
   const id = `ha-${randomBytes(4).toString("hex")}`;
   const tempPassword = randomBytes(5).toString("hex");
@@ -69,7 +71,8 @@ router.delete("/accounts/:id", requireAuth, async (req, res) => {
       `DELETE FROM hosting_accounts WHERE id = $1 AND company_id = $2`,
       [req.params.id, getCompanyId(req)],
     );
-    if (rowCount === 0) return res.status(404).json({ message: "Notandi ekki fundinn" });
+    if (rowCount === 0)
+      return res.status(404).json({ message: "Notandi ekki fundinn" });
     res.json({ ok: true });
   } catch (err) {
     console.error(err);
@@ -84,7 +87,8 @@ router.post("/accounts/:id/reset-password", requireAuth, async (req, res) => {
       `SELECT id FROM hosting_accounts WHERE id = $1 AND company_id = $2`,
       [req.params.id, getCompanyId(req)],
     );
-    if (rowCount === 0) return res.status(404).json({ message: "Notandi ekki fundinn" });
+    if (rowCount === 0)
+      return res.status(404).json({ message: "Notandi ekki fundinn" });
     const tempPassword = randomBytes(5).toString("hex");
     res.json({ tempPassword });
   } catch (err) {
@@ -101,7 +105,8 @@ router.post("/accounts/:id/restart", requireAuth, async (req, res) => {
        WHERE id = $1 AND company_id = $2`,
       [req.params.id, getCompanyId(req)],
     );
-    if (rowCount === 0) return res.status(404).json({ message: "Notandi ekki fundinn" });
+    if (rowCount === 0)
+      return res.status(404).json({ message: "Notandi ekki fundinn" });
     res.json({ ok: true, restarted: new Date().toISOString() });
   } catch (err) {
     console.error(err);
@@ -120,7 +125,8 @@ router.put("/accounts/:id/mfa", requireAuth, async (req, res) => {
       `UPDATE hosting_accounts SET has_mfa = $1 WHERE id = $2 AND company_id = $3`,
       [enabled, req.params.id, getCompanyId(req)],
     );
-    if (rowCount === 0) return res.status(404).json({ message: "Notandi ekki fundinn" });
+    if (rowCount === 0)
+      return res.status(404).json({ message: "Notandi ekki fundinn" });
     res.json({ ok: true, hasMfa: enabled });
   } catch (err) {
     console.error(err);
