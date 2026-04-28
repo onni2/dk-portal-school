@@ -13,6 +13,7 @@ export interface NavItem {
     | { type: "alwaysVisible" }
     | { type: "requiredModules"; modules: LicenceModule[] }
     | { type: "requiredPermission"; permission: keyof UserPermissions }
+    | { type: "licencedModule"; module: LicenceModule; permission: keyof UserPermissions }
     | { type: "copOnly" }
     | { type: "accountantOnly" };
   children?: NavItem[];
@@ -47,16 +48,16 @@ export const NAV_ITEMS: NavItem[] = [
   {
     label: "Hýsing",
     to: "/hosting",
-    access: { type: "requiredPermission", permission: "hosting" },
+    access: { type: "licencedModule", module: "Hosting", permission: "hosting" },
     children: [
-      { label: "Notendur", to: "/hosting", access: { type: "requiredPermission", permission: "hosting" } },
-      { label: "Öryggi og persónuvernd", to: "/hosting/oryggi", access: { type: "requiredPermission", permission: "hosting" } },
+      { label: "Notendur", to: "/hosting", access: { type: "licencedModule", module: "Hosting", permission: "hosting" } },
+      { label: "Öryggi og persónuvernd", to: "/hosting/oryggi", access: { type: "licencedModule", module: "Hosting", permission: "hosting" } },
     ],
   },
-  { label: "POS", to: "/pos", access: { type: "requiredPermission", permission: "pos" } },
-  { label: "dkOne", to: "/dkone", access: { type: "requiredPermission", permission: "dkOne" } },
-  { label: "dkPlus", to: "/dkplus", access: { type: "requiredPermission", permission: "dkPlus" } },
-  { label: "Stimpilklukka", to: "/timeclock", access: { type: "requiredPermission", permission: "timeclock" } },
+  { label: "POS", to: "/pos", access: { type: "licencedModule", module: "POS", permission: "pos" } },
+  { label: "dkOne", to: "/dkone", access: { type: "licencedModule", module: "dkOne", permission: "dkOne" } },
+  { label: "dkPlus", to: "/dkplus", access: { type: "licencedModule", module: "dkPlus", permission: "dkPlus" } },
+  { label: "Stimpilklukka", to: "/timeclock", access: { type: "licencedModule", module: "TimeClock", permission: "timeclock" } },
 
   // Always visible to all logged-in users
   { label: "Zoho beiðnir", to: "/zoho", access: { type: "alwaysVisible" } },

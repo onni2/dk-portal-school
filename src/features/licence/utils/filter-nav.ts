@@ -42,6 +42,13 @@ export function filterNavItems(
       return userPermissions ? userPermissions[item.access.permission] : false;
     }
 
+    // licencedModule: company must have the module AND user must have permission
+    if (item.access.type === "licencedModule") {
+      const hasLicence = licence ? isModuleEnabled(licence, item.access.module) : false;
+      const hasPermission = userPermissions ? userPermissions[item.access.permission] : false;
+      return hasLicence && hasPermission;
+    }
+
     // requiredModules: show if ANY of the listed modules are enabled (OR logic)
     if (!licence) return false;
     return item.access.modules.some((mod) => isModuleEnabled(licence, mod));
