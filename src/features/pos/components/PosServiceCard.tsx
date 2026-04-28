@@ -48,6 +48,7 @@ export function PosServiceCard({ service, serviceType, isSelected, onSelect }: P
           disabled={isPending}
           onClick={(e) => {
             e.stopPropagation();
+            onSelect(service.id);
             mutate();
           }}
         >
