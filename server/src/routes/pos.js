@@ -73,7 +73,7 @@ router.post("/services/:id/restart", requireAuth, async (req, res) => {
 router.get("/services/:id/logs", requireAuth, async (req, res) => {
   try {
     const { rows } = await pool.query(
-      "SELECT id, service_id, description, executed_by, created_at FROM pos_logs WHERE service_id = $1 AND company_id = $2 AND service_type = 'dkpos' ORDER BY created_at DESC",
+      "SELECT id, service_id, description, executed_by, created_at FROM pos_logs WHERE service_id = $1 AND company_id = $2 AND service_type = 'dkpos' ORDER BY seq DESC",
       [req.params.id, req.companyId],
     );
     res.json(rows.map(mapLog));
@@ -128,7 +128,7 @@ router.post("/rest/:id/restart", requireAuth, async (req, res) => {
 router.get("/rest/:id/logs", requireAuth, async (req, res) => {
   try {
     const { rows } = await pool.query(
-      "SELECT id, service_id, description, executed_by, created_at FROM pos_logs WHERE service_id = $1 AND company_id = $2 AND service_type = 'rest' ORDER BY created_at DESC",
+      "SELECT id, service_id, description, executed_by, created_at FROM pos_logs WHERE service_id = $1 AND company_id = $2 AND service_type = 'rest' ORDER BY seq DESC",
       [req.params.id, req.companyId],
     );
     res.json(rows.map(mapLog));
