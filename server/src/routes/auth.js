@@ -105,8 +105,36 @@ router.post("/audkenni", async (req, res) => {
       return res.status(404).json({ message: "Notandi ekki skráður í gáttina — hafðu samband við stjórnanda" });
     }
 
+    const { rows: companyRows } = await pool.query(
+      `SELECT c.id, c.name, uc.role,
+              uc.invoices, uc.subscription, uc.hosting, uc.pos,
+              uc.dk_one, uc.dk_plus, uc.timeclock, uc.users
+       FROM user_companies uc
+       JOIN companies c ON c.id = uc.company_id
+       WHERE uc.user_id = $1`,
+      [user.id],
+    );
+
+    const companies = companyRows.map((c) => ({
+      id: c.id,
+      name: c.name,
+      role: c.role,
+      permissions: {
+        invoices: c.invoices,
+        subscription: c.subscription,
+        hosting: c.hosting,
+        pos: c.pos,
+        dkOne: c.dk_one,
+        dkPlus: c.dk_plus,
+        timeclock: c.timeclock,
+        users: c.users,
+      },
+    }));
+
+    const activeCompanyId = user.active_company_id ?? companies[0]?.id ?? null;
+
     const token = jwt.sign(
-      { id: user.id, role: user.role, company_id: user.company_id },
+      { id: user.id, role: user.role, active_company_id: activeCompanyId },
       process.env.JWT_SECRET,
       { expiresIn: "8h" },
     );
@@ -123,8 +151,9 @@ router.post("/audkenni", async (req, res) => {
         kennitala: user.kennitala,
         phone: user.phone,
         mustResetPassword: user.must_reset_password,
-        companyId: user.company_id,
+        activeCompanyId,
       },
+      companies,
     });
   } catch (err) {
     console.error(err);
@@ -156,13 +185,18 @@ router.post("/switch-company", async (req, res) => {
       [companyId, req.user.id],
     );
 
+    const { rows: companyRows } = await pool.query(
+      "SELECT dk_token FROM companies WHERE id = $1",
+      [companyId],
+    );
+
     const token = jwt.sign(
       { id: req.user.id, role: req.user.role, active_company_id: companyId },
       process.env.JWT_SECRET,
       { expiresIn: "8h" },
     );
 
-    res.json({ token, companyDkToken: null });
+    res.json({ token, companyDkToken: companyRows[0]?.dk_token ?? null });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Villa á þjóni" });
