@@ -54,7 +54,7 @@ export function InviteUserModal({ onClose, onInvited }: Props) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [kennitala, setKennitala] = useState("");
-  const [role, setRole] = useState<"standard" | "admin">("standard");
+  const [companyRole, setCompanyRole] = useState<"user" | "admin">("user");
   const [hostingUsername, setHostingUsername] = useState("");
   const [permissions, setPermissions] = useState<UserPermissions>(DEFAULT_PERMISSIONS);
   const [loading, setLoading] = useState(false);
@@ -75,7 +75,7 @@ export function InviteUserModal({ onClose, onInvited }: Props) {
     setError("");
     setLoading(true);
     try {
-      const { generatedPassword: pw } = await inviteUser({ name, username: email, email, kennitala, hostingUsername, role, permissions });
+      const { generatedPassword: pw } = await inviteUser({ name, username: email, email, kennitala, hostingUsername, companyRole, permissions });
       setGeneratedPassword(pw);
     } catch (err) {
       setError((err as { message?: string })?.message ?? "Villa kom upp");
@@ -137,11 +137,11 @@ export function InviteUserModal({ onClose, onInvited }: Props) {
               Hlutverk
             </label>
             <select
-              value={role}
-              onChange={(e) => setRole(e.target.value as "standard" | "admin")}
+              value={companyRole}
+              onChange={(e) => setCompanyRole(e.target.value as "user" | "admin")}
               className="w-full rounded-md border border-(--color-border) bg-(--color-background) px-3 py-2 text-sm text-(--color-text) outline-none transition-colors focus:border-(--color-primary) focus:ring-1 focus:ring-(--color-primary)"
             >
-              <option value="standard">Venjulegur notandi</option>
+              <option value="user">Venjulegur notandi</option>
               <option value="admin">Stjórnandi</option>
             </select>
           </div>

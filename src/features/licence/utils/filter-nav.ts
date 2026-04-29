@@ -1,17 +1,7 @@
-/**
- * Pure function that filters nav items by user role, enabled licence modules, and user permissions.
- * COP users see everything; clients see only alwaysVisible items and items they have permission for.
- * Uses: ../types/licence.types, ../config/nav-items, @/features/users/types/users.types
- * Exports: filterNavItems
- */
 import type { LicenceResponse, UserRole } from "../types/licence.types";
 import type { NavItem } from "../config/nav-items";
 import type { UserPermissions } from "@/features/users/types/user-permissions.types";
-import type { AuthRole } from "@/features/auth/types/auth.types";
 
-/**
- *
- */
 function isModuleEnabled(licence: LicenceResponse, module: string): boolean {
   const entry = licence[module as keyof LicenceResponse];
   if (!entry || typeof entry !== "object") return false;
@@ -20,36 +10,31 @@ function isModuleEnabled(licence: LicenceResponse, module: string): boolean {
   return false;
 }
 
-/**
- *
- */
 export function filterNavItems(
   items: NavItem[],
   role: UserRole,
   licence: LicenceResponse | undefined,
   userPermissions: UserPermissions | null,
-  authRole?: AuthRole,
 ): NavItem[] {
-  // COP always sees everything
+  // super_admin and god get cop role — they see everything
   if (role === "cop") return items;
 
   return items.filter((item) => {
     if (item.access.type === "alwaysVisible") return true;
     if (item.access.type === "copOnly") return false;
-    if (item.access.type === "accountantOnly") return authRole === "accountant" || authRole === "admin";
-    
+    // accountantOnly items only visible to cop users (handled above)
+    if (item.access.type === "accountantOnly") return false;
+
     if (item.access.type === "requiredPermission") {
       return userPermissions ? userPermissions[item.access.permission] : false;
     }
 
-    // licencedModule: company must have the module AND user must have permission
     if (item.access.type === "licencedModule") {
       const hasLicence = licence ? isModuleEnabled(licence, item.access.module) : false;
       const hasPermission = userPermissions ? userPermissions[item.access.permission] : false;
       return hasLicence && hasPermission;
     }
 
-    // requiredModules: show if ANY of the listed modules are enabled (OR logic)
     if (!licence) return false;
     return item.access.modules.some((mod) => isModuleEnabled(licence, mod));
   });
