@@ -64,6 +64,7 @@ function CallbackPage() {
         interface AudkenniLoginResponse {
           token: string;
           user: { id: string; username: string; email: string; name: string; role: string; kennitala?: string; phone?: string; mustResetPassword: boolean; companyId?: string };
+          companies?: import("@/features/auth/types/auth.types").CompanyMembership[];
         }
         let portalData: AudkenniLoginResponse;
         try {
@@ -92,9 +93,16 @@ function CallbackPage() {
           companyId: portalData.user.companyId,
         };
 
-        setAuth(user, portalData.token, []);
+        const companies = portalData.companies ?? [];
+        setAuth(user, portalData.token, companies);
         setRole(authRoleToUserRole(user.role));
-        navigate({ to: portalData.user.mustResetPassword ? "/reset-password" : "/" });
+        if (portalData.user.mustResetPassword) {
+          navigate({ to: "/reset-password" });
+        } else if (companies.length > 1) {
+          navigate({ to: "/select-company" });
+        } else {
+          navigate({ to: "/" });
+        }
       })
       .catch((err: unknown) => {
         setError(

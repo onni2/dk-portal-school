@@ -26,11 +26,13 @@ export interface RouterContext {
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   beforeLoad: ({ location }) => {
-    const isLoginPage =
-      location.pathname === "/login" || location.pathname === "/callback";
+    const isPublicPage =
+      location.pathname === "/login" ||
+      location.pathname === "/callback" ||
+      location.pathname === "/select-company";
     const isAuthenticated = useAuthStore.getState().isAuthenticated;
 
-    if (!isAuthenticated && !isLoginPage) {
+    if (!isAuthenticated && !isPublicPage) {
       throw redirect({ to: "/login" });
     }
   },
@@ -64,6 +66,7 @@ function RootComponent() {
   const isLoginPage =
     pathname === "/login" ||
     pathname === "/callback" ||
+    pathname === "/select-company" ||
     pathname.startsWith("/reset-password");
 
   if (isLoginPage) {
