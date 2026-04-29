@@ -3,16 +3,40 @@ const pool = require("../db");
 
 const router = express.Router();
 
-// GET /tickets — fetch all tickets for logged in user + active company
+// GET /tickets — fetch all tickets for logged in user, optionally filtered by departmentId (company_id)
 router.get("/", async (req, res) => {
   try {
-    const { rows } = await pool.query(
-      `SELECT id, number, title, preview, status, created_at, updated_at
-       FROM zoho_tickets
-       WHERE user_id = $1 AND company_id = $2
-       ORDER BY updated_at DESC`,
-      [req.user.id, req.user.active_company_id],
-    );
+    const { departmentId } = req.query;
+
+    let query;
+    let params;
+
+    if (departmentId) {
+      query = `
+        SELECT t.id, t.number, t.title, t.preview, t.status,
+               t.created_at, t.updated_at,
+               c.id AS department_id, c.name AS department_name
+        FROM zoho_tickets t
+        JOIN companies c ON c.id = t.company_id
+        WHERE t.user_id = $1 AND t.company_id = $2
+        ORDER BY t.updated_at DESC
+      `;
+      params = [req.user.id, departmentId];
+    } else {
+      query = `
+        SELECT t.id, t.number, t.title, t.preview, t.status,
+               t.created_at, t.updated_at,
+               c.id AS department_id, c.name AS department_name
+        FROM zoho_tickets t
+        JOIN companies c ON c.id = t.company_id
+        WHERE t.user_id = $1
+        ORDER BY t.updated_at DESC
+      `;
+      params = [req.user.id];
+    }
+
+    const { rows } = await pool.query(query, params);
+
     res.json(rows.map((t) => ({
       id: t.id,
       number: t.number,
@@ -21,6 +45,10 @@ router.get("/", async (req, res) => {
       status: t.status,
       createdAt: t.created_at,
       updatedAt: t.updated_at,
+      department: {
+        id: t.department_id,
+        name: t.department_name,
+      },
     })));
   } catch (err) {
     console.error(err);
@@ -28,14 +56,35 @@ router.get("/", async (req, res) => {
   }
 });
 
-// GET /tickets/:id — fetch single ticket with messages
+// GET /tickets/departments — list departments that have tickets for this user
+router.get("/departments", async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT DISTINCT c.id, c.name
+       FROM zoho_tickets t
+       JOIN companies c ON c.id = t.company_id
+       WHERE t.user_id = $1
+       ORDER BY c.name ASC`,
+      [req.user.id],
+    );
+    res.json(rows.map((r) => ({ id: r.id, name: r.name })));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Villa á þjóni" });
+  }
+});
+
+// GET /tickets/:id — fetch single ticket with messages (no company_id check)
 router.get("/:id", async (req, res) => {
   try {
     const { rows: ticketRows } = await pool.query(
-      `SELECT id, number, title, preview, status, created_at, updated_at
-       FROM zoho_tickets
-       WHERE id = $1 AND user_id = $2 AND company_id = $3`,
-      [req.params.id, req.user.id, req.user.active_company_id],
+      `SELECT t.id, t.number, t.title, t.preview, t.status,
+              t.created_at, t.updated_at,
+              c.id AS department_id, c.name AS department_name
+       FROM zoho_tickets t
+       JOIN companies c ON c.id = t.company_id
+       WHERE t.id = $1 AND t.user_id = $2`,
+      [req.params.id, req.user.id],
     );
 
     if (!ticketRows[0]) {
@@ -62,6 +111,10 @@ router.get("/:id", async (req, res) => {
       status: ticket.status,
       createdAt: ticket.created_at,
       updatedAt: ticket.updated_at,
+      department: {
+        id: ticket.department_id,
+        name: ticket.department_name,
+      },
       messages: msgRows.map((m) => ({
         id: m.id,
         from: m.from_type,
