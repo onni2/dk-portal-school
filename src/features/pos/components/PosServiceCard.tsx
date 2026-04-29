@@ -28,7 +28,7 @@ export function PosServiceCard({ service, serviceType, isSelected, onSelect }: P
       onClick={() => onSelect(service.id)}
     >
       <div className="border-b border-(--color-border) bg-(--color-surface) px-4 py-3">
-        <h3 className="text-sm font-semibold text-(--color-text)">{service.display}</h3>
+        <h3 className="text-sm font-semibold text-(--color-text)">{service.id}</h3>
       </div>
       <div className="flex items-center justify-between bg-(--color-background) px-4 py-4">
         <div className="flex items-center gap-2">
