@@ -61,11 +61,10 @@ async function checkInvoices() {
 }
 
 function startPoller() {
-  // Run once shortly after startup, then on interval
   setTimeout(() => {
     void checkInvoices();
     setInterval(() => { void checkInvoices(); }, INTERVAL_MS);
-  }, 10_000); // 10s delay so DB is ready
+  }, 10_000);
 
   console.log("[Poller] Invoice poller started (5 min interval)");
 }
