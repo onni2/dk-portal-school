@@ -13,13 +13,25 @@ export interface NavItem {
     | { type: "alwaysVisible" }
     | { type: "requiredModules"; modules: LicenceModule[] }
     | { type: "requiredPermission"; permission: keyof UserPermissions }
-    | { type: "copOnly" };
+    | { type: "copOnly" }
+    | { type: "accountantOnly" };
   children?: NavItem[];
 }
 
 export const NAV_ITEMS: NavItem[] = [
   // Always visible to all logged-in users
   { label: "Yfirlit", to: "/", access: { type: "alwaysVisible" } },
+
+    // Accountant-only items
+  {
+    label: "Bókari",
+    to: "/accountant",
+    access: { type: "accountantOnly" },
+    children: [
+      { label: "Fyrirtækin mín", to: "/accountant/companies", access: { type: "accountantOnly" } },
+      { label: "Skilastaða", to: "/accountant/submissions", access: { type: "accountantOnly" } },
+    ],
+  },
 
   // Permission-based items — visible if the admin has granted the user access
   { label: "Reikningsyfirlit", to: "/invoices", access: { type: "requiredPermission", permission: "invoices" } },
@@ -37,10 +49,11 @@ export const NAV_ITEMS: NavItem[] = [
     to: "/hosting",
     access: { type: "requiredPermission", permission: "hosting" },
     children: [
+      { label: "Notendur", to: "/hosting", access: { type: "requiredPermission", permission: "hosting" } },
       { label: "Öryggi og persónuvernd", to: "/hosting/oryggi", access: { type: "requiredPermission", permission: "hosting" } },
     ],
   },
-  { label: "POS", to: "/pos", access: { type: "requiredPermission", permission: "pos" } },
+  { label: "dkPOS", to: "/pos", access: { type: "requiredPermission", permission: "pos" } },
   { label: "dkOne", to: "/dkone", access: { type: "requiredPermission", permission: "dkOne" } },
   { label: "dkPlus", to: "/dkplus", access: { type: "requiredPermission", permission: "dkPlus" } },
   { label: "Stimpilklukka", to: "/timeclock", access: { type: "requiredPermission", permission: "timeclock" } },
