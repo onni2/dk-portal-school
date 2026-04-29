@@ -1,6 +1,7 @@
 const express = require("express");
 const { randomBytes } = require("crypto");
 const pool = require("../db");
+const { randomBytes } = require("crypto");
 
 const router = express.Router();
 

@@ -112,6 +112,26 @@ const SEED_POS_SERVICES = [
     mode: "auto",
     path: "C:\\dkPos\\Akurey\\Akurey\\dkPosService.exe",
   },
+  {
+    id: "ps-hr-1",
+    company_id: "hr",
+    name: "Búð 1",
+    display: "Búð 1 - dkPOS Services",
+    server: "DK-WS-01",
+    state: "running",
+    mode: "auto",
+    path: "C:\\dkPos\\HR\\Bud1\\dkPosService.exe",
+  },
+  {
+    id: "ps-hr-2",
+    company_id: "hr",
+    name: "Búð 2",
+    display: "Búð 2 - dkPOS Services",
+    server: "DK-WS-02",
+    state: "stopped",
+    mode: "auto",
+    path: "C:\\dkPos\\HR\\Bud2\\dkPosService.exe",
+  },
 ];
 
 const SEED_POS_REST = [
@@ -135,14 +155,41 @@ const SEED_POS_REST = [
     mode: "auto",
     path: "C:\\dkPos\\Akurey\\Akurey\\dkRESTServer.exe",
   },
+  {
+    id: "pr-hr-1",
+    company_id: "hr",
+    name: "Búð 1",
+    display: "Búð 1 - REST POS",
+    server: "DK-REST-01",
+    state: "running",
+    mode: "auto",
+    path: "C:\\dkPos\\HR\\Bud1\\dkRESTServer.exe",
+  },
+  {
+    id: "pr-hr-2",
+    company_id: "hr",
+    name: "Búð 2",
+    display: "Búð 2 - REST POS",
+    server: "DK-REST-02",
+    state: "stopped",
+    mode: "auto",
+    path: "C:\\dkPos\\HR\\Bud2\\dkRESTServer.exe",
+  },
+];
+
+const SEED_POS_LOGS = [
+  { id: "pl-1", service_id: "ps-hr-1", service_type: "dkpos", company_id: "hr", description: "Service State Changed: Running", executed_by: "Magnús", created_at: "2026-10-02T14:02:00Z" },
+  { id: "pl-2", service_id: "ps-hr-1", service_type: "dkpos", company_id: "hr", description: "Service State Changed: Stopped", executed_by: "Agent", created_at: "2026-10-02T13:50:00Z" },
+  { id: "pl-3", service_id: "ps-hr-1", service_type: "dkpos", company_id: "hr", description: "Service State Changed: Running", executed_by: "Magnús", created_at: "2025-01-01T12:30:00Z" },
+  { id: "pl-4", service_id: "ps-hr-1", service_type: "dkpos", company_id: "hr", description: "Service State Changed: Stopped", executed_by: "Magnús", created_at: "2025-01-01T12:25:00Z" },
 ];
 
 const SEED_HOSTING_ACCOUNTS = [
-  { id: "ha-1", company_id: "hr", username: "fyr.agusta", display_name: "fyr.agusta" },
-  { id: "ha-2", company_id: "hr", username: "fyr.bjorn", display_name: "fyr.bjorn" },
-  { id: "ha-3", company_id: "hr", username: "fyr.gudrun", display_name: "fyr.gudrun" },
-  { id: "ha-4", company_id: "hr", username: "fyr.halldor", display_name: "fyr.halldor" },
-  { id: "ha-5", company_id: "hr", username: "fyr.sigrid", display_name: "fyr.sigrid" },
+  { id: "ha-1", company_id: "hr", username: "fyr.agusta",  display_name: "Ágústa B.",   email: "agusta@fyrirtaeki.is",  has_mfa: true  },
+  { id: "ha-2", company_id: "hr", username: "fyr.bjorn",   display_name: "Björn G.",    email: "bjorn@fyrirtaeki.is",   has_mfa: false },
+  { id: "ha-3", company_id: "hr", username: "fyr.gudrun",  display_name: "Guðrún S.",   email: "gudrun@fyrirtaeki.is",  has_mfa: false },
+  { id: "ha-4", company_id: "hr", username: "fyr.halldor", display_name: "Halldór Þ.",  email: "halldor@fyrirtaeki.is", has_mfa: true  },
+  { id: "ha-5", company_id: "hr", username: "fyr.sigrid",  display_name: "Sigrið M.",   email: "sigrid@fyrirtaeki.is",  has_mfa: false },
 ];
 
 const SEED_IP_WHITELIST = [
@@ -191,6 +238,7 @@ const ZOHO_TEST_USER = {
 
 async function migrate() {
   await pool.query(`ALTER TABLE companies ADD COLUMN IF NOT EXISTS dk_token TEXT`);
+  await pool.query(`ALTER TABLE portal_users ADD COLUMN IF NOT EXISTS company_id TEXT REFERENCES companies(id)`);
   await pool.query(`ALTER TABLE portal_users ADD COLUMN IF NOT EXISTS hosting_username TEXT`);
   await pool.query(`ALTER TABLE portal_users DROP COLUMN IF EXISTS dk_token`);
 
@@ -226,6 +274,9 @@ async function migrate() {
       created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `);
+  await pool.query(`ALTER TABLE hosting_accounts ADD COLUMN IF NOT EXISTS email TEXT`);
+  await pool.query(`ALTER TABLE hosting_accounts ADD COLUMN IF NOT EXISTS has_mfa BOOLEAN NOT NULL DEFAULT false`);
+  await pool.query(`ALTER TABLE hosting_accounts ADD COLUMN IF NOT EXISTS last_restart TIMESTAMPTZ`);
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS pos_services (
@@ -252,6 +303,19 @@ async function migrate() {
       path       TEXT NOT NULL
     )
   `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS pos_logs (
+      id           TEXT PRIMARY KEY,
+      service_id   TEXT NOT NULL,
+      service_type TEXT NOT NULL DEFAULT 'dkpos',
+      company_id   TEXT NOT NULL REFERENCES companies(id),
+      description  TEXT NOT NULL,
+      executed_by  TEXT NOT NULL,
+      created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await pool.query(`ALTER TABLE pos_logs ADD COLUMN IF NOT EXISTS seq SERIAL`);
 
   for (const user of SEED_COMPANY_USERS) {
     const hashed = await bcrypt.hash(user.password, 10);
@@ -306,12 +370,40 @@ async function migrate() {
     );
   }
 
+  for (const entry of SEED_POS_LOGS) {
+    await pool.query(
+      `INSERT INTO pos_logs (id, service_id, service_type, company_id, description, executed_by, created_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7)
+       ON CONFLICT DO NOTHING`,
+      [entry.id, entry.service_id, entry.service_type, entry.company_id, entry.description, entry.executed_by, entry.created_at]
+    );
+  }
+
+  // Seed hosting accounts (idempotent)
+  for (const acc of SEED_HOSTING_ACCOUNTS) {
+    await pool.query(
+      `INSERT INTO hosting_accounts (id, company_id, username, display_name, email, has_mfa)
+       VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT DO NOTHING`,
+      [acc.id, acc.company_id, acc.username, acc.display_name, acc.email, acc.has_mfa],
+    );
+  }
+
+  // Sync HR company dk_token from env on every startup
   if (process.env.DK_TOKEN) {
     await pool.query(`UPDATE companies SET dk_token = $1 WHERE id = 'hr'`, [process.env.DK_TOKEN]);
   }
 
   await pool.query(`UPDATE portal_users SET company_id = 'hr' WHERE company_id IS NULL`);
 
+  // Correct company_id for seeded company users (in case they were wrongly assigned to HR)
+  for (const user of SEED_COMPANY_USERS) {
+    await pool.query(
+      `UPDATE portal_users SET company_id = $1 WHERE id = $2`,
+      [user.company_id, user.id],
+    );
+  }
+
+  // Add missing team members
   for (const member of TEAM_MEMBERS) {
     const hashed = await bcrypt.hash(member.password, 10);
 
@@ -364,6 +456,36 @@ async function migrate() {
     ON CONFLICT DO NOTHING
   `);
 
+  // Ensure user_companies table exists
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS user_companies (
+      user_id    TEXT NOT NULL REFERENCES portal_users(id) ON DELETE CASCADE,
+      company_id TEXT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+      role       TEXT NOT NULL DEFAULT 'admin',
+      invoices   BOOLEAN NOT NULL DEFAULT false,
+      subscription BOOLEAN NOT NULL DEFAULT false,
+      hosting    BOOLEAN NOT NULL DEFAULT false,
+      pos        BOOLEAN NOT NULL DEFAULT false,
+      dk_one     BOOLEAN NOT NULL DEFAULT false,
+      dk_plus    BOOLEAN NOT NULL DEFAULT false,
+      timeclock  BOOLEAN NOT NULL DEFAULT false,
+      users      BOOLEAN NOT NULL DEFAULT false,
+      PRIMARY KEY (user_id, company_id)
+    )
+  `);
+
+  // Give odinn (id=1) admin access to all companies
+  const ALL_COMPANIES = ['hr', '1001nott', 'akurey', 'bokhald'];
+  for (const companyId of ALL_COMPANIES) {
+    await pool.query(
+      `INSERT INTO user_companies (user_id, company_id, role, invoices, subscription, hosting, pos, dk_one, dk_plus, timeclock, users)
+       VALUES ('1', $1, 'admin', true, true, true, true, true, true, true, true)
+       ON CONFLICT DO NOTHING`,
+      [companyId],
+    );
+  }
+
+  // Zoho tickets tables
   await pool.query(`
     CREATE TABLE IF NOT EXISTS zoho_tickets (
       id          TEXT PRIMARY KEY,
@@ -587,11 +709,9 @@ async function seed() {
 
   for (const acc of SEED_HOSTING_ACCOUNTS) {
     await pool.query(
-      `INSERT INTO hosting_accounts
-        (id, company_id, username, display_name)
-       VALUES ($1,$2,$3,$4)
-       ON CONFLICT DO NOTHING`,
-      [acc.id, acc.company_id, acc.username, acc.display_name]
+      `INSERT INTO hosting_accounts (id, company_id, username, display_name, email, has_mfa)
+       VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT DO NOTHING`,
+      [acc.id, acc.company_id, acc.username, acc.display_name, acc.email, acc.has_mfa],
     );
   }
 
