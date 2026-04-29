@@ -43,15 +43,20 @@ function mapLog(r) {
   };
 }
 
-// GET /dkplus/tokens — all tokens across all companies
+// GET /dkplus/tokens — tokens for companies the user belongs to
 router.get("/tokens", requireAuth, async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT at.id, at.description, at.token, at.created_at, at.company_id, c.name AS company_name
       FROM auth_tokens at
       JOIN companies c ON c.id = at.company_id
+      WHERE at.company_id IN (
+        SELECT company_id FROM user_companies WHERE user_id = $1
+        UNION
+        SELECT company_id FROM portal_users WHERE id = $1 AND company_id IS NOT NULL
+      )
       ORDER BY at.created_at DESC
-    `);
+    `, [req.user.id]);
     res.json(rows.map(mapToken));
   } catch (err) {
     console.error(err);
@@ -105,8 +110,14 @@ router.delete("/tokens/:id", requireAuth, async (req, res) => {
     const executedBy = await getUserName(req.user.id);
 
     const { rows } = await pool.query(
-      "SELECT description, company_id FROM auth_tokens WHERE id = $1",
-      [id],
+      `SELECT description, company_id FROM auth_tokens
+       WHERE id = $1
+         AND company_id IN (
+           SELECT company_id FROM user_companies WHERE user_id = $2
+           UNION
+           SELECT company_id FROM portal_users WHERE id = $2 AND company_id IS NOT NULL
+         )`,
+      [id, req.user.id],
     );
     if (!rows[0]) return res.status(404).json({ message: "Token fannst ekki" });
 
