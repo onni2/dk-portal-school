@@ -141,4 +141,38 @@ router.get("/tokens/:id/logs", requireAuth, async (req, res) => {
   }
 });
 
+// GET /dkplus/tokens/:id/api-logs
+router.get("/tokens/:id/api-logs", requireAuth, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, token_id, user_name, uri, method, query, status_code,
+              ip_address, user_agent, bandwidth_upload, bandwidth_download,
+              time_taken, error, created_at
+       FROM auth_token_api_logs
+       WHERE token_id = $1
+       ORDER BY seq DESC`,
+      [req.params.id],
+    );
+    res.json(rows.map((r) => ({
+      id: r.id,
+      tokenId: r.token_id,
+      userName: r.user_name,
+      uri: r.uri,
+      method: r.method,
+      query: r.query,
+      statusCode: r.status_code,
+      ipAddress: r.ip_address,
+      userAgent: r.user_agent,
+      bandwidthUpload: r.bandwidth_upload,
+      bandwidthDownload: r.bandwidth_download,
+      timeTaken: r.time_taken,
+      error: r.error,
+      createdAt: r.created_at,
+    })));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Villa á þjóni" });
+  }
+});
+
 module.exports = router;

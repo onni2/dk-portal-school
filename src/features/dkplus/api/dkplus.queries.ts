@@ -10,6 +10,7 @@ import {
   createAuthToken,
   deleteAuthToken,
   fetchAuthTokenLogs,
+  fetchAuthTokenApiLogs,
   fetchCompanies,
 } from "./dkplus.api";
 
@@ -29,6 +30,13 @@ export function useAuthTokens() {
 
 export function useCompanies() {
   return useSuspenseQuery(companiesQueryOptions);
+}
+
+export function useAuthTokenApiLogs(tokenId: string) {
+  return useQuery({
+    queryKey: ["auth-token-api-logs", tokenId],
+    queryFn: () => fetchAuthTokenApiLogs(tokenId),
+  });
 }
 
 export function useAuthTokenLogs(tokenId: string | null) {
