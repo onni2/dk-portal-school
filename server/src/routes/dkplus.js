@@ -135,26 +135,21 @@ router.delete("/tokens/:id", requireAuth, async (req, res) => {
   }
 });
 
-// GET /dkplus/tokens/:id/logs
-router.get("/tokens/:id/logs", requireAuth, async (req, res) => {
-  try {
-    const { rows } = await pool.query(
-      `SELECT id, token_id, description, executed_by, created_at
-       FROM auth_token_logs
-       WHERE token_id = $1
-       ORDER BY seq DESC`,
-      [req.params.id],
-    );
-    res.json(rows.map(mapLog));
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Villa á þjóni" });
-  }
-});
-
 // GET /dkplus/tokens/:id/api-logs
 router.get("/tokens/:id/api-logs", requireAuth, async (req, res) => {
   try {
+    const { rows: access } = await pool.query(
+      `SELECT 1 FROM auth_tokens
+       WHERE id = $1
+         AND company_id IN (
+           SELECT company_id FROM user_companies WHERE user_id = $2
+           UNION
+           SELECT company_id FROM portal_users WHERE id = $2 AND company_id IS NOT NULL
+         )`,
+      [req.params.id, req.user.id],
+    );
+    if (!access.length) return res.status(404).json({ message: "Token fannst ekki" });
+
     const { rows } = await pool.query(
       `SELECT id, token_id, user_name, uri, method, query, status_code,
               ip_address, user_agent, bandwidth_upload, bandwidth_download,

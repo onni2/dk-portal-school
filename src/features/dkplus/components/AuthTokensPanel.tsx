@@ -107,9 +107,9 @@ function CreateForm({ onCreated }: { onCreated: () => void }) {
   const { user, companies } = useAuthStore();
   const createMutation = useCreateAuthToken();
   const [description, setDescription] = useState("");
-  const [descError, setDescError] = useState(false);
-
   const [companyId, setCompanyId] = useState(user?.companyId ?? companies[0]?.id ?? "");
+  const [descError, setDescError] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   async function handleCreate() {
     if (!description.trim()) {
@@ -117,58 +117,70 @@ function CreateForm({ onCreated }: { onCreated: () => void }) {
       return;
     }
     setDescError(false);
-    await createMutation.mutateAsync({ description: description.trim(), companyId });
-    setDescription("");
-    onCreated();
+    setCreateError(null);
+    try {
+      await createMutation.mutateAsync({ description: description.trim(), companyId });
+      setDescription("");
+      onCreated();
+    } catch {
+      setCreateError("Villa kom upp við stofnun tokens.");
+    }
   }
 
   return (
-    <div className="flex items-end gap-2 border-t border-(--color-border) px-4 py-3">
-      <div className="flex-1">
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Lýsing"
-            value={description}
-            onChange={(e) => {
-              setDescription(e.target.value);
-              if (e.target.value.trim()) setDescError(false);
-            }}
-            onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-            className={`w-full rounded-lg border px-3 py-2 text-sm outline-none transition-colors focus:ring-2 ${
-              descError
-                ? "border-(--color-error) focus:ring-(--color-error)/30"
-                : "border-(--color-border) focus:border-(--color-primary) focus:ring-(--color-primary)/20"
-            } bg-(--color-surface) text-(--color-text) placeholder:text-(--color-text-muted)`}
-          />
-          {descError && (
-            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-(--color-error)">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="12" stroke="white" strokeWidth="2" strokeLinecap="round" />
-                <line x1="12" y1="16" x2="12.01" y2="16" stroke="white" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-            </span>
-          )}
+    <div className="border-t border-(--color-border)">
+      {createError && (
+        <div className="border-b border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {createError}
         </div>
+      )}
+      <div className="flex items-end gap-2 px-4 py-3">
+        <div className="flex-1">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Lýsing"
+              value={description}
+              onChange={(e) => {
+                setDescription(e.target.value);
+                if (e.target.value.trim()) setDescError(false);
+              }}
+              onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+              className={`w-full rounded-lg border px-3 py-2 text-sm outline-none transition-colors focus:ring-2 ${
+                descError
+                  ? "border-(--color-error) focus:ring-(--color-error)/30"
+                  : "border-(--color-border) focus:border-(--color-primary) focus:ring-(--color-primary)/20"
+              } bg-(--color-surface) text-(--color-text) placeholder:text-(--color-text-muted)`}
+            />
+            {descError && (
+              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-(--color-error)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" stroke="white" strokeWidth="2" strokeLinecap="round" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" stroke="white" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </span>
+            )}
+          </div>
+        </div>
+        <select
+          value={companyId}
+          onChange={(e) => setCompanyId(e.target.value)}
+          className="rounded-lg border border-(--color-border) bg-(--color-surface) px-3 py-2 text-sm text-(--color-text) outline-none focus:border-(--color-primary) focus:ring-2 focus:ring-(--color-primary)/20"
+        >
+          {companies.map((c) => (
+            <option key={c.id} value={c.id}>{c.name}</option>
+          ))}
+        </select>
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={handleCreate}
+          disabled={createMutation.isPending}
+        >
+          {createMutation.isPending ? "Stofna..." : "✓ Stofna"}
+        </Button>
       </div>
-      <select
-        value={companyId}
-        onChange={(e) => setCompanyId(e.target.value)}
-        className="rounded-lg border border-(--color-border) bg-(--color-surface) px-3 py-2 text-sm text-(--color-text) outline-none focus:border-(--color-primary) focus:ring-2 focus:ring-(--color-primary)/20"
-      >
-        {companies.map((c) => (
-          <option key={c.id} value={c.id}>{c.name}</option>
-        ))}
-      </select>
-      <Button
-        variant="primary"
-        size="sm"
-        onClick={handleCreate}
-        disabled={createMutation.isPending}
-      >
-        {createMutation.isPending ? "Stofna..." : "✓ Stofna"}
-      </Button>
     </div>
   );
 }
@@ -185,6 +197,12 @@ export function AuthTokensPanel({ onViewLogs }: AuthTokensPanelProps) {
   const [pageSize, setPageSize] = useState<(typeof PAGE_SIZE_OPTIONS)[number]>(10);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  function showError(msg: string) {
+    setError(msg);
+    setTimeout(() => setError(null), 4000);
+  }
 
   const totalPages = Math.max(1, Math.ceil(tokens.length / pageSize));
   const pagedTokens = tokens.slice((page - 1) * pageSize, page * pageSize);
@@ -199,6 +217,8 @@ export function AuthTokensPanel({ onViewLogs }: AuthTokensPanelProps) {
     setDeletingId(id);
     try {
       await deleteMutation.mutateAsync(id);
+    } catch {
+      showError("Villa kom upp við eyðingu á token.");
     } finally {
       setDeletingId(null);
     }
@@ -209,6 +229,12 @@ export function AuthTokensPanel({ onViewLogs }: AuthTokensPanelProps) {
       <div className="border-b border-(--color-border) bg-(--color-surface) px-4 py-3">
         <h3 className="text-sm font-semibold text-(--color-text)">Auðkenningar tákn</h3>
       </div>
+
+      {error && (
+        <div className="border-b border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
 
       {pagedTokens.length === 0 ? (
         <div className="flex items-center justify-center py-12 text-sm text-(--color-text-secondary)">

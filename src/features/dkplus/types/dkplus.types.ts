@@ -7,14 +7,6 @@ export interface AuthToken {
   createdAt: string;
 }
 
-export interface AuthTokenLog {
-  id: string;
-  tokenId: string;
-  description: string;
-  executedBy: string;
-  createdAt: string;
-}
-
 export interface AuthTokenApiLog {
   id: string;
   tokenId: string;
