@@ -36,7 +36,7 @@ export function filterNavItems(
   return items.filter((item) => {
     if (item.access.type === "alwaysVisible") return true;
     if (item.access.type === "copOnly") return false;
-    if (item.access.type === "accountantOnly") return authRole === "accountant" || authRole === "admin";
+    if (item.access.type === "accountantOnly") return authRole === "accountant";
     
     if (item.access.type === "requiredPermission") {
       return userPermissions ? userPermissions[item.access.permission] : false;

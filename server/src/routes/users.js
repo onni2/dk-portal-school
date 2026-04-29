@@ -53,7 +53,15 @@ async function requireAdminOrUsersPermission(req, res, next) {
 router.get("/", requireAdminOrUsersPermission, async (req, res) => {
   try {
     const { rows } = await pool.query(
-      "SELECT id, username, email, name, role, status, must_reset_password, kennitala, phone, company_id, created_at FROM portal_users WHERE company_id = $1 ORDER BY created_at ASC",
+      `SELECT DISTINCT id, username, email, name, role, status, must_reset_password, kennitala, phone, company_id, created_at 
+      FROM portal_users 
+      WHERE company_id = $1
+      UNION
+      SELECT DISTINCT pu.id, pu.username, pu.email, pu.name, pu.role, pu.status, pu.must_reset_password, pu.kennitala, pu.phone, pu.company_id, pu.created_at
+      FROM portal_users pu
+      JOIN user_companies uc ON uc.user_id = pu.id
+      WHERE uc.company_id = $1
+      ORDER BY created_at ASC`,
       [getCompanyId(req)],
     );
     res.json(rows.map((u) => ({

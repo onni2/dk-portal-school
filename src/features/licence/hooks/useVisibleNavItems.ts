@@ -16,6 +16,8 @@ export function useVisibleNavItems() {
   const user = useAuthStore((s) => s.user);
   const companies = useAuthStore((s) => s.companies);
   const activeCompany = companies.find((c) => c.id === user?.companyId);
+  console.log("activeCompany", activeCompany);
+  console.log("user.role", user?.role);
 
   // Use DB permissions if available, fall back to company permissions
   const { data: dbPermissions = null } = useUserPermissions(user?.id);
@@ -28,5 +30,5 @@ export function useVisibleNavItems() {
     return NAV_ITEMS.filter((item) => item.access.type === "alwaysVisible");
   }
 
-  return filterNavItems(NAV_ITEMS, role, licence, userPermissions, user?.role);
+  return filterNavItems(NAV_ITEMS, role, licence, userPermissions, activeCompany?.role ?? user?.role);
 }
