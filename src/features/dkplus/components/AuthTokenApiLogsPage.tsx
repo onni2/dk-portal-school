@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Button } from "@/shared/components/Button";
+import { useAuthStore } from "@/features/auth/store/auth.store";
 import { useAuthTokenApiLogs } from "../api/dkplus.queries";
 import type { AuthToken, AuthTokenApiLog } from "../types/dkplus.types";
 import { cn } from "@/shared/utils/cn";
@@ -51,18 +52,31 @@ interface Filters {
   user: string;
   method: string;
   statusCode: string;
-  uri: string;
 }
 
-const EMPTY_FILTERS: Filters = { from: "", to: "", user: "", method: "", statusCode: "", uri: "" };
+function yesterdayRange(): { from: string; to: string } {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  const yyyy = d.getFullYear();
+  const mm = (d.getMonth() + 1).toString().padStart(2, "0");
+  const dd = d.getDate().toString().padStart(2, "0");
+  return { from: `${yyyy}-${mm}-${dd}T00:00`, to: `${yyyy}-${mm}-${dd}T23:59` };
+}
+
+function emptyFilters(userName: string): Filters {
+  const { from, to } = yesterdayRange();
+  return { from, to, user: userName, method: "", statusCode: "" };
+}
 
 function FilterPanel({
   filters,
+  tokenValue,
   onChange,
   onApply,
   onClear,
 }: {
   filters: Filters;
+  tokenValue: string;
   onChange: (f: Filters) => void;
   onApply: () => void;
   onClear: () => void;
@@ -94,15 +108,13 @@ function FilterPanel({
         <div>
           <label className="mb-1 block text-xs font-medium text-(--color-text-secondary)">Notandi</label>
           <input
-            type="text"
-            placeholder="Allir notendur"
+            readOnly
             value={filters.user}
-            onChange={(e) => onChange({ ...filters, user: e.target.value })}
-            className={inputClass}
+            className="w-full rounded-lg border border-(--color-border) bg-(--color-surface-hover) px-3 py-2 text-sm text-(--color-text-secondary) outline-none"
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-(--color-text-secondary)">Aðferð</label>
+          <label className="mb-1 block text-xs font-medium text-(--color-text-secondary)">Aðferð <span className="font-normal text-(--color-text-muted)">(valkvætt)</span></label>
           <select
             value={filters.method}
             onChange={(e) => onChange({ ...filters, method: e.target.value })}
@@ -115,7 +127,7 @@ function FilterPanel({
           </select>
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-(--color-text-secondary)">Stöðukóði</label>
+          <label className="mb-1 block text-xs font-medium text-(--color-text-secondary)">Stöðukóði <span className="font-normal text-(--color-text-muted)">(valkvætt)</span></label>
           <input
             type="number"
             placeholder="T.d. 200"
@@ -125,13 +137,11 @@ function FilterPanel({
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-(--color-text-secondary)">Uri</label>
+          <label className="mb-1 block text-xs font-medium text-(--color-text-secondary)">Token</label>
           <input
-            type="text"
-            placeholder="Leita í URI"
-            value={filters.uri}
-            onChange={(e) => onChange({ ...filters, uri: e.target.value })}
-            className={inputClass}
+            readOnly
+            value={tokenValue}
+            className="w-full rounded-lg border border-(--color-border) bg-(--color-surface-hover) px-3 py-2 font-mono text-sm text-(--color-text-secondary) outline-none"
           />
         </div>
       </div>
@@ -220,7 +230,7 @@ function LogTable({
               <td className="whitespace-nowrap px-4 py-2.5 font-mono text-xs text-(--color-text-secondary)">
                 {log.ipAddress}
               </td>
-              <td className="max-w-[160px] px-4 py-2.5">
+              <td className="max-w-40 px-4 py-2.5">
                 <span className="block truncate text-xs text-(--color-text-muted)" title={log.userAgent}>
                   {log.userAgent}
                 </span>
@@ -245,10 +255,11 @@ interface AuthTokenApiLogsPageProps {
 }
 
 export function AuthTokenApiLogsPage({ token, onBack }: AuthTokenApiLogsPageProps) {
+  const { user } = useAuthStore();
   const { data: allLogs = [], isLoading } = useAuthTokenApiLogs(token.id);
 
-  const [draftFilters, setDraftFilters] = useState<Filters>(EMPTY_FILTERS);
-  const [activeFilters, setActiveFilters] = useState<Filters>(EMPTY_FILTERS);
+  const [draftFilters, setDraftFilters] = useState<Filters>(() => emptyFilters(user?.name ?? ""));
+  const [activeFilters, setActiveFilters] = useState<Filters>(() => emptyFilters(user?.name ?? ""));
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<(typeof PAGE_SIZE_OPTIONS)[number]>(10);
 
@@ -256,10 +267,9 @@ export function AuthTokenApiLogsPage({ token, onBack }: AuthTokenApiLogsPageProp
     return allLogs.filter((log) => {
       if (activeFilters.from && new Date(log.createdAt) < new Date(activeFilters.from)) return false;
       if (activeFilters.to   && new Date(log.createdAt) > new Date(activeFilters.to))   return false;
-      if (activeFilters.user   && !log.userName.toLowerCase().includes(activeFilters.user.toLowerCase())) return false;
+      if (activeFilters.user && !log.userName.toLowerCase().includes(activeFilters.user.toLowerCase())) return false;
       if (activeFilters.method && log.method !== activeFilters.method) return false;
       if (activeFilters.statusCode && log.statusCode !== Number(activeFilters.statusCode)) return false;
-      if (activeFilters.uri && !log.uri.toLowerCase().includes(activeFilters.uri.toLowerCase())) return false;
       return true;
     });
   }, [allLogs, activeFilters]);
@@ -273,8 +283,9 @@ export function AuthTokenApiLogsPage({ token, onBack }: AuthTokenApiLogsPageProp
   }
 
   function clearFilters() {
-    setDraftFilters(EMPTY_FILTERS);
-    setActiveFilters(EMPTY_FILTERS);
+    const reset = emptyFilters(user?.name ?? "");
+    setDraftFilters(reset);
+    setActiveFilters(reset);
     setPage(1);
   }
 
@@ -297,6 +308,7 @@ export function AuthTokenApiLogsPage({ token, onBack }: AuthTokenApiLogsPageProp
 
       <FilterPanel
         filters={draftFilters}
+        tokenValue={token.token}
         onChange={setDraftFilters}
         onApply={applyFilters}
         onClear={clearFilters}
