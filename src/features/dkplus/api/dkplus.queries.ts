@@ -9,9 +9,7 @@ import {
   fetchAuthTokens,
   createAuthToken,
   deleteAuthToken,
-  fetchAuthTokenLogs,
   fetchAuthTokenApiLogs,
-  fetchCompanies,
 } from "./dkplus.api";
 
 export const authTokensQueryOptions = queryOptions({
@@ -19,31 +17,14 @@ export const authTokensQueryOptions = queryOptions({
   queryFn: fetchAuthTokens,
 });
 
-export const companiesQueryOptions = queryOptions({
-  queryKey: ["companies"],
-  queryFn: fetchCompanies,
-});
-
 export function useAuthTokens() {
   return useSuspenseQuery(authTokensQueryOptions);
-}
-
-export function useCompanies() {
-  return useSuspenseQuery(companiesQueryOptions);
 }
 
 export function useAuthTokenApiLogs(tokenId: string) {
   return useQuery({
     queryKey: ["auth-token-api-logs", tokenId],
     queryFn: () => fetchAuthTokenApiLogs(tokenId),
-  });
-}
-
-export function useAuthTokenLogs(tokenId: string | null) {
-  return useQuery({
-    queryKey: ["auth-token-logs", tokenId],
-    queryFn: () => fetchAuthTokenLogs(tokenId!),
-    enabled: !!tokenId,
   });
 }
 
