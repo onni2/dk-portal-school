@@ -485,6 +485,56 @@ async function migrate() {
     );
   }
 
+  // Auth tokens tables
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS auth_tokens (
+      id          TEXT PRIMARY KEY,
+      company_id  TEXT NOT NULL REFERENCES companies(id),
+      description TEXT NOT NULL,
+      token       TEXT NOT NULL,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS auth_token_logs (
+      id          TEXT PRIMARY KEY,
+      token_id    TEXT NOT NULL,
+      company_id  TEXT NOT NULL REFERENCES companies(id),
+      description TEXT NOT NULL,
+      executed_by TEXT NOT NULL,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      seq         SERIAL
+    )
+  `);
+
+  const SEED_AUTH_TOKENS = [
+    { id: "at-1", company_id: "hr",       description: "dk",        token: "f1632c65-8d38-4050-83e6-b36a63c0a21b" },
+    { id: "at-2", company_id: "1001nott", description: "1001 Nott", token: "a7d94e12-3c51-47bb-91f0-c28b74e0d3f9" },
+  ];
+
+  const SEED_AUTH_TOKEN_LOGS = [
+    { id: "atl-1", token_id: "at-1", company_id: "hr",       description: "Token stofnað",   executed_by: "Jón Ágústsson",    created_at: "2026-03-15T10:00:00Z" },
+    { id: "atl-2", token_id: "at-2", company_id: "1001nott", description: "Token stofnað",   executed_by: "Björn Gunnarsson", created_at: "2026-02-20T09:15:00Z" },
+    { id: "atl-3", token_id: "at-1", company_id: "hr",       description: "Token notað",     executed_by: "Agent",            created_at: "2026-04-01T08:30:00Z" },
+  ];
+
+  for (const t of SEED_AUTH_TOKENS) {
+    await pool.query(
+      `INSERT INTO auth_tokens (id, company_id, description, token)
+       VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING`,
+      [t.id, t.company_id, t.description, t.token],
+    );
+  }
+
+  for (const l of SEED_AUTH_TOKEN_LOGS) {
+    await pool.query(
+      `INSERT INTO auth_token_logs (id, token_id, company_id, description, executed_by, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING`,
+      [l.id, l.token_id, l.company_id, l.description, l.executed_by, l.created_at],
+    );
+  }
+
   // Zoho tickets tables
   await pool.query(`
     CREATE TABLE IF NOT EXISTS zoho_tickets (
