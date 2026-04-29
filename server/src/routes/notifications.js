@@ -3,6 +3,13 @@ const pool = require("../db");
 
 const router = express.Router();
 
+function requireAuth(req, res, next) {
+  if (!req.user) return res.status(401).json({ message: "Ekki innskráður" });
+  next();
+}
+
+router.use(requireAuth);
+
 // GET /notifications
 router.get("/", async (req, res) => {
   try {
