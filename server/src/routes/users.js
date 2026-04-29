@@ -1,6 +1,7 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const pool = require("../db");
+const { sendInviteEmail } = require("../email");
 
 const router = express.Router();
 
@@ -109,6 +110,10 @@ router.post("/invite", requireAdminOrUsersPermission, async (req, res) => {
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
       [id, p.invoices ?? false, p.subscription ?? false, p.hosting ?? false,
        p.pos ?? false, p.dkOne ?? false, p.dkPlus ?? false, p.timeclock ?? false, p.users ?? false],
+    );
+
+    await sendInviteEmail(email, name, username, generatedPassword).catch((err) =>
+      console.error("[Email] Failed to send invite email:", err),
     );
 
     res.status(201).json({
