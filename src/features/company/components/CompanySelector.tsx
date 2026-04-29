@@ -27,6 +27,7 @@ export function CompanySelector() {
   const user = useAuthStore((s) => s.user);
   const setToken = useAuthStore((s) => s.setToken);
   const setActiveCompany = useAuthStore((s) => s.setActiveCompany);
+  const setPermissions = useAuthStore((s) => s.setPermissions);
 
   const activeCompany = companies.find((c) => c.id === user?.companyId)
     ?? companies[0]
@@ -55,13 +56,14 @@ export function CompanySelector() {
     setSwitching(true);
     setSwitchError("");
     try {
-      const { token, companyDkToken } = await switchCompany(companyId);
+      const { token, companyDkToken, permissions } = await switchCompany(companyId);
       setToken(token);
       if (companyDkToken) {
         localStorage.setItem("dk-company-token", companyDkToken);
       } else {
         localStorage.removeItem("dk-company-token");
       }
+      if (permissions) setPermissions(permissions as Parameters<typeof setPermissions>[0]);
       setActiveCompany(companyId);
       setOpen(false);
       await queryClient.invalidateQueries();

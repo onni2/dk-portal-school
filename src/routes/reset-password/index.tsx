@@ -1,13 +1,9 @@
-/**
- * Forced password reset page — shown to users whose mustResetPassword flag is set.
- * Requires current password verification + strong new password.
- */
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { resetPassword } from "@/features/users/api/users.api";
 import { Button } from "@/shared/components/Button";
-import { Input } from "@/shared/components/Input";
+import { PasswordInput } from "@/shared/components/PasswordInput";
 
 export const Route = createFileRoute("/reset-password/")({
   beforeLoad: () => {
@@ -84,18 +80,16 @@ function ResetPasswordPage() {
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
-            <Input
+            <PasswordInput
               label="Núverandi lykilorð"
-              type="password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               placeholder="••••••••"
               required
             />
 
-            <Input
+            <PasswordInput
               label="Nýtt lykilorð"
-              type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder="••••••••"
@@ -123,9 +117,8 @@ function ResetPasswordPage() {
               })}
             </ul>
 
-            <Input
+            <PasswordInput
               label="Staðfesta nýtt lykilorð"
-              type="password"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               placeholder="••••••••"
