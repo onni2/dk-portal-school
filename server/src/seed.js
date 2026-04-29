@@ -485,6 +485,56 @@ async function migrate() {
     );
   }
 
+  // Auth token API logs table
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS auth_token_api_logs (
+      id                 TEXT PRIMARY KEY,
+      token_id           TEXT NOT NULL,
+      company_id         TEXT NOT NULL REFERENCES companies(id),
+      user_name          TEXT NOT NULL DEFAULT '',
+      uri                TEXT NOT NULL DEFAULT '',
+      method             TEXT NOT NULL DEFAULT 'GET',
+      query              TEXT NOT NULL DEFAULT '',
+      status_code        INTEGER NOT NULL DEFAULT 200,
+      ip_address         TEXT NOT NULL DEFAULT '',
+      user_agent         TEXT NOT NULL DEFAULT '',
+      bandwidth_upload   INTEGER NOT NULL DEFAULT 0,
+      bandwidth_download INTEGER NOT NULL DEFAULT 0,
+      time_taken         INTEGER NOT NULL DEFAULT 0,
+      error              TEXT,
+      created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      seq                SERIAL
+    )
+  `);
+
+  const SEED_AUTH_TOKEN_API_LOGS = [
+    { id: "atal-1",  token_id: "at-1", company_id: "hr", user_name: "Jón Ágústsson", uri: "/api/v1/customer/transaction/page/1/1", method: "GET", query: "",               status_code: 200, ip_address: "130.208.24.15", user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", bandwidth_upload: 0, bandwidth_download: 11962, time_taken: 8,  error: null, created_at: "2026-04-12T10:00:00Z" },
+    { id: "atal-2",  token_id: "at-1", company_id: "hr", user_name: "Jón Ágústsson", uri: "/api/v1/TimeClock/settings",             method: "GET", query: "",               status_code: 200, ip_address: "130.208.24.15", user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", bandwidth_upload: 0, bandwidth_download: 160,   time_taken: 6,  error: null, created_at: "2026-04-12T10:00:01Z" },
+    { id: "atal-3",  token_id: "at-1", company_id: "hr", user_name: "Jón Ágústsson", uri: "/api/v1/general/employee",               method: "GET", query: "",               status_code: 200, ip_address: "130.208.24.15", user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", bandwidth_upload: 0, bandwidth_download: 3592,  time_taken: 15, error: null, created_at: "2026-04-12T10:00:02Z" },
+    { id: "atal-4",  token_id: "at-1", company_id: "hr", user_name: "Jón Ágústsson", uri: "/api/v1/customer/transaction/page/1/1", method: "GET", query: "",               status_code: 200, ip_address: "130.208.24.15", user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", bandwidth_upload: 0, bandwidth_download: 11962, time_taken: 15, error: null, created_at: "2026-04-12T10:01:00Z" },
+    { id: "atal-5",  token_id: "at-1", company_id: "hr", user_name: "Jón Ágústsson", uri: "/api/v1/TimeClock/settings",             method: "GET", query: "",               status_code: 200, ip_address: "130.208.24.15", user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", bandwidth_upload: 0, bandwidth_download: 160,   time_taken: 15, error: null, created_at: "2026-04-12T10:01:01Z" },
+    { id: "atal-6",  token_id: "at-1", company_id: "hr", user_name: "Jón Ágústsson", uri: "/api/v1/customer/transaction/page/1/1", method: "GET", query: "",               status_code: 200, ip_address: "130.208.24.15", user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", bandwidth_upload: 0, bandwidth_download: 11962, time_taken: 8,  error: null, created_at: "2026-04-12T10:02:00Z" },
+    { id: "atal-7",  token_id: "at-1", company_id: "hr", user_name: "Jón Ágústsson", uri: "/api/v1/TimeClock/settings",             method: "GET", query: "",               status_code: 200, ip_address: "130.208.24.15", user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", bandwidth_upload: 0, bandwidth_download: 160,   time_taken: 6,  error: null, created_at: "2026-04-12T10:02:01Z" },
+    { id: "atal-8",  token_id: "at-1", company_id: "hr", user_name: "Jón Ágústsson", uri: "/api/v1/general/employee",               method: "GET", query: "",               status_code: 200, ip_address: "130.208.24.15", user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", bandwidth_upload: 0, bandwidth_download: 3592,  time_taken: 13, error: null, created_at: "2026-04-12T10:02:02Z" },
+    { id: "atal-9",  token_id: "at-1", company_id: "hr", user_name: "Jón Ágústsson", uri: "/api/v1/customer/transaction/page/1/1", method: "GET", query: "",               status_code: 200, ip_address: "130.208.24.15", user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", bandwidth_upload: 0, bandwidth_download: 11962, time_taken: 19, error: null, created_at: "2026-04-12T10:03:00Z" },
+    { id: "atal-10", token_id: "at-1", company_id: "hr", user_name: "Jón Ágústsson", uri: "/api/v1/TimeClock/settings",             method: "GET", query: "",               status_code: 200, ip_address: "130.208.24.15", user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", bandwidth_upload: 0, bandwidth_download: 160,   time_taken: 10, error: null, created_at: "2026-04-12T10:03:01Z" },
+    { id: "atal-11", token_id: "at-1", company_id: "hr", user_name: "Jón Ágústsson", uri: "/api/v1/TimeClock/settings",             method: "GET", query: "",               status_code: 200, ip_address: "130.208.24.15", user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", bandwidth_upload: 0, bandwidth_download: 160,   time_taken: 6,  error: null, created_at: "2026-04-12T10:03:02Z" },
+    { id: "atal-12", token_id: "at-1", company_id: "hr", user_name: "Jón Ágústsson", uri: "/api/v1/general/employee",               method: "GET", query: "",               status_code: 200, ip_address: "130.208.24.15", user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", bandwidth_upload: 0, bandwidth_download: 3592,  time_taken: 10, error: null, created_at: "2026-04-12T10:03:03Z" },
+    { id: "atal-13", token_id: "at-1", company_id: "hr", user_name: "Jón Ágústsson", uri: "/api/v1/invoice/list",                   method: "GET", query: "status=unpaid",  status_code: 200, ip_address: "130.208.24.15", user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", bandwidth_upload: 0, bandwidth_download: 5841,  time_taken: 22, error: null, created_at: "2026-04-12T10:04:00Z" },
+    { id: "atal-14", token_id: "at-1", company_id: "hr", user_name: "Jón Ágústsson", uri: "/api/v1/product/search",                 method: "POST", query: "",              status_code: 200, ip_address: "130.208.24.15", user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", bandwidth_upload: 312, bandwidth_download: 8204, time_taken: 31, error: null, created_at: "2026-04-12T10:04:30Z" },
+    { id: "atal-15", token_id: "at-1", company_id: "hr", user_name: "Jón Ágústsson", uri: "/api/v1/customer/9999/profile",           method: "GET", query: "",              status_code: 404, ip_address: "130.208.24.15", user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", bandwidth_upload: 0, bandwidth_download: 42,    time_taken: 4,  error: "Customer not found", created_at: "2026-04-12T10:05:00Z" },
+  ];
+
+  for (const l of SEED_AUTH_TOKEN_API_LOGS) {
+    await pool.query(
+      `INSERT INTO auth_token_api_logs
+         (id, token_id, company_id, user_name, uri, method, query, status_code, ip_address, user_agent, bandwidth_upload, bandwidth_download, time_taken, error, created_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+       ON CONFLICT DO NOTHING`,
+      [l.id, l.token_id, l.company_id, l.user_name, l.uri, l.method, l.query, l.status_code, l.ip_address, l.user_agent, l.bandwidth_upload, l.bandwidth_download, l.time_taken, l.error, l.created_at],
+    );
+  }
+
   // Auth tokens tables
   await pool.query(`
     CREATE TABLE IF NOT EXISTS auth_tokens (

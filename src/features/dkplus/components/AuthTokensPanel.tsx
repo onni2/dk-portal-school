@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/shared/components/Button";
-import { Input } from "@/shared/components/Input";
 import { useAuthTokens, useCompanies, useCreateAuthToken, useDeleteAuthToken } from "../api/dkplus.queries";
-import { AuthTokenLogsPanel } from "./AuthTokenLogsPanel";
 import type { AuthToken } from "../types/dkplus.types";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
@@ -37,18 +35,16 @@ function LogsIcon() {
 
 function TokenTable({
   tokens,
-  selectedLogId,
   onCopy,
   onDelete,
-  onToggleLogs,
+  onViewLogs,
   copiedId,
   deletingId,
 }: {
   tokens: AuthToken[];
-  selectedLogId: string | null;
   onCopy: (token: AuthToken) => void;
   onDelete: (id: string) => void;
-  onToggleLogs: (token: AuthToken) => void;
+  onViewLogs: (token: AuthToken) => void;
   copiedId: string | null;
   deletingId: string | null;
 }) {
@@ -91,13 +87,9 @@ function TokenTable({
                   <TrashIcon />
                 </button>
                 <button
-                  title="Skoða log"
-                  onClick={() => onToggleLogs(t)}
-                  className={`rounded p-1.5 transition-colors ${
-                    selectedLogId === t.id
-                      ? "text-(--color-primary) bg-(--color-surface-hover)"
-                      : "text-(--color-text-secondary) hover:text-(--color-text) hover:bg-(--color-surface-hover)"
-                  }`}
+                  title="Skoða API log"
+                  onClick={() => onViewLogs(t)}
+                  className="rounded p-1.5 text-(--color-text-secondary) transition-colors hover:text-(--color-text) hover:bg-(--color-surface-hover)"
                 >
                   <LogsIcon />
                 </button>
@@ -181,20 +173,21 @@ function CreateForm({ onCreated }: { onCreated: () => void }) {
   );
 }
 
-export function AuthTokensPanel() {
+interface AuthTokensPanelProps {
+  onViewLogs: (token: AuthToken) => void;
+}
+
+export function AuthTokensPanel({ onViewLogs }: AuthTokensPanelProps) {
   const { data: tokens } = useAuthTokens();
   const deleteMutation = useDeleteAuthToken();
 
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<(typeof PAGE_SIZE_OPTIONS)[number]>(10);
-  const [selectedLogId, setSelectedLogId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const totalPages = Math.max(1, Math.ceil(tokens.length / pageSize));
   const pagedTokens = tokens.slice((page - 1) * pageSize, page * pageSize);
-
-  const selectedToken = tokens.find((t) => t.id === selectedLogId) ?? null;
 
   function handleCopy(token: AuthToken) {
     navigator.clipboard.writeText(token.token);
@@ -206,88 +199,67 @@ export function AuthTokensPanel() {
     setDeletingId(id);
     try {
       await deleteMutation.mutateAsync(id);
-      if (selectedLogId === id) setSelectedLogId(null);
     } finally {
       setDeletingId(null);
     }
   }
 
-  function handleToggleLogs(token: AuthToken) {
-    setSelectedLogId((prev) => (prev === token.id ? null : token.id));
-  }
-
-  function handlePageSizeChange(size: (typeof PAGE_SIZE_OPTIONS)[number]) {
-    setPageSize(size);
-    setPage(1);
-  }
-
   return (
-    <div className="grid grid-cols-5 items-start gap-6">
-      <div className={selectedToken ? "col-span-2" : "col-span-5"}>
-        <div className="overflow-hidden rounded-xl border border-(--color-border)">
-          <div className="border-b border-(--color-border) bg-(--color-surface) px-4 py-3">
-            <h3 className="text-sm font-semibold text-(--color-text)">Auðkenningar tákn</h3>
-          </div>
+    <div className="overflow-hidden rounded-xl border border-(--color-border)">
+      <div className="border-b border-(--color-border) bg-(--color-surface) px-4 py-3">
+        <h3 className="text-sm font-semibold text-(--color-text)">Auðkenningar tákn</h3>
+      </div>
 
-          {pagedTokens.length === 0 ? (
-            <div className="flex items-center justify-center py-12 text-sm text-(--color-text-secondary)">
-              Engin auðkenningar tákn skráð.
-            </div>
-          ) : (
-            <TokenTable
-              tokens={pagedTokens}
-              selectedLogId={selectedLogId}
-              onCopy={handleCopy}
-              onDelete={handleDelete}
-              onToggleLogs={handleToggleLogs}
-              copiedId={copiedId}
-              deletingId={deletingId}
-            />
-          )}
+      {pagedTokens.length === 0 ? (
+        <div className="flex items-center justify-center py-12 text-sm text-(--color-text-secondary)">
+          Engin auðkenningar tákn skráð.
+        </div>
+      ) : (
+        <TokenTable
+          tokens={pagedTokens}
+          onCopy={handleCopy}
+          onDelete={handleDelete}
+          onViewLogs={onViewLogs}
+          copiedId={copiedId}
+          deletingId={deletingId}
+        />
+      )}
 
-          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-(--color-border) px-4 py-3 text-xs text-(--color-text-secondary)">
-            <div className="flex items-center gap-2">
-              <span>
-                Síða {page} af {totalPages} ({tokens.length} færslur)
-              </span>
-              <input
-                type="number"
-                min={1}
-                max={totalPages}
-                value={page}
-                onChange={(e) => {
-                  const v = Math.min(totalPages, Math.max(1, Number(e.target.value)));
-                  setPage(v);
-                }}
-                className="w-12 rounded border border-(--color-border) bg-(--color-surface) px-2 py-1 text-center text-xs text-(--color-text) outline-none focus:border-(--color-primary)"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <span>Fjöldi á síðu:</span>
-              <select
-                value={pageSize}
-                onChange={(e) => handlePageSizeChange(Number(e.target.value) as (typeof PAGE_SIZE_OPTIONS)[number])}
-                className="rounded border border-(--color-border) bg-(--color-surface) px-2 py-1 text-xs text-(--color-text) outline-none focus:border-(--color-primary)"
-              >
-                {PAGE_SIZE_OPTIONS.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <CreateForm onCreated={() => setPage(1)} />
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-(--color-border) px-4 py-3 text-xs text-(--color-text-secondary)">
+        <div className="flex items-center gap-2">
+          <span>
+            Síða {page} af {totalPages} ({tokens.length} færslur)
+          </span>
+          <input
+            type="number"
+            min={1}
+            max={totalPages}
+            value={page}
+            onChange={(e) => {
+              const v = Math.min(totalPages, Math.max(1, Number(e.target.value)));
+              setPage(v);
+            }}
+            className="w-12 rounded border border-(--color-border) bg-(--color-surface) px-2 py-1 text-center text-xs text-(--color-text) outline-none focus:border-(--color-primary)"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <span>Fjöldi á síðu:</span>
+          <select
+            value={pageSize}
+            onChange={(e) => {
+              setPageSize(Number(e.target.value) as (typeof PAGE_SIZE_OPTIONS)[number]);
+              setPage(1);
+            }}
+            className="rounded border border-(--color-border) bg-(--color-surface) px-2 py-1 text-xs text-(--color-text) outline-none focus:border-(--color-primary)"
+          >
+            {PAGE_SIZE_OPTIONS.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
         </div>
       </div>
 
-      {selectedToken && (
-        <div className="col-span-3">
-          <AuthTokenLogsPanel
-            tokenId={selectedToken.id}
-            tokenDescription={selectedToken.description}
-          />
-        </div>
-      )}
+      <CreateForm onCreated={() => setPage(1)} />
     </div>
   );
 }

@@ -15,6 +15,23 @@ export interface AuthTokenLog {
   createdAt: string;
 }
 
+export interface AuthTokenApiLog {
+  id: string;
+  tokenId: string;
+  userName: string;
+  uri: string;
+  method: string;
+  query: string;
+  statusCode: number;
+  ipAddress: string;
+  userAgent: string;
+  bandwidthUpload: number;
+  bandwidthDownload: number;
+  timeTaken: number;
+  error: string | null;
+  createdAt: string;
+}
+
 export interface Company {
   id: string;
   name: string;
