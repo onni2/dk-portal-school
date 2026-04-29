@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/shared/components/Button";
-import { useAuthTokens, useCompanies, useCreateAuthToken, useDeleteAuthToken } from "../api/dkplus.queries";
+import { useAuthStore } from "@/features/auth/store/auth.store";
+import { useAuthTokens, useCreateAuthToken, useDeleteAuthToken } from "../api/dkplus.queries";
 import type { AuthToken } from "../types/dkplus.types";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
@@ -103,11 +104,12 @@ function TokenTable({
 }
 
 function CreateForm({ onCreated }: { onCreated: () => void }) {
-  const { data: companies } = useCompanies();
+  const { user, companies } = useAuthStore();
   const createMutation = useCreateAuthToken();
   const [description, setDescription] = useState("");
-  const [companyId, setCompanyId] = useState(companies[0]?.id ?? "");
   const [descError, setDescError] = useState(false);
+
+  const [companyId, setCompanyId] = useState(user?.companyId ?? companies[0]?.id ?? "");
 
   async function handleCreate() {
     if (!description.trim()) {
@@ -156,9 +158,7 @@ function CreateForm({ onCreated }: { onCreated: () => void }) {
         className="rounded-lg border border-(--color-border) bg-(--color-surface) px-3 py-2 text-sm text-(--color-text) outline-none focus:border-(--color-primary) focus:ring-2 focus:ring-(--color-primary)/20"
       >
         {companies.map((c) => (
-          <option key={c.id} value={c.id}>
-            {c.name}
-          </option>
+          <option key={c.id} value={c.id}>{c.name}</option>
         ))}
       </select>
       <Button
