@@ -13,7 +13,7 @@ const SEED_USERS = [
     password: "admin123",
     email: "admin@example.is",
     name: "Admin User",
-    role: "admin",
+    role: "god",
     status: "active",
     must_reset_password: false,
     kennitala: "0000000000",
@@ -25,7 +25,7 @@ const SEED_USERS = [
     password: "admin321",
     email: "admin2@example.is",
     name: "Jón Ágústsson",
-    role: "admin",
+    role: "super_admin",
     status: "active",
     must_reset_password: false,
     kennitala: "0909032330",
@@ -47,7 +47,7 @@ const SEED_COMPANY_USERS = [
     password: "Nott1234!",
     email: "admin@1001nott.is",
     name: "Björn Gunnarsson",
-    role: "admin",
+    role: "user",
     status: "active",
     must_reset_password: true,
     kennitala: "1111111119",
@@ -59,7 +59,7 @@ const SEED_COMPANY_USERS = [
     password: "Staff123!",
     email: "staff@1001nott.is",
     name: "Sigrún Ólafsdóttir",
-    role: "standard",
+    role: "user",
     status: "active",
     must_reset_password: true,
     kennitala: "2222222229",
@@ -71,7 +71,7 @@ const SEED_COMPANY_USERS = [
     password: "Akurey1!",
     email: "admin@akurey.is",
     name: "Gunnar Sigurðsson",
-    role: "admin",
+    role: "user",
     status: "active",
     must_reset_password: true,
     kennitala: "3333333339",
@@ -83,7 +83,7 @@ const SEED_COMPANY_USERS = [
     password: "Bokhald1!",
     email: "admin@bokhald.is",
     name: "Helga Magnúsdóttir",
-    role: "admin",
+    role: "user",
     status: "active",
     must_reset_password: true,
     kennitala: "4444444449",
@@ -198,7 +198,7 @@ const ZOHO_TEST_USER = {
   password: "Thora123!",
   email: "thora@fyrirtaeki.is",
   name: "Þóra",
-  role: "standard",
+  role: "user",
   status: "active",
   must_reset_password: false,
   kennitala: "5555555559",
@@ -391,7 +391,7 @@ async function migrate() {
     await pool.query(
       `INSERT INTO portal_users
         (id, username, password, email, name, role, status, must_reset_password, company_id)
-       VALUES ($1,$2,$3,$4,$5,'admin','active',$6,'hr')
+       VALUES ($1,$2,$3,$4,$5,'super_admin','active',$6,'hr')
        ON CONFLICT DO NOTHING`,
       [member.id, member.username, hashed, member.email, member.name, member.must_reset_password]
     );
@@ -437,6 +437,14 @@ async function migrate() {
     ON CONFLICT DO NOTHING
   `);
 
+  // Add created_at to companies for ordering in company picker
+  await pool.query(`ALTER TABLE companies ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`);
+
+  // Migrate portal_users.role to new three-tier system (idempotent)
+  await pool.query(`UPDATE portal_users SET role = 'god'        WHERE id = '1'`);
+  await pool.query(`UPDATE portal_users SET role = 'super_admin' WHERE id IN ('2', 'tm-jon', 'tm-agusta')`);
+  await pool.query(`UPDATE portal_users SET role = 'user'        WHERE role NOT IN ('user', 'super_admin', 'god')`);
+
   // Ensure user_companies table exists
   await pool.query(`
     CREATE TABLE IF NOT EXISTS user_companies (
@@ -454,6 +462,23 @@ async function migrate() {
       PRIMARY KEY (user_id, company_id)
     )
   `);
+
+  // Backfill user_companies for company users (idempotent)
+  const COMPANY_USER_MEMBERSHIPS = [
+    { user_id: 'cu-1', company_id: '1001nott', role: 'admin', all: true },
+    { user_id: 'cu-2', company_id: '1001nott', role: 'user',  all: false },
+    { user_id: 'cu-3', company_id: 'akurey',   role: 'admin', all: true },
+    { user_id: 'cu-4', company_id: 'bokhald',  role: 'admin', all: true },
+    { user_id: 'fdeps33p', company_id: 'hr',   role: 'user',  all: false },
+  ];
+  for (const m of COMPANY_USER_MEMBERSHIPS) {
+    await pool.query(
+      `INSERT INTO user_companies (user_id, company_id, role, invoices, subscription, hosting, pos, dk_one, dk_plus, timeclock, users)
+       VALUES ($1, $2, $3, $4, $4, $4, $4, $4, $4, $4, $4)
+       ON CONFLICT DO NOTHING`,
+      [m.user_id, m.company_id, m.role, m.all],
+    );
+  }
 
   // Seed company licences (upsert so changes to SEED_COMPANY_LICENCES take effect on restart)
   for (const lic of SEED_COMPANY_LICENCES) {
