@@ -1,18 +1,25 @@
-const { Resend } = require("resend");
+const nodemailer = require("nodemailer");
 
-const resend = process.env.RESEND_API_KEY
-  ? new Resend(process.env.RESEND_API_KEY)
-  : null;
+const transporter =
+  process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD
+    ? nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.GMAIL_USER,
+          pass: process.env.GMAIL_APP_PASSWORD,
+        },
+      })
+    : null;
 
 async function sendInviteEmail(to, name, username, password) {
-  if (!resend) {
+  if (!transporter) {
     console.log(
       `[Email] Invite — to: ${to}  username: ${username}  password: ${password}`,
     );
     return;
   }
-  await resend.emails.send({
-    from: "DK Gátt <onboarding@resend.dev>",
+  await transporter.sendMail({
+    from: `"DK Gátt" <${process.env.GMAIL_USER}>`,
     to,
     subject: "Velkomin/n í DK Gáttina",
     html: `
