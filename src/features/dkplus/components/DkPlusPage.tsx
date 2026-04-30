@@ -1,17 +1,25 @@
-/**
- * dkPlus page — overview of the company's dkPlus subscription.
- * Uses: @/shared/components/PageTemplate
- * Exports: DkPlusPage
- */
+import { Suspense, useState } from "react";
 import { PageTemplate } from "@/shared/components/PageTemplate";
+import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
+import { AuthTokensPanel } from "./AuthTokensPanel";
+import { AuthTokenApiLogsPage } from "./AuthTokenApiLogsPage";
+import type { AuthToken } from "../types/dkplus.types";
 
 export function DkPlusPage() {
+  const [logToken, setLogToken] = useState<AuthToken | null>(null);
+
   return (
     <PageTemplate
-      title="dkPlus"
-      description="Yfirlit yfir dkPlus lausnina."
+      title={logToken ? `${logToken.description} — API Yfirlit` : "dkPlus"}
+      description={logToken ? undefined : "Yfirlit yfir dkPlus lausnina."}
     >
-      <p className="text-(--color-text-secondary)">Hér mun koma yfirlit yfir dkPlus.</p>
+      <Suspense fallback={<LoadingSpinner />}>
+        {logToken ? (
+          <AuthTokenApiLogsPage token={logToken} onBack={() => setLogToken(null)} />
+        ) : (
+          <AuthTokensPanel onViewLogs={setLogToken} />
+        )}
+      </Suspense>
     </PageTemplate>
   );
 }
