@@ -1,17 +1,26 @@
-/**
- * dkOne page — overview of the company's dkOne subscription.
- * Uses: @/shared/components/PageTemplate
- * Exports: DkOnePage
- */
+import { useState, Suspense } from "react";
 import { PageTemplate } from "@/shared/components/PageTemplate";
+import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
+import { Button } from "@/shared/components/Button";
+import { DkOneUserTable } from "./DkOneUserTable";
+import { AddDkOneUserModal } from "./AddDkOneUserModal";
 
 export function DkOnePage() {
+  const [showModal, setShowModal] = useState(false);
+
   return (
     <PageTemplate
       title="dkOne"
-      description="Yfirlit yfir dkOne lausnina."
+      description="Yfirlit yfir notendur með dkOne aðgang."
+      actions={
+        <Button onClick={() => setShowModal(true)}>Bæta við notanda</Button>
+      }
     >
-      <p className="text-(--color-text-secondary)">Hér mun koma yfirlit yfir dkOne.</p>
+      <Suspense fallback={<LoadingSpinner />}>
+        <DkOneUserTable />
+      </Suspense>
+
+      {showModal && <AddDkOneUserModal onClose={() => setShowModal(false)} />}
     </PageTemplate>
   );
 }
