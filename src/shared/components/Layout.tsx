@@ -6,6 +6,7 @@
  */
 import { Link, useMatches, useNavigate } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/shared/utils/cn";
 import { useVisibleNavItems } from "@/features/licence/hooks/useVisibleNavItems";
 import { useRoleStore } from "@/features/licence/store/role.store";
@@ -14,6 +15,7 @@ import { logout } from "@/features/auth/api/auth.api";
 import { ProfileDropdown } from "@/features/auth/components/ProfileDropdown";
 import { CompanySelector } from "@/features/company/components/CompanySelector";
 import { NotificationBell } from "@/features/notifications/components/NotificationBell";
+import { subCompaniesQueryOptions } from "@/features/dkone/api/dkone.queries";
 
 function findActiveChild(children: { to: string }[], path: string): string | null {
   const matches = children.filter((c) => path === c.to || path.startsWith(c.to + "/"));
@@ -27,7 +29,20 @@ function findActiveChild(children: { to: string }[], path: string): string | nul
 export function Layout({ children }: { children: ReactNode }) {
   const matches = useMatches();
   const currentPath = matches[matches.length - 1]?.fullPath ?? "/";
-  const navItems = useVisibleNavItems();
+  const rawNavItems = useVisibleNavItems();
+  const hasDkOne = rawNavItems.some((item) => item.to === "/dkone");
+  const { data: subCompanies } = useQuery({ ...subCompaniesQueryOptions, enabled: hasDkOne });
+  const navItems = rawNavItems.map((item) =>
+    item.to === "/dkone" && (subCompanies?.length ?? 0) > 0
+      ? {
+          ...item,
+          children: [
+            { label: "Notendur", to: "/dkone", access: item.access },
+            { label: "Umsýslusvæði", to: "/dkone/umsyslusvaedi", access: item.access },
+          ],
+        }
+      : item,
+  );
   const { role, toggleRole } = useRoleStore();
   const user = useAuthStore((s) => s.user);
   const clearAuth = useAuthStore((s) => s.clearAuth);

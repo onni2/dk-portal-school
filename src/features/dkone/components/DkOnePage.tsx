@@ -3,7 +3,7 @@ import { PageTemplate } from "@/shared/components/PageTemplate";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { Button } from "@/shared/components/Button";
 import { DkOneUserTable } from "./DkOneUserTable";
-import { AddDkOneUserModal } from "./AddDkOneUserModal";
+import { InviteDkOneModal } from "./InviteDkOneModal";
 
 export function DkOnePage() {
   const [showModal, setShowModal] = useState(false);
@@ -11,16 +11,16 @@ export function DkOnePage() {
   return (
     <PageTemplate
       title="dkOne"
-      description="Yfirlit yfir notendur með dkOne aðgang."
+      description="Notendur með aðgang að dkOne."
       actions={
-        <Button onClick={() => setShowModal(true)}>Bæta við notanda</Button>
+        <Button onClick={() => setShowModal(true)}>Bjóða inn dk notendum</Button>
       }
     >
       <Suspense fallback={<LoadingSpinner />}>
         <DkOneUserTable />
       </Suspense>
 
-      {showModal && <AddDkOneUserModal onClose={() => setShowModal(false)} />}
+      {showModal && <InviteDkOneModal onClose={() => setShowModal(false)} />}
     </PageTemplate>
   );
 }
