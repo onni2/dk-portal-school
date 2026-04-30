@@ -5,6 +5,7 @@ const cors = require("cors");
 const jwt = require("jsonwebtoken");
 
 const seed = require("./seed");
+const { startPoller } = require("./poller");
 
 const authRouter = require("./routes/auth");
 const usersRouter = require("./routes/users");
@@ -58,6 +59,7 @@ seed()
   .then(() => {
     app.listen(PORT, () => {
       console.log(`API listening on port ${PORT}`);
+      startPoller();
     });
   })
   .catch((err) => {
