@@ -28,15 +28,21 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ message: "Rangt notendanafn eða lykilorð" });
     }
 
-    // Fetch all companies this user belongs to
+    // Fetch all companies this user belongs to, falling back to their primary company_id
     const { rows: companyRows } = await pool.query(
       `SELECT c.id, c.name, uc.role,
               uc.invoices, uc.subscription, uc.hosting, uc.pos,
               uc.dk_one, uc.dk_plus, uc.timeclock, uc.users
        FROM user_companies uc
        JOIN companies c ON c.id = uc.company_id
-       WHERE uc.user_id = $1`,
-      [user.id],
+       WHERE uc.user_id = $1
+       UNION
+       SELECT c.id, c.name, $2,
+              true, true, true, true, true, true, true, true
+       FROM companies c
+       WHERE c.id = (SELECT company_id FROM portal_users WHERE id = $1)
+         AND c.id NOT IN (SELECT company_id FROM user_companies WHERE user_id = $1)`,
+      [user.id, user.role],
     );
 
     const companies = companyRows.map((c) => ({
@@ -105,8 +111,42 @@ router.post("/audkenni", async (req, res) => {
       return res.status(404).json({ message: "Notandi ekki skráður í gáttina — hafðu samband við stjórnanda" });
     }
 
+    const { rows: companyRows } = await pool.query(
+      `SELECT c.id, c.name, uc.role,
+              uc.invoices, uc.subscription, uc.hosting, uc.pos,
+              uc.dk_one, uc.dk_plus, uc.timeclock, uc.users
+       FROM user_companies uc
+       JOIN companies c ON c.id = uc.company_id
+       WHERE uc.user_id = $1
+       UNION
+       SELECT c.id, c.name, $2,
+              true, true, true, true, true, true, true, true
+       FROM companies c
+       WHERE c.id = (SELECT company_id FROM portal_users WHERE id = $1)
+         AND c.id NOT IN (SELECT company_id FROM user_companies WHERE user_id = $1)`,
+      [user.id, user.role],
+    );
+
+    const companies = companyRows.map((c) => ({
+      id: c.id,
+      name: c.name,
+      role: c.role,
+      permissions: {
+        invoices: c.invoices,
+        subscription: c.subscription,
+        hosting: c.hosting,
+        pos: c.pos,
+        dkOne: c.dk_one,
+        dkPlus: c.dk_plus,
+        timeclock: c.timeclock,
+        users: c.users,
+      },
+    }));
+
+    const activeCompanyId = user.active_company_id ?? companies[0]?.id ?? null;
+
     const token = jwt.sign(
-      { id: user.id, role: user.role, company_id: user.company_id },
+      { id: user.id, role: user.role, active_company_id: activeCompanyId },
       process.env.JWT_SECRET,
       { expiresIn: "8h" },
     );
@@ -125,6 +165,7 @@ router.post("/audkenni", async (req, res) => {
         mustResetPassword: user.must_reset_password,
         companyId: user.company_id,
       },
+      companies,
     });
   } catch (err) {
     console.error(err);
