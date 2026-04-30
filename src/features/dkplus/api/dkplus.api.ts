@@ -1,0 +1,22 @@
+import { mockClient } from "@/shared/api/mockClient";
+import type { AuthToken, AuthTokenApiLog, Company } from "../types/dkplus.types";
+
+export async function fetchAuthTokens(): Promise<AuthToken[]> {
+  return mockClient.get<AuthToken[]>("/dkplus/tokens");
+}
+
+export async function createAuthToken(description: string, companyId: string): Promise<AuthToken> {
+  return mockClient.post<AuthToken>("/dkplus/tokens", { description, companyId });
+}
+
+export async function deleteAuthToken(id: string): Promise<void> {
+  return mockClient.delete<void>(`/dkplus/tokens/${id}`);
+}
+
+export async function fetchAuthTokenApiLogs(tokenId: string): Promise<AuthTokenApiLog[]> {
+  return mockClient.get<AuthTokenApiLog[]>(`/dkplus/tokens/${tokenId}/api-logs`);
+}
+
+export async function fetchCompanies(): Promise<Company[]> {
+  return mockClient.get<Company[]>("/companies");
+}
