@@ -58,7 +58,7 @@ router.post("/login", async (req, res) => {
     const activeCompanyId = user.active_company_id ?? companies[0]?.id ?? null;
 
     const token = jwt.sign(
-      { id: user.id, role: user.role, active_company_id: activeCompanyId },
+      { id: user.id, role: user.role, active_company_id: activeCompanyId, email: user.email },
       process.env.JWT_SECRET,
       { expiresIn: "8h" },
     );
@@ -106,7 +106,7 @@ router.post("/audkenni", async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, role: user.role, company_id: user.company_id },
+      { id: user.id, role: user.role, company_id: user.company_id, email: user.email },
       process.env.JWT_SECRET,
       { expiresIn: "8h" },
     );
@@ -157,7 +157,7 @@ router.post("/switch-company", async (req, res) => {
     );
 
     const token = jwt.sign(
-      { id: req.user.id, role: req.user.role, active_company_id: companyId },
+      { id: req.user.id, role: req.user.role, active_company_id: companyId, email: req.user.email },
       process.env.JWT_SECRET,
       { expiresIn: "8h" },
     );

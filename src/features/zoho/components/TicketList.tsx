@@ -95,13 +95,8 @@ export function TicketList({ tickets, isLoading, selectedId, onSelect, onDepartm
                 </div>
 
                 {/* Title */}
-                <p className="mb-1 text-[13px] font-semibold leading-snug text-[#0B0F1A]">
+                <p className="mb-3 text-[13px] font-semibold leading-snug text-[#0B0F1A]">
                   {ticket.title}
-                </p>
-
-                {/* Preview */}
-                <p className="mb-2 truncate text-[12px] tracking-tight text-[#5C667A]">
-                  {ticket.preview}
                 </p>
 
                 {/* Department + date row */}
