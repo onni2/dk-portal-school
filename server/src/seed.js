@@ -481,6 +481,7 @@ async function migrate() {
     )
   `);
   await pool.query(`ALTER TABLE dkone_users ADD COLUMN IF NOT EXISTS added_by TEXT REFERENCES portal_users(id) ON DELETE SET NULL`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS dkone_users_email_company ON dkone_users (email, company_id)`);
 
   const SEED_DKONE_USERS = [
     // HR - active

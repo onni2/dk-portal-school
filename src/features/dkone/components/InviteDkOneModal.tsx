@@ -94,12 +94,22 @@ function NewUserForm({ onCancel }: { onCancel: () => void }) {
     setLoading(true);
     setError(null);
     try {
-      await inviteDkOneUser({ employeeNumber: employeeNumber || undefined, fullName, email, username, role });
+      await inviteDkOneUser({
+        employeeNumber: employeeNumber.trim() || undefined,
+        fullName: fullName.trim(),
+        email: email.trim(),
+        username: username.trim(),
+        role,
+      });
       queryClient.invalidateQueries({ queryKey: dkOneUsersQueryOptions.queryKey });
       queryClient.invalidateQueries({ queryKey: companyUsersQueryOptions.queryKey });
       onCancel();
-    } catch {
-      setError("Ekki tókst að bjóða notanda. Reyndu aftur.");
+    } catch (err: unknown) {
+      const status = (err as { status?: number }).status;
+      setError(status === 409
+        ? "Notandi með þetta netfang er nú þegar skráður."
+        : "Ekki tókst að bjóða notanda. Reyndu aftur."
+      );
     } finally {
       setLoading(false);
     }
