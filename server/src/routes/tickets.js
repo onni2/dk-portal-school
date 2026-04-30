@@ -3,38 +3,124 @@ const pool = require("../db");
 
 const router = express.Router();
 
-// GET /tickets — fetch all tickets for logged in user, optionally filtered by departmentId (company_id)
+// ── Zoho helpers ────────────────────────────────────────────────────────────
+
+async function getZohoAccessToken() {
+  const params = new URLSearchParams({
+    refresh_token: process.env.ZOHO_TICKETS_REFRESH_TOKEN,
+    client_id: process.env.ZOHO_CLIENT_ID,
+    client_secret: process.env.ZOHO_CLIENT_SECRET,
+    grant_type: "refresh_token",
+  });
+
+  const res = await fetch(`https://accounts.zoho.com/oauth/v2/token?${params}`, {
+    method: "POST",
+  });
+
+  const data = await res.json();
+  if (!data.access_token) throw new Error("Failed to get Zoho access token");
+  return data.access_token;
+}
+
+async function getZohoConversations(ticketId, accessToken) {
+  const res = await fetch(
+    `https://desk.zoho.com/api/v1/tickets/${ticketId}/conversations`,
+    {
+      headers: {
+        Authorization: `Zoho-oauthtoken ${accessToken}`,
+        orgId: process.env.ZOHO_ORG_ID,
+      },
+    }
+  );
+  const data = await res.json();
+  return (data?.data ?? []).filter(m => m.summary && m.createdTime);
+}
+
+// Map Zoho ticket → our shape
+function mapZohoTicket(t) {
+  return {
+    id: t.id,
+    number: t.ticketNumber,
+    title: t.subject,
+    preview: t.description?.replace(/<[^>]*>/g, "").slice(0, 80) ?? "",
+    status: t.statusType === "OPEN" ? "opið" : "lokað",
+    createdAt: t.createdTime,
+    updatedAt: t.modifiedTime,
+    department: {
+      id: t.departmentId ?? "",
+      name: t.department?.name ?? "",
+    },
+    source: "zoho",
+  };
+}
+
+// Map Zoho conversation → our message shape
+function mapZohoMessage(m) {
+  return {
+    id: m.id,
+    from: m.direction === "in" ? "customer" : "support",
+    senderName: m.author?.name ?? (m.direction === "in" ? "Viðskiptavinur" : "DK Þjónusta"),
+    body: m.summary ?? "",
+    sentAt: m.createdTime,
+  };
+}
+
+// Check if user should get Zoho data
+function isZohoUser(email) {
+  return (
+    process.env.ZOHO_CLIENT_ID &&
+    process.env.ZOHO_TICKETS_REFRESH_TOKEN &&
+    email === "kristofer.oli@takk.co"
+  );
+}
+
+// ── Routes ───────────────────────────────────────────────────────────────────
+
+// GET /tickets
 router.get("/", async (req, res) => {
   try {
     const { departmentId } = req.query;
 
-    let query;
-    let params;
-
-    if (departmentId) {
-      query = `
-        SELECT t.id, t.number, t.title, t.preview, t.status,
-               t.created_at, t.updated_at,
-               c.id AS department_id, c.name AS department_name
-        FROM zoho_tickets t
-        JOIN companies c ON c.id = t.company_id
-        WHERE t.user_id = $1 AND t.company_id = $2
-        ORDER BY t.updated_at DESC
-      `;
-      params = [req.user.id, departmentId];
-    } else {
-      query = `
-        SELECT t.id, t.number, t.title, t.preview, t.status,
-               t.created_at, t.updated_at,
-               c.id AS department_id, c.name AS department_name
-        FROM zoho_tickets t
-        JOIN companies c ON c.id = t.company_id
-        WHERE t.user_id = $1
-        ORDER BY t.updated_at DESC
-      `;
-      params = [req.user.id];
+    // Zoho — only for users with a known Zoho email
+    if (isZohoUser(req.user.email)) {
+      try {
+        const accessToken = await getZohoAccessToken();
+        const ticketRes = await fetch(
+          `https://desk.zoho.com/api/v1/tickets/691274000157138804?include=departments`,
+          {
+            headers: {
+              Authorization: `Zoho-oauthtoken ${accessToken}`,
+              orgId: process.env.ZOHO_ORG_ID,
+            },
+          }
+        );
+        const ticket = await ticketRes.json();
+        if (ticket.id) {
+          return res.json([mapZohoTicket(ticket)]);
+        }
+      } catch (zohoErr) {
+        console.warn("Zoho fetch failed, falling back to mock DB:", zohoErr.message);
+      }
     }
 
+    // Fallback — mock DB
+    const query = departmentId
+      ? `SELECT t.id, t.number, t.title, t.preview, t.status,
+                t.created_at, t.updated_at,
+                c.id AS department_id, c.name AS department_name
+         FROM zoho_tickets t
+         JOIN companies c ON c.id = t.company_id
+         WHERE t.user_id = $1 AND t.company_id = $2
+         ORDER BY t.updated_at DESC`
+      : `SELECT t.id, t.number, t.title, t.preview, t.status,
+                t.created_at, t.updated_at,
+                c.id AS department_id, c.name AS department_name
+         FROM zoho_tickets t
+         JOIN companies c ON c.id = t.company_id
+         WHERE t.user_id = $1
+         ORDER BY t.updated_at DESC`;
+
+    const params = departmentId ? [req.user.id, departmentId] : [req.user.id];
     const { rows } = await pool.query(query, params);
 
     res.json(rows.map((t) => ({
@@ -45,10 +131,8 @@ router.get("/", async (req, res) => {
       status: t.status,
       createdAt: t.created_at,
       updatedAt: t.updated_at,
-      department: {
-        id: t.department_id,
-        name: t.department_name,
-      },
+      department: { id: t.department_id, name: t.department_name },
+      source: "mock",
     })));
   } catch (err) {
     console.error(err);
@@ -56,9 +140,32 @@ router.get("/", async (req, res) => {
   }
 });
 
-// GET /tickets/departments — list departments that have tickets for this user
+// GET /tickets/departments
 router.get("/departments", async (req, res) => {
   try {
+    // Zoho users — return department from their hardcoded ticket
+    if (isZohoUser(req.user.email)) {
+      try {
+        const accessToken = await getZohoAccessToken();
+        const ticketRes = await fetch(
+          `https://desk.zoho.com/api/v1/tickets/691274000157138804?include=departments`,
+          {
+            headers: {
+              Authorization: `Zoho-oauthtoken ${accessToken}`,
+              orgId: process.env.ZOHO_ORG_ID,
+            },
+          }
+        );
+        const ticket = await ticketRes.json();
+        if (ticket.id && ticket.department) {
+          return res.json([{ id: ticket.departmentId, name: ticket.department.name }]);
+        }
+      } catch (zohoErr) {
+        console.warn("Zoho departments fetch failed, falling back to mock DB:", zohoErr.message);
+      }
+    }
+
+    // Fallback — mock DB
     const { rows } = await pool.query(
       `SELECT DISTINCT c.id, c.name
        FROM zoho_tickets t
@@ -74,9 +181,37 @@ router.get("/departments", async (req, res) => {
   }
 });
 
-// GET /tickets/:id — fetch single ticket with messages (no company_id check)
+// GET /tickets/:id
 router.get("/:id", async (req, res) => {
   try {
+    // Zoho — fetch ticket and conversations directly by ID
+    if (isZohoUser(req.user.email)) {
+      try {
+        const accessToken = await getZohoAccessToken();
+        const ticketRes = await fetch(
+          `https://desk.zoho.com/api/v1/tickets/${req.params.id}?include=departments`,
+          {
+            headers: {
+              Authorization: `Zoho-oauthtoken ${accessToken}`,
+              orgId: process.env.ZOHO_ORG_ID,
+            },
+          }
+        );
+        const ticket = await ticketRes.json();
+
+        if (ticket.id) {
+          const conversations = await getZohoConversations(req.params.id, accessToken);
+          return res.json({
+            ...mapZohoTicket(ticket),
+            messages: conversations.map(mapZohoMessage),
+          });
+        }
+      } catch (zohoErr) {
+        console.warn("Zoho ticket fetch failed, falling back to mock DB:", zohoErr.message);
+      }
+    }
+
+    // Fallback — mock DB
     const { rows: ticketRows } = await pool.query(
       `SELECT t.id, t.number, t.title, t.preview, t.status,
               t.created_at, t.updated_at,
@@ -102,19 +237,17 @@ router.get("/:id", async (req, res) => {
       [req.params.id],
     );
 
-    const ticket = ticketRows[0];
+    const t = ticketRows[0];
     res.json({
-      id: ticket.id,
-      number: ticket.number,
-      title: ticket.title,
-      preview: ticket.preview,
-      status: ticket.status,
-      createdAt: ticket.created_at,
-      updatedAt: ticket.updated_at,
-      department: {
-        id: ticket.department_id,
-        name: ticket.department_name,
-      },
+      id: t.id,
+      number: t.number,
+      title: t.title,
+      preview: t.preview,
+      status: t.status,
+      createdAt: t.created_at,
+      updatedAt: t.updated_at,
+      department: { id: t.department_id, name: t.department_name },
+      source: "mock",
       messages: msgRows.map((m) => ({
         id: m.id,
         from: m.from_type,

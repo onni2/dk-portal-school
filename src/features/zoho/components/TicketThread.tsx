@@ -27,15 +27,15 @@ function formatDateTime(dateStr: string) {
   });
 }
 
-/**
- *
- */
-export function TicketThread({ ticket, currentUserName }: Props) {
+export function TicketThread({ ticket }: Props) {
   const status = STATUS_STYLES[ticket.status];
+  const messages = [...(ticket.messages ?? [])].sort(
+    (a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime()
+  );
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-xl border border-[#CFD3DB]">
-      {/* Header — rounded top */}
+      {/* Header */}
       <div className="flex items-center justify-between border-b border-[#CFD3DB] bg-white px-5 py-4">
         <div>
           <h2 className="text-[17px] font-semibold text-[#0B0F1A]">{ticket.title}</h2>
@@ -49,7 +49,6 @@ export function TicketThread({ ticket, currentUserName }: Props) {
           </p>
         </div>
 
-        {/* Status + close button */}
         <div className="flex items-center gap-2">
           {ticket.status === "lokað" && (
             <span className={cn("rounded-[3px] px-2 py-1 text-[10px] font-semibold", status.bg, status.text)}>
@@ -59,17 +58,18 @@ export function TicketThread({ ticket, currentUserName }: Props) {
         </div>
       </div>
 
-      {/* Messages area — grey background like Figma */}
+      {/* Messages area */}
       <div className="nav-scroll flex flex-1 flex-col gap-4 overflow-y-auto bg-[#F6F8FC] px-6 py-6">
-        {ticket.messages?.map((msg) => {
-          const isMe = msg.senderName === currentUserName;
+        {messages.map((msg) => {
+          const isCustomer = msg.from === "customer";
+
           return (
             <div
               key={msg.id}
-              className={cn("flex flex-col gap-1", isMe ? "items-end" : "items-start")}
+              className={cn("flex flex-col gap-1", isCustomer ? "items-end" : "items-start")}
             >
               {/* Sender + time */}
-              <div className={cn("flex items-center gap-1.5 text-[11px] text-[#5C667A]", isMe && "flex-row-reverse")}>
+              <div className={cn("flex items-center gap-1.5 text-[11px] text-[#5C667A]", isCustomer && "flex-row-reverse")}>
                 <span className="font-medium">{msg.senderName}</span>
                 <span>•</span>
                 <span>{formatDateTime(msg.sentAt)}</span>
@@ -79,7 +79,7 @@ export function TicketThread({ ticket, currentUserName }: Props) {
               <div
                 className={cn(
                   "max-w-[70%] px-4 py-3 text-[13px] leading-relaxed",
-                  isMe
+                  isCustomer
                     ? "rounded-2xl rounded-tr-sm bg-[#4743F7] text-white"
                     : "rounded-2xl rounded-tl-sm border border-[#CFD3DB] bg-white text-[#0B0F1A]",
                 )}
