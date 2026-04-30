@@ -30,6 +30,7 @@ export function DkOneUserTable() {
     setActiveTab(tab);
     setSearch("");
     setConfirmId(null);
+    setActivatingId(null);
     setError(null);
   }
 
@@ -105,7 +106,9 @@ export function DkOneUserTable() {
       {error && <p className="text-sm text-(--color-error)">{error}</p>}
 
       {filtered.length === 0 ? (
-        <p className="py-8 text-center text-sm text-(--color-text-secondary)">Engir notendur fundust.</p>
+        <p className="py-8 text-center text-sm text-(--color-text-secondary)">
+          {search ? "Engir notendur fundust." : "Engir notendur skráðir."}
+        </p>
       ) : (
         <div className="overflow-x-auto rounded-md border border-(--color-border)">
           <table className="w-full text-left text-sm">

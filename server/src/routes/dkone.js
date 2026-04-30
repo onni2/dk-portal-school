@@ -115,6 +115,9 @@ router.post("/users", requireAdmin, async (req, res) => {
       addedByName: addedByRows[0]?.name ?? null,
     });
   } catch (err) {
+    if (err.code === "23505") {
+      return res.status(409).json({ message: "Notandi með þetta netfang er nú þegar skráður." });
+    }
     console.error(err);
     res.status(500).json({ message: "Villa á þjóni" });
   }
