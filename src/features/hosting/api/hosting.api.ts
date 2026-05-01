@@ -10,6 +10,7 @@ import { mockClient } from "@/shared/api/mockClient";
 import type {
   CreateHostingAccountPayload,
   HostingAccount,
+  HostingLogEntry,
 } from "../types/hosting.types";
 
 export async function fetchHostingAccounts(): Promise<HostingAccount[]> {
@@ -36,4 +37,16 @@ export async function restartHostingService(
   id: string,
 ): Promise<{ restarted: string }> {
   return mockClient.post(`/hosting/accounts/${id}/restart`, {});
+}
+
+export async function fetchMyHostingAccount(): Promise<HostingAccount> {
+  return mockClient.get<HostingAccount>("/hosting/me");
+}
+
+export async function fetchMyHostingLog(): Promise<HostingLogEntry[]> {
+  return mockClient.get<HostingLogEntry[]>("/hosting/me/log");
+}
+
+export async function changeMyHostingPassword(_password: string): Promise<void> {
+  return mockClient.put("/hosting/me/password", { password: _password });
 }
