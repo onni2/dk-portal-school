@@ -13,6 +13,7 @@ export interface NavItem {
     | { type: "alwaysVisible" }
     | { type: "requiredModules"; modules: LicenceModule[] }
     | { type: "requiredPermission"; permission: keyof UserPermissions }
+    | { type: "licencedModule"; module: LicenceModule; permission: keyof UserPermissions }
     | { type: "copOnly" }
     | { type: "accountantOnly" };
   children?: NavItem[];
@@ -38,16 +39,16 @@ export const NAV_ITEMS: NavItem[] = [
   {
     label: "Áskrift",
     to: "/askrift",
-    access: { type: "requiredPermission", permission: "subscription" },
+    access: { type: "licencedModule", module: "dkPlus", permission: "subscription" },
     children: [
-      { label: "Yfirlit áskriftar", to: "/askrift/yfirlit", access: { type: "requiredPermission", permission: "subscription" } },
-      { label: "Vörur dk", to: "/askrift/vorur", access: { type: "requiredPermission", permission: "subscription" } },
+      { label: "Yfirlit áskriftar", to: "/askrift/yfirlit", access: { type: "licencedModule", module: "dkPlus", permission: "subscription" } },
+      { label: "Vörur dk", to: "/askrift/vorur", access: { type: "licencedModule", module: "dkPlus", permission: "subscription" } },
     ],
   },
   {
     label: "Hýsing",
     to: "/hosting",
-    access: { type: "requiredPermission", permission: "hosting" },
+    access: { type: "licencedModule", module: "Hosting", permission: "hosting" },
     children: [
       { label: "Hýsingin mín", to: "/hosting/myHosting", access: { type: "requiredPermission", permission: "hosting" } },
       { label: "Duo - fjölþátta auðkenning", to: "/hosting/duo", access: { type: "requiredPermission", permission: "hosting" } },

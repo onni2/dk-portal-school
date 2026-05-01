@@ -9,6 +9,7 @@ import { cn } from "@/shared/utils/cn";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { switchCompany } from "../api/company.api";
 import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "@tanstack/react-router";
 
 /**
  *
@@ -17,13 +18,16 @@ export function CompanySelector() {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [switching, setSwitching] = useState(false);
+  const [switchError, setSwitchError] = useState("");
   const queryClient = useQueryClient();
+  const router = useRouter();
   const ref = useRef<HTMLDivElement>(null);
 
   const companies = useAuthStore((s) => s.companies);
   const user = useAuthStore((s) => s.user);
   const setToken = useAuthStore((s) => s.setToken);
   const setActiveCompany = useAuthStore((s) => s.setActiveCompany);
+  const setPermissions = useAuthStore((s) => s.setPermissions);
 
   const activeCompany = companies.find((c) => c.id === user?.companyId)
     ?? companies[0]
@@ -50,14 +54,22 @@ export function CompanySelector() {
   async function handleSwitch(companyId: string) {
     if (companyId === activeCompany?.id) { setOpen(false); return; }
     setSwitching(true);
+    setSwitchError("");
     try {
-      const { token } = await switchCompany(companyId);
+      const { token, companyDkToken, permissions } = await switchCompany(companyId);
       setToken(token);
+      if (companyDkToken) {
+        localStorage.setItem("dk-company-token", companyDkToken);
+      } else {
+        localStorage.removeItem("dk-company-token");
+      }
+      if (permissions) setPermissions(permissions as Parameters<typeof setPermissions>[0]);
       setActiveCompany(companyId);
       setOpen(false);
-      queryClient.invalidateQueries();
+      await queryClient.invalidateQueries();
+      await router.invalidate();
     } catch (err) {
-      console.error("Failed to switch company", err);
+      setSwitchError((err as { message?: string })?.message ?? "Ekki tókst að skipta um fyrirtæki");
     } finally {
       setSwitching(false);
     }
@@ -115,6 +127,13 @@ export function CompanySelector() {
             className="w-full rounded-[var(--radius-md)] bg-[var(--color-background)] px-3 py-1.5 text-sm outline-none placeholder:text-[var(--color-text-muted)]"
           />
         </div>
+
+        {/* Error */}
+        {switchError && (
+          <p className="border-b border-[var(--color-border)] px-4 py-2 text-xs text-red-600">
+            {switchError}
+          </p>
+        )}
 
         {/* List */}
         <div className="max-h-48 overflow-y-auto">

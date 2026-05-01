@@ -12,8 +12,10 @@ import { Button } from "@/shared/components/Button";
 
 export const Route = createFileRoute("/users/")({
   beforeLoad: () => {
-    const user = useAuthStore.getState().user;
-    if (user?.role !== "admin") throw redirect({ to: "/" });
+    const { user, permissions } = useAuthStore.getState();
+    if (!user) throw redirect({ to: "/login" });
+    const isElevated = user.role === "super_admin" || user.role === "god";
+    if (!isElevated && !permissions.users) throw redirect({ to: "/" });
   },
   component: UsersPage,
 });

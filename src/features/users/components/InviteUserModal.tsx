@@ -11,17 +11,19 @@ import { Button } from "@/shared/components/Button";
 import { Input } from "@/shared/components/Input";
 import { inviteUser } from "../api/users.api";
 import { fetchHostingAccounts } from "../api/hosting.api";
+import { useLicence } from "@/features/licence/api/licence.queries";
+import type { LicenceResponse } from "@/features/licence/types/licence.types";
 import type { HostingAccount } from "../api/hosting.api";
 import type { UserPermissions } from "../types/user-permissions.types";
 
-const PERMISSION_LABELS: { key: keyof UserPermissions; label: string }[] = [
+const PERMISSION_LABELS: { key: keyof UserPermissions; label: string; licenceModule?: keyof LicenceResponse }[] = [
   { key: "invoices", label: "Reikningsyfirlit" },
-  { key: "subscription", label: "Áskrift" },
-  { key: "hosting", label: "Hýsing" },
-  { key: "pos", label: "POS" },
-  { key: "dkOne", label: "dkOne" },
-  { key: "dkPlus", label: "dkPlus" },
-  { key: "timeclock", label: "Stimpilklukka" },
+  { key: "subscription", label: "Áskrift", licenceModule: "dkPlus" },
+  { key: "hosting", label: "Hýsing", licenceModule: "Hosting" },
+  { key: "pos", label: "POS", licenceModule: "POS" },
+  { key: "dkOne", label: "dkOne", licenceModule: "dkOne" },
+  { key: "dkPlus", label: "dkPlus", licenceModule: "dkPlus" },
+  { key: "timeclock", label: "Stimpilklukka", licenceModule: "TimeClock" },
   { key: "users", label: "Notendur" },
 ];
 
@@ -42,10 +44,17 @@ interface Props {
 }
 
 export function InviteUserModal({ onClose, onInvited }: Props) {
+  const { data: licence } = useLicence();
+  const visiblePermissions = PERMISSION_LABELS.filter(({ licenceModule }) => {
+    if (!licenceModule) return true;
+    const entry = licence?.[licenceModule];
+    return entry && typeof entry === "object" && "Enabled" in entry && entry.Enabled;
+  });
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [kennitala, setKennitala] = useState("");
-  const [role, setRole] = useState<"standard" | "admin">("standard");
+  const [companyRole, setCompanyRole] = useState<"user" | "admin">("user");
   const [hostingUsername, setHostingUsername] = useState("");
   const [permissions, setPermissions] = useState<UserPermissions>(DEFAULT_PERMISSIONS);
   const [loading, setLoading] = useState(false);
@@ -66,7 +75,7 @@ export function InviteUserModal({ onClose, onInvited }: Props) {
     setError("");
     setLoading(true);
     try {
-      const { generatedPassword: pw } = await inviteUser({ name, username: email, email, kennitala, hostingUsername, role, permissions });
+      const { generatedPassword: pw } = await inviteUser({ name, username: email, email, kennitala, hostingUsername, companyRole, permissions });
       setGeneratedPassword(pw);
     } catch (err) {
       setError((err as { message?: string })?.message ?? "Villa kom upp");
@@ -128,11 +137,11 @@ export function InviteUserModal({ onClose, onInvited }: Props) {
               Hlutverk
             </label>
             <select
-              value={role}
-              onChange={(e) => setRole(e.target.value as "standard" | "admin")}
+              value={companyRole}
+              onChange={(e) => setCompanyRole(e.target.value as "user" | "admin")}
               className="w-full rounded-md border border-(--color-border) bg-(--color-background) px-3 py-2 text-sm text-(--color-text) outline-none transition-colors focus:border-(--color-primary) focus:ring-1 focus:ring-(--color-primary)"
             >
-              <option value="standard">Venjulegur notandi</option>
+              <option value="user">Venjulegur notandi</option>
               <option value="admin">Stjórnandi</option>
             </select>
           </div>
@@ -160,7 +169,7 @@ export function InviteUserModal({ onClose, onInvited }: Props) {
               Aðgangur að einingum
             </p>
             <div className="grid grid-cols-2 gap-2">
-              {PERMISSION_LABELS.map(({ key, label }) => (
+              {visiblePermissions.map(({ key, label }) => (
                 <label
                   key={key}
                   className="flex cursor-pointer items-center gap-2 text-sm text-(--color-text)"
