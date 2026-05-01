@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/shared/components/Button";
-import { loadUserPermissions, saveUserPermissions, DEFAULT_PERMISSIONS } from "../api/permissions.api";
+import { saveUserPermissions, DEFAULT_PERMISSIONS } from "../api/permissions.api";
 import { removeUser, updateUserHosting } from "../api/users.api";
 import { hostingAccountsQueryOptions } from "@/features/hosting/api/hosting.queries";
 import { permissionsQueryOptions } from "../api/users.queries";
