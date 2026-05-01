@@ -18,3 +18,12 @@ export interface CreateHostingAccountPayload {
   displayName: string;
   email?: string;
 }
+
+export interface HostingLogEntry {
+  id: number;
+  type: "login" | "logout" | "failed";
+  when: string;
+  ip: string;
+  agent: string;
+  status: "ok" | "failed";
+}
