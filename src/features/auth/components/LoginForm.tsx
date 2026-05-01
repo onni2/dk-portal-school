@@ -39,7 +39,7 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false);
   // "polling" = waiting for user to confirm on their phone (Rafræn / Kort)
   const [polling, setPolling] = useState(false);
-  const [pollCount, setPollCount] = useState(0);
+  const [verificationCode, setVerificationCode] = useState("");
   const navigate = useNavigate();
   const setAuth = useAuthStore((s) => s.setAuth);
   const setRole = useRoleStore((s) => s.setRole);
@@ -48,13 +48,13 @@ export function LoginForm() {
     setActiveTab(tab);
     setError("");
     setPolling(false);
-    setPollCount(0);
+    setVerificationCode("");
   }
 
   function handleCancel() {
     setLoading(false);
     setPolling(false);
-    setPollCount(0);
+    setVerificationCode("");
     setError("");
   }
 
@@ -85,12 +85,13 @@ export function LoginForm() {
     setError("");
     setLoading(true);
     setPolling(false);
-    setPollCount(0);
     try {
-      await initiateAudkenniLogin("sim", phoneNumber, () => {
-        setPolling(true);
-        setPollCount((n) => n + 1);
-      });
+      await initiateAudkenniLogin(
+        "sim",
+        phoneNumber,
+        () => { setPolling(true); },
+        (code) => { setVerificationCode(code); },
+      );
       // page redirects to /callback — loading stays true
     } catch (err) {
       setError(
@@ -106,11 +107,9 @@ export function LoginForm() {
     setError("");
     setLoading(true);
     setPolling(false);
-    setPollCount(0);
     try {
       await initiateAudkenniLogin("card", undefined, () => {
         setPolling(true);
-        setPollCount((n) => n + 1);
       });
       // page redirects to /callback — loading stays true
     } catch (err) {
@@ -249,17 +248,19 @@ export function LoginForm() {
                     <p className="text-sm font-medium text-(--color-text)">
                       Auðkennisbeiðni hefur verið send í símann þinn
                     </p>
-                    <p className="text-xs text-(--color-text-muted)">
-                      <>
-                        Staðfestu auðkenningu á símanúmeri:{" "}
-                        <span className="font-semibold">{phoneNumber}</span>
-                      </>
-                      {pollCount > 1 && (
-                        <span className="ml-1 block">
-                          ({pollCount} tilraunir)
-                        </span>
-                      )}
-                    </p>
+                    {verificationCode && (
+                      <div className="flex flex-col items-center gap-1">
+                        <p className="text-xs text-(--color-text-muted)">
+                          Öryggistalan þín er:
+                        </p>
+                        <p className="text-4xl font-bold tracking-widest text-(--color-text)">
+                          {verificationCode}
+                        </p>
+                        <p className="text-xs text-(--color-text-muted)">
+                          Staðfestu auðkenninguna ef öryggistalan er sú sama og birtist á símanum þínum.
+                        </p>
+                      </div>
+                    )}
                     {error && (
                       <p className="text-sm text-(--color-error)">{error}</p>
                     )}

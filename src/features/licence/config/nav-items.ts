@@ -50,14 +50,15 @@ export const NAV_ITEMS: NavItem[] = [
     to: "/hosting",
     access: { type: "licencedModule", module: "Hosting", permission: "hosting" },
     children: [
-      { label: "Notendur", to: "/hosting", access: { type: "licencedModule", module: "Hosting", permission: "hosting" } },
-      { label: "Öryggi og persónuvernd", to: "/hosting/oryggi", access: { type: "licencedModule", module: "Hosting", permission: "hosting" } },
+      { label: "Hýsingin mín", to: "/hosting/myHosting", access: { type: "requiredPermission", permission: "hosting" } },
+      { label: "Duo - fjölþátta auðkenning", to: "/hosting/duo", access: { type: "requiredPermission", permission: "hosting" } },
+      { label: "Öryggi og persónuvernd", to: "/hosting/oryggi", access: { type: "requiredPermission", permission: "hosting" } },
     ],
   },
-  { label: "POS", to: "/pos", access: { type: "licencedModule", module: "POS", permission: "pos" } },
-  { label: "dkOne", to: "/dkone", access: { type: "licencedModule", module: "dkOne", permission: "dkOne" } },
-  { label: "dkPlus", to: "/dkplus", access: { type: "licencedModule", module: "dkPlus", permission: "dkPlus" } },
-  { label: "Stimpilklukka", to: "/timeclock", access: { type: "licencedModule", module: "TimeClock", permission: "timeclock" } },
+  { label: "dkPOS", to: "/pos", access: { type: "requiredPermission", permission: "pos" } },
+  { label: "dkOne", to: "/dkone", access: { type: "requiredPermission", permission: "dkOne" } },
+  { label: "dkPlus", to: "/dkplus", access: { type: "requiredPermission", permission: "dkPlus" } },
+  { label: "Stimpilklukka", to: "/timeclock", access: { type: "requiredPermission", permission: "timeclock" } },
 
   // Always visible to all logged-in users
   { label: "Zoho beiðnir", to: "/zoho", access: { type: "alwaysVisible" } },

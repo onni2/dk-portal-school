@@ -63,7 +63,7 @@ router.get("/", requireAdminOrUsersPermission, async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT u.id, u.username, u.email, u.name, u.role, u.status, u.must_reset_password,
-              u.kennitala, u.phone, u.company_id, u.created_at,
+              u.kennitala, u.phone, u.company_id, u.hosting_username, u.created_at,
               uc.role AS company_role,
               uc.invoices, uc.subscription, uc.hosting, uc.pos,
               uc.dk_one, uc.dk_plus, uc.timeclock, uc.users
@@ -84,6 +84,7 @@ router.get("/", requireAdminOrUsersPermission, async (req, res) => {
       kennitala: u.kennitala,
       phone: u.phone,
       companyId: u.company_id,
+      hostingUsername: u.hosting_username ?? null,
       createdAt: u.created_at,
       permissions: {
         invoices: u.invoices,
@@ -142,11 +143,9 @@ router.post("/invite", requireAdminOrUsersPermission, async (req, res) => {
        isAdmin || (p.timeclock ?? false), isAdmin || (p.users ?? false)],
     );
 
-    try {
-      await sendInviteEmail(email, name, username, generatedPassword);
-    } catch (emailErr) {
-      console.error("[Email] Failed to send invite:", emailErr.message);
-    }
+    await sendInviteEmail(email, name, username, generatedPassword).catch((err) =>
+      console.error("[Email] Failed to send invite email:", err),
+    );
 
     res.status(201).json({
       user: {
@@ -156,6 +155,22 @@ router.post("/invite", requireAdminOrUsersPermission, async (req, res) => {
       },
       generatedPassword,
     });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Villa á þjóni" });
+  }
+});
+
+// PATCH /users/:id/hosting — admin only, link/unlink hosting account
+router.patch("/:id/hosting", requireAdmin, async (req, res) => {
+  const { hostingUsername } = req.body;
+  try {
+    const { rowCount } = await pool.query(
+      `UPDATE portal_users SET hosting_username = $1 WHERE id = $2 AND company_id = $3`,
+      [hostingUsername ?? null, req.params.id, getCompanyId(req)],
+    );
+    if (rowCount === 0) return res.status(404).json({ message: "Notandi ekki fundinn" });
+    res.status(204).send();
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Villa á þjóni" });

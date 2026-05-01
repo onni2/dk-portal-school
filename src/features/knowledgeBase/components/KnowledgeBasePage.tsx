@@ -1,8 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import MiniSearch from "minisearch";
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
-
-const kbRoute = getRouteApi("/knowledge-base/");
 import { Card } from "@/shared/components/Card";
 import { Input } from "@/shared/components/Input";
 import { cn } from "@/shared/utils/cn";
@@ -10,6 +8,8 @@ import { useKbData, useArticleContent } from "../api/knowledgeBase.queries";
 import { useYoutubeVideos } from "../api/youtube.queries";
 import type { KbArticle, KbCategory } from "../types/knowledgeBase.types";
 import type { YoutubeVideo } from "../types/youtube.types";
+
+const kbRoute = getRouteApi("/knowledge-base/");
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -84,7 +84,7 @@ function ArticleContent({ article }: { article: KbArticle }) {
         <p className="py-6 text-center text-sm text-(--color-text-secondary)">Hleð inn efni…</p>
       ) : content ? (
         <div
-          className="max-w-none text-black"
+          className="prose prose-sm max-w-none"
           dangerouslySetInnerHTML={{ __html: content }}
         />
       ) : (

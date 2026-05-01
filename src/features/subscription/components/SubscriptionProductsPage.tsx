@@ -108,16 +108,18 @@ export function SubscriptionProductsPage() {
                             {" "}/mán
                           </span>
                         </div>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            goToInstructions(articleId);
-                          }}
-                          className="rounded-md border border-(--color-border) px-3 py-1.5 text-xs font-medium text-(--color-text-secondary) transition-colors hover:border-(--color-primary) hover:text-(--color-primary)"
-                        >
-                          Skoða leiðbeiningar
-                        </button>
+                        {articleId && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              goToInstructions(articleId);
+                            }}
+                            className="rounded-md border border-(--color-border) px-3 py-1.5 text-xs font-medium text-(--color-text-secondary) transition-colors hover:border-(--color-primary) hover:text-(--color-primary)"
+                          >
+                            Skoða leiðbeiningar
+                          </button>
+                        )}
                       </div>
                     </div>
                   );

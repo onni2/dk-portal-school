@@ -1,14 +1,16 @@
-/**
- * /dkone — dkOne page, guarded by dkOne licence.
- */
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { Suspense } from "react";
+import { dkOneUsersQueryOptions } from "@/features/dkone/api/dkone.queries";
 import { DkOnePage } from "@/features/dkone/components/DkOnePage";
-import { licenceQueryOptions } from "@/features/licence/api/licence.queries";
+import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 
 export const Route = createFileRoute("/dkone/")({
-  beforeLoad: async ({ context: { queryClient } }) => {
-    const licence = await queryClient.ensureQueryData(licenceQueryOptions);
-    if (!licence?.dkOne?.Enabled) throw redirect({ to: "/" });
+  loader: ({ context: { queryClient } }) => {
+    queryClient.prefetchQuery(dkOneUsersQueryOptions);
   },
-  component: DkOnePage,
+  component: () => (
+    <Suspense fallback={<LoadingSpinner />}>
+      <DkOnePage />
+    </Suspense>
+  ),
 });

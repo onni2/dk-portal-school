@@ -125,6 +125,26 @@ const SEED_POS_SERVICES = [
     mode: "auto",
     path: "C:\\dkPos\\Akurey\\Akurey\\dkPosService.exe",
   },
+  {
+    id: "ps-hr-1",
+    company_id: "hr",
+    name: "Búð 1",
+    display: "Búð 1 - dkPOS Services",
+    server: "DK-WS-01",
+    state: "running",
+    mode: "auto",
+    path: "C:\\dkPos\\HR\\Bud1\\dkPosService.exe",
+  },
+  {
+    id: "ps-hr-2",
+    company_id: "hr",
+    name: "Búð 2",
+    display: "Búð 2 - dkPOS Services",
+    server: "DK-WS-02",
+    state: "stopped",
+    mode: "auto",
+    path: "C:\\dkPos\\HR\\Bud2\\dkPosService.exe",
+  },
 ];
 
 const SEED_POS_REST = [
@@ -148,10 +168,37 @@ const SEED_POS_REST = [
     mode: "auto",
     path: "C:\\dkPos\\Akurey\\Akurey\\dkRESTServer.exe",
   },
+  {
+    id: "pr-hr-1",
+    company_id: "hr",
+    name: "Búð 1",
+    display: "Búð 1 - REST POS",
+    server: "DK-REST-01",
+    state: "running",
+    mode: "auto",
+    path: "C:\\dkPos\\HR\\Bud1\\dkRESTServer.exe",
+  },
+  {
+    id: "pr-hr-2",
+    company_id: "hr",
+    name: "Búð 2",
+    display: "Búð 2 - REST POS",
+    server: "DK-REST-02",
+    state: "stopped",
+    mode: "auto",
+    path: "C:\\dkPos\\HR\\Bud2\\dkRESTServer.exe",
+  },
+];
+
+const SEED_POS_LOGS = [
+  { id: "pl-1", service_id: "ps-hr-1", service_type: "dkpos", company_id: "hr", description: "Service State Changed: Running", executed_by: "Magnús", created_at: "2026-10-02T14:02:00Z" },
+  { id: "pl-2", service_id: "ps-hr-1", service_type: "dkpos", company_id: "hr", description: "Service State Changed: Stopped", executed_by: "Agent", created_at: "2026-10-02T13:50:00Z" },
+  { id: "pl-3", service_id: "ps-hr-1", service_type: "dkpos", company_id: "hr", description: "Service State Changed: Running", executed_by: "Magnús", created_at: "2025-01-01T12:30:00Z" },
+  { id: "pl-4", service_id: "ps-hr-1", service_type: "dkpos", company_id: "hr", description: "Service State Changed: Stopped", executed_by: "Magnús", created_at: "2025-01-01T12:25:00Z" },
 ];
 
 const SEED_HOSTING_ACCOUNTS = [
-  { id: "ha-1", company_id: "hr", username: "fyr.agusta",  display_name: "Ágústa B.",   email: "agusta@fyrirtaeki.is",  has_mfa: true  },
+  { id: "ha-1", company_id: "hr", username: "dk.agusta",  display_name: "dk.agusta",   email: "agusta@fyrirtaeki.is",  has_mfa: true  },
   { id: "ha-2", company_id: "hr", username: "fyr.bjorn",   display_name: "Björn G.",    email: "bjorn@fyrirtaeki.is",   has_mfa: false },
   { id: "ha-3", company_id: "hr", username: "fyr.gudrun",  display_name: "Guðrún S.",   email: "gudrun@fyrirtaeki.is",  has_mfa: false },
   { id: "ha-4", company_id: "hr", username: "fyr.halldor", display_name: "Halldór Þ.",  email: "halldor@fyrirtaeki.is", has_mfa: true  },
@@ -195,6 +242,8 @@ const TEAM_MEMBERS = [
     email: "agusta@dk.is",
     name: "Ágústa Björk Schweitz Bergsveinsdóttir",
     must_reset_password: true,
+    hosting_username: "dk.agusta",
+    kennitala: "2810003920",
   },
   {
     id: "tm-jon",
@@ -203,6 +252,7 @@ const TEAM_MEMBERS = [
     email: "admin2@example.is",
     name: "Jón Ágústsson",
     must_reset_password: false,
+    hosting_username: null,
   },
 ];
 
@@ -321,6 +371,19 @@ async function migrate() {
     )
   `);
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS pos_logs (
+      id           TEXT PRIMARY KEY,
+      service_id   TEXT NOT NULL,
+      service_type TEXT NOT NULL DEFAULT 'dkpos',
+      company_id   TEXT NOT NULL REFERENCES companies(id),
+      description  TEXT NOT NULL,
+      executed_by  TEXT NOT NULL,
+      created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await pool.query(`ALTER TABLE pos_logs ADD COLUMN IF NOT EXISTS seq SERIAL`);
+
   for (const user of SEED_COMPANY_USERS) {
     const hashed = await bcrypt.hash(user.password, 10);
 
@@ -374,6 +437,15 @@ async function migrate() {
     );
   }
 
+  for (const entry of SEED_POS_LOGS) {
+    await pool.query(
+      `INSERT INTO pos_logs (id, service_id, service_type, company_id, description, executed_by, created_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7)
+       ON CONFLICT DO NOTHING`,
+      [entry.id, entry.service_id, entry.service_type, entry.company_id, entry.description, entry.executed_by, entry.created_at]
+    );
+  }
+
   // Seed hosting accounts (idempotent)
   for (const acc of SEED_HOSTING_ACCOUNTS) {
     await pool.query(
@@ -404,11 +476,25 @@ async function migrate() {
 
     await pool.query(
       `INSERT INTO portal_users
-        (id, username, password, email, name, role, status, must_reset_password, company_id)
-       VALUES ($1,$2,$3,$4,$5,'super_admin','active',$6,'hr')
+        (id, username, password, email, name, role, status, must_reset_password, company_id, hosting_username)
+       VALUES ($1,$2,$3,$4,$5,'super_admin','active',$6,'hr',$7)
        ON CONFLICT DO NOTHING`,
-      [member.id, member.username, hashed, member.email, member.name, member.must_reset_password]
+      [member.id, member.username, hashed, member.email, member.name, member.must_reset_password, member.hosting_username ?? null]
     );
+
+    // Update hosting_username and kennitala for existing rows (ON CONFLICT DO NOTHING skips them)
+    if (member.hosting_username) {
+      await pool.query(
+        `UPDATE portal_users SET hosting_username = $1 WHERE id = $2 AND hosting_username IS NULL`,
+        [member.hosting_username, member.id]
+      );
+    }
+    if (member.kennitala) {
+      await pool.query(
+        `UPDATE portal_users SET kennitala = $1 WHERE id = $2 AND kennitala IS NULL`,
+        [member.kennitala, member.id]
+      );
+    }
 
     await pool.query(
       `INSERT INTO user_permissions
@@ -540,6 +626,105 @@ async function migrate() {
      VALUES ('cu-owner', 'holding', 'owner', true, true, true, true, true, true, true, true)
      ON CONFLICT DO NOTHING`,
   );
+  // Auth token API logs table
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS auth_token_api_logs (
+      id                 TEXT PRIMARY KEY,
+      token_id           TEXT NOT NULL,
+      company_id         TEXT NOT NULL REFERENCES companies(id),
+      user_name          TEXT NOT NULL DEFAULT '',
+      uri                TEXT NOT NULL DEFAULT '',
+      method             TEXT NOT NULL DEFAULT 'GET',
+      query              TEXT NOT NULL DEFAULT '',
+      status_code        INTEGER NOT NULL DEFAULT 200,
+      ip_address         TEXT NOT NULL DEFAULT '',
+      user_agent         TEXT NOT NULL DEFAULT '',
+      bandwidth_upload   INTEGER NOT NULL DEFAULT 0,
+      bandwidth_download INTEGER NOT NULL DEFAULT 0,
+      time_taken         INTEGER NOT NULL DEFAULT 0,
+      error              TEXT,
+      created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      seq                SERIAL
+    )
+  `);
+
+  const SEED_AUTH_TOKEN_API_LOGS = [
+    { id: "atal-1",  token_id: "at-1", company_id: "hr", user_name: "Jón Ágústsson", uri: "/api/v1/customer/transaction/page/1/1", method: "GET", query: "",               status_code: 200, ip_address: "130.208.24.15", user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", bandwidth_upload: 0, bandwidth_download: 11962, time_taken: 8,  error: null, created_at: "2026-04-12T10:00:00Z" },
+    { id: "atal-2",  token_id: "at-1", company_id: "hr", user_name: "Jón Ágústsson", uri: "/api/v1/TimeClock/settings",             method: "GET", query: "",               status_code: 200, ip_address: "130.208.24.15", user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", bandwidth_upload: 0, bandwidth_download: 160,   time_taken: 6,  error: null, created_at: "2026-04-12T10:00:01Z" },
+    { id: "atal-3",  token_id: "at-1", company_id: "hr", user_name: "Jón Ágústsson", uri: "/api/v1/general/employee",               method: "GET", query: "",               status_code: 200, ip_address: "130.208.24.15", user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", bandwidth_upload: 0, bandwidth_download: 3592,  time_taken: 15, error: null, created_at: "2026-04-12T10:00:02Z" },
+    { id: "atal-4",  token_id: "at-1", company_id: "hr", user_name: "Jón Ágústsson", uri: "/api/v1/customer/transaction/page/1/1", method: "GET", query: "",               status_code: 200, ip_address: "130.208.24.15", user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", bandwidth_upload: 0, bandwidth_download: 11962, time_taken: 15, error: null, created_at: "2026-04-12T10:01:00Z" },
+    { id: "atal-5",  token_id: "at-1", company_id: "hr", user_name: "Jón Ágústsson", uri: "/api/v1/TimeClock/settings",             method: "GET", query: "",               status_code: 200, ip_address: "130.208.24.15", user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", bandwidth_upload: 0, bandwidth_download: 160,   time_taken: 15, error: null, created_at: "2026-04-12T10:01:01Z" },
+    { id: "atal-6",  token_id: "at-1", company_id: "hr", user_name: "Jón Ágústsson", uri: "/api/v1/customer/transaction/page/1/1", method: "GET", query: "",               status_code: 200, ip_address: "130.208.24.15", user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", bandwidth_upload: 0, bandwidth_download: 11962, time_taken: 8,  error: null, created_at: "2026-04-12T10:02:00Z" },
+    { id: "atal-7",  token_id: "at-1", company_id: "hr", user_name: "Jón Ágústsson", uri: "/api/v1/TimeClock/settings",             method: "GET", query: "",               status_code: 200, ip_address: "130.208.24.15", user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", bandwidth_upload: 0, bandwidth_download: 160,   time_taken: 6,  error: null, created_at: "2026-04-12T10:02:01Z" },
+    { id: "atal-8",  token_id: "at-1", company_id: "hr", user_name: "Jón Ágústsson", uri: "/api/v1/general/employee",               method: "GET", query: "",               status_code: 200, ip_address: "130.208.24.15", user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", bandwidth_upload: 0, bandwidth_download: 3592,  time_taken: 13, error: null, created_at: "2026-04-12T10:02:02Z" },
+    { id: "atal-9",  token_id: "at-1", company_id: "hr", user_name: "Jón Ágústsson", uri: "/api/v1/customer/transaction/page/1/1", method: "GET", query: "",               status_code: 200, ip_address: "130.208.24.15", user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", bandwidth_upload: 0, bandwidth_download: 11962, time_taken: 19, error: null, created_at: "2026-04-12T10:03:00Z" },
+    { id: "atal-10", token_id: "at-1", company_id: "hr", user_name: "Jón Ágústsson", uri: "/api/v1/TimeClock/settings",             method: "GET", query: "",               status_code: 200, ip_address: "130.208.24.15", user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", bandwidth_upload: 0, bandwidth_download: 160,   time_taken: 10, error: null, created_at: "2026-04-12T10:03:01Z" },
+    { id: "atal-11", token_id: "at-1", company_id: "hr", user_name: "Jón Ágústsson", uri: "/api/v1/TimeClock/settings",             method: "GET", query: "",               status_code: 200, ip_address: "130.208.24.15", user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", bandwidth_upload: 0, bandwidth_download: 160,   time_taken: 6,  error: null, created_at: "2026-04-12T10:03:02Z" },
+    { id: "atal-12", token_id: "at-1", company_id: "hr", user_name: "Jón Ágústsson", uri: "/api/v1/general/employee",               method: "GET", query: "",               status_code: 200, ip_address: "130.208.24.15", user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", bandwidth_upload: 0, bandwidth_download: 3592,  time_taken: 10, error: null, created_at: "2026-04-12T10:03:03Z" },
+    { id: "atal-13", token_id: "at-1", company_id: "hr", user_name: "Jón Ágústsson", uri: "/api/v1/invoice/list",                   method: "GET", query: "status=unpaid",  status_code: 200, ip_address: "130.208.24.15", user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", bandwidth_upload: 0, bandwidth_download: 5841,  time_taken: 22, error: null, created_at: "2026-04-12T10:04:00Z" },
+    { id: "atal-14", token_id: "at-1", company_id: "hr", user_name: "Jón Ágústsson", uri: "/api/v1/product/search",                 method: "POST", query: "",              status_code: 200, ip_address: "130.208.24.15", user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", bandwidth_upload: 312, bandwidth_download: 8204, time_taken: 31, error: null, created_at: "2026-04-12T10:04:30Z" },
+    { id: "atal-15", token_id: "at-1", company_id: "hr", user_name: "Jón Ágústsson", uri: "/api/v1/customer/9999/profile",           method: "GET", query: "",              status_code: 404, ip_address: "130.208.24.15", user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", bandwidth_upload: 0, bandwidth_download: 42,    time_taken: 4,  error: "Customer not found", created_at: "2026-04-12T10:05:00Z" },
+  ];
+
+  for (const l of SEED_AUTH_TOKEN_API_LOGS) {
+    await pool.query(
+      `INSERT INTO auth_token_api_logs
+         (id, token_id, company_id, user_name, uri, method, query, status_code, ip_address, user_agent, bandwidth_upload, bandwidth_download, time_taken, error, created_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+       ON CONFLICT DO NOTHING`,
+      [l.id, l.token_id, l.company_id, l.user_name, l.uri, l.method, l.query, l.status_code, l.ip_address, l.user_agent, l.bandwidth_upload, l.bandwidth_download, l.time_taken, l.error, l.created_at],
+    );
+  }
+
+  // Auth tokens tables
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS auth_tokens (
+      id          TEXT PRIMARY KEY,
+      company_id  TEXT NOT NULL REFERENCES companies(id),
+      description TEXT NOT NULL,
+      token       TEXT NOT NULL,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS auth_token_logs (
+      id          TEXT PRIMARY KEY,
+      token_id    TEXT NOT NULL,
+      company_id  TEXT NOT NULL REFERENCES companies(id),
+      description TEXT NOT NULL,
+      executed_by TEXT NOT NULL,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      seq         SERIAL
+    )
+  `);
+
+  const SEED_AUTH_TOKENS = [
+    { id: "at-1", company_id: "hr",       description: "dk",        token: "f1632c65-8d38-4050-83e6-b36a63c0a21b" },
+    { id: "at-2", company_id: "1001nott", description: "1001 Nott", token: "a7d94e12-3c51-47bb-91f0-c28b74e0d3f9" },
+  ];
+
+  const SEED_AUTH_TOKEN_LOGS = [
+    { id: "atl-1", token_id: "at-1", company_id: "hr",       description: "Token stofnað",   executed_by: "Jón Ágústsson",    created_at: "2026-03-15T10:00:00Z" },
+    { id: "atl-2", token_id: "at-2", company_id: "1001nott", description: "Token stofnað",   executed_by: "Björn Gunnarsson", created_at: "2026-02-20T09:15:00Z" },
+    { id: "atl-3", token_id: "at-1", company_id: "hr",       description: "Token notað",     executed_by: "Agent",            created_at: "2026-04-01T08:30:00Z" },
+  ];
+
+  for (const t of SEED_AUTH_TOKENS) {
+    await pool.query(
+      `INSERT INTO auth_tokens (id, company_id, description, token)
+       VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING`,
+      [t.id, t.company_id, t.description, t.token],
+    );
+  }
+
+  for (const l of SEED_AUTH_TOKEN_LOGS) {
+    await pool.query(
+      `INSERT INTO auth_token_logs (id, token_id, company_id, description, executed_by, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING`,
+      [l.id, l.token_id, l.company_id, l.description, l.executed_by, l.created_at],
+    );
+  }
 
   // Zoho tickets tables
   await pool.query(`
