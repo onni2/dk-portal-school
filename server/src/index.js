@@ -17,6 +17,7 @@ const ticketsRouter = require("./routes/tickets");
 const posRouter = require("./routes/pos");
 const dkoneRouter = require("./routes/dkone");
 const dkplusRouter = require("./routes/dkplus");
+const duoRouter = require("./routes/duo");
 
 const app = express();
 
@@ -48,6 +49,7 @@ app.use("/tickets", ticketsRouter);
 app.use("/pos", posRouter);
 app.use("/dkone", dkoneRouter);
 app.use("/dkplus", dkplusRouter);
+app.use("/duo", duoRouter);
 
 app.get("/health", (_req, res) => {
   res.json({ ok: true });
