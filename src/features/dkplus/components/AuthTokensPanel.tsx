@@ -183,7 +183,7 @@ function CreateForm({
           {createError}
         </div>
       )}
-      <div className="flex items-end gap-2 px-4 py-3">
+      <div className="flex items-center gap-2 px-4 py-3">
         <div className="flex-1">
           <div className="relative">
             <input
@@ -223,7 +223,7 @@ function CreateForm({
         </select>
         <Button
           variant="primary"
-          size="sm"
+          size="md"
           onClick={handleCreate}
           disabled={createMutation.isPending}
         >
