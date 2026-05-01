@@ -1,8 +1,16 @@
 import { mockClient } from "@/shared/api/mockClient";
-import type { DkOneUser, InviteDkOneUserInput, DkOneRole, CompanyUser, SubCompany } from "../types/dkone.types";
+import type { DkOneUser, DkUser, DkEmployee, InviteDkOneUserInput, DkOneRole, CompanyUser, SubCompany } from "../types/dkone.types";
 
 export async function fetchSubCompanies(): Promise<SubCompany[]> {
   return mockClient.get<SubCompany[]>("/dkone/sub-companies");
+}
+
+export async function createSubCompany(name: string): Promise<SubCompany> {
+  return mockClient.post<SubCompany>("/dkone/sub-companies", { name });
+}
+
+export async function deleteSubCompany(id: string): Promise<void> {
+  return mockClient.delete<void>(`/dkone/sub-companies/${id}`);
 }
 
 export async function fetchCompanyUsers(): Promise<CompanyUser[]> {
@@ -11,6 +19,23 @@ export async function fetchCompanyUsers(): Promise<CompanyUser[]> {
 
 export async function fetchDkOneUsers(): Promise<DkOneUser[]> {
   return mockClient.get<DkOneUser[]>("/dkone/users");
+}
+
+export async function fetchDkUsers(): Promise<DkUser[]> {
+  return mockClient.get<DkUser[]>("/dkone/dk-users");
+}
+
+export async function fetchDkEmployees(): Promise<DkEmployee[]> {
+  return mockClient.get<DkEmployee[]>("/dkone/employees");
+}
+
+export async function addDkUser(employee: DkEmployee): Promise<DkUser> {
+  return mockClient.post<DkUser>("/dkone/dk-users", {
+    number: employee.number,
+    name: employee.name,
+    ssNumber: employee.ssNumber,
+    email: employee.email,
+  });
 }
 
 export async function inviteDkOneUser(input: InviteDkOneUserInput): Promise<DkOneUser> {
