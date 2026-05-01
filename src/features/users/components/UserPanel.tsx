@@ -1,16 +1,11 @@
-/**
- * Slide-over panel for viewing and editing a portal user's permissions.
- * Opens from the right when a user row is clicked. Allows toggling permissions and deleting the user.
- * Uses: @/shared/components/Button,
- *       ../api/permissions.api, ../store/users.store, ../types/user-permissions.types
- * Exports: UserPanel
- */
 import { useState, useEffect } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/shared/components/Button";
 import { loadUserPermissions, saveUserPermissions, DEFAULT_PERMISSIONS } from "../api/permissions.api";
 import { removeUser, updateUserHosting } from "../api/users.api";
-import { fetchHostingAccounts, type HostingAccount } from "../api/hosting.api";
-import { useInvalidatePermissions, useInvalidateUsers } from "../api/users.queries";
+import { hostingAccountsQueryOptions } from "@/features/hosting/api/hosting.queries";
+import { permissionsQueryOptions } from "../api/users.queries";
+import { useInvalidateUsers } from "../api/users.queries";
 import { useLicence } from "@/features/licence/api/licence.queries";
 import type { LicenceResponse } from "@/features/licence/types/licence.types";
 import type { UserPermissions } from "../types/user-permissions.types";
@@ -33,15 +28,17 @@ interface Props {
 }
 
 export function UserPanel({ user, onClose }: Props) {
-  const [permissions, setPermissions] = useState<UserPermissions>(DEFAULT_PERMISSIONS);
-  const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [hostingAccounts, setHostingAccounts] = useState<HostingAccount[]>([]);
-  const [selectedHosting, setSelectedHosting] = useState<string>(user.hostingUsername ?? "");
-  const [savingHosting, setSavingHosting] = useState(false);
-  const invalidatePermissions = useInvalidatePermissions();
+  const qc = useQueryClient();
   const invalidateUsers = useInvalidateUsers();
   const { data: licence } = useLicence();
+  const { data: loadedPermissions } = useQuery(permissionsQueryOptions(user.id));
+  const { data: hostingAccounts = [] } = useQuery(hostingAccountsQueryOptions);
+  const [permissions, setPermissions] = useState<UserPermissions>(DEFAULT_PERMISSIONS);
+  const [selectedHosting, setSelectedHosting] = useState<string>(user.hostingUsername ?? "");
+
+  useEffect(() => {
+    if (loadedPermissions) setPermissions(loadedPermissions);
+  }, [loadedPermissions]);
 
   const visiblePermissions = PERMISSION_LABELS.filter(({ licenceModule }) => {
     if (!licenceModule) return true;
@@ -49,51 +46,33 @@ export function UserPanel({ user, onClose }: Props) {
     return entry && typeof entry === "object" && "Enabled" in entry && entry.Enabled;
   });
 
-  useEffect(() => {
-    loadUserPermissions(user.id)
-      .then(setPermissions)
-      .catch(() => setPermissions(DEFAULT_PERMISSIONS));
-    fetchHostingAccounts()
-      .then(setHostingAccounts)
-      .catch(() => setHostingAccounts([]));
-  }, [user.id]);
-
   function togglePermission(key: keyof UserPermissions) {
     setPermissions((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
-  async function handleSave() {
-    setSaving(true);
-    try {
-      await saveUserPermissions(user.id, permissions);
-      invalidatePermissions(user.id);
+  const saveMutation = useMutation({
+    mutationFn: () => saveUserPermissions(user.id, permissions),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["user-permissions", user.id] });
       onClose();
-    } finally {
-      setSaving(false);
-    }
-  }
+    },
+  });
 
-  async function handleSaveHosting() {
-    setSavingHosting(true);
-    try {
-      await updateUserHosting(user.id, selectedHosting || null);
-      void invalidateUsers();
-    } finally {
-      setSavingHosting(false);
-    }
-  }
+  const saveHostingMutation = useMutation({
+    mutationFn: () => updateUserHosting(user.id, selectedHosting || null),
+    onSuccess: () => void invalidateUsers(),
+  });
 
-  async function handleDelete() {
-    if (!confirm(`Ertu viss um að þú viljir eyða ${user.name}?`)) return;
-    setDeleting(true);
-    try {
-      await removeUser(user.id);
+  const deleteMutation = useMutation({
+    mutationFn: () => {
+      if (!confirm(`Ertu viss um að þú viljir eyða ${user.name}?`)) return Promise.resolve();
+      return removeUser(user.id);
+    },
+    onSuccess: () => {
       void invalidateUsers();
       onClose();
-    } finally {
-      setDeleting(false);
-    }
-  }
+    },
+  });
 
   return (
     <>
@@ -143,10 +122,10 @@ export function UserPanel({ user, onClose }: Props) {
             </select>
             <Button
               size="sm"
-              onClick={() => void handleSaveHosting()}
-              disabled={savingHosting || selectedHosting === (user.hostingUsername ?? "")}
+              onClick={() => saveHostingMutation.mutate()}
+              disabled={saveHostingMutation.isPending || selectedHosting === (user.hostingUsername ?? "")}
             >
-              {savingHosting ? "Vista..." : "Vista"}
+              {saveHostingMutation.isPending ? "Vista..." : "Vista"}
             </Button>
           </div>
         </div>
@@ -179,15 +158,15 @@ export function UserPanel({ user, onClose }: Props) {
 
         {/* Footer */}
         <div className="flex items-center justify-between border-t border-(--color-border) p-6">
-          <Button variant="danger" onClick={handleDelete} disabled={deleting}>
-            {deleting ? "Eyði..." : "Eyða notanda"}
+          <Button variant="danger" onClick={() => deleteMutation.mutate()} disabled={deleteMutation.isPending}>
+            {deleteMutation.isPending ? "Eyði..." : "Eyða notanda"}
           </Button>
           <div className="flex gap-3">
             <Button variant="ghost" onClick={onClose} className="w-28">
               Hætta við
             </Button>
-            <Button onClick={handleSave} disabled={saving} className="w-28">
-              {saving ? "Vista..." : "Vista"}
+            <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="w-28">
+              {saveMutation.isPending ? "Vista..." : "Vista"}
             </Button>
           </div>
         </div>
