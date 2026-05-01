@@ -67,7 +67,7 @@ export function UserTable() {
         <tbody className="divide-y divide-(--color-border)">
           {users.map((user) => {
             const isSelf = user.id === currentUser?.id;
-            const isOtherAdmin = user.role === "admin" && !isSelf;
+            const isOtherAdmin = user.companyRole === "admin" && !isSelf;
             return (
               <tr key={user.id} className="hover:bg-(--color-surface-hover)">
                 <td className="px-4 py-3 font-medium text-(--color-text)">
@@ -83,12 +83,12 @@ export function UserTable() {
                   <span
                     className={cn(
                       "inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
-                      user.role === "admin"
+                      user.companyRole === "admin"
                         ? "bg-purple-100 text-purple-700"
                         : "bg-(--color-surface) text-(--color-text-secondary)",
                     )}
                   >
-                    {user.role === "admin" ? "Stjórnandi" : "Staðlað"}
+                    {user.companyRole === "admin" ? "Stjórnandi" : "Staðlað"}
                   </span>
                 </td>
                 <td className="px-4 py-3">

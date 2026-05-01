@@ -97,9 +97,16 @@ function CallbackPage() {
           companyId: portalData.user.companyId,
         };
 
-        setAuth(user, portalData.token, portalData.companies ?? []);
+        const companies = portalData.companies ?? [];
+        setAuth(user, portalData.token, companies);
         setRole(authRoleToUserRole(user.role));
-        navigate({ to: portalData.user.mustResetPassword ? "/reset-password" : "/" });
+        if (portalData.user.mustResetPassword) {
+          navigate({ to: "/reset-password" });
+        } else if (companies.length > 1) {
+          navigate({ to: "/select-company" });
+        } else {
+          navigate({ to: "/" });
+        }
       })
       .catch((err: unknown) => {
         setError(

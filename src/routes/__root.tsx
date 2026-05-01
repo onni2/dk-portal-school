@@ -16,6 +16,8 @@ import { Layout } from "@/shared/components/Layout";
 import { NotFound } from "@/shared/components/NotFound";
 import { RouteError } from "@/shared/components/RouteError";
 import { licenceQueryOptions } from "@/features/licence/api/licence.queries";
+import { kbDataQueryOptions } from "@/features/knowledgeBase/api/knowledgeBase.queries";
+import { youtubeVideosQueryOptions } from "@/features/knowledgeBase/api/youtube.queries";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 
 export interface RouterContext {
@@ -24,17 +26,32 @@ export interface RouterContext {
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   beforeLoad: ({ location }) => {
-    const isLoginPage =
-      location.pathname === "/login" || location.pathname === "/callback";
+    const isPublicPage =
+      location.pathname === "/login" ||
+      location.pathname === "/callback" ||
+      location.pathname === "/select-company";
     const isAuthenticated = useAuthStore.getState().isAuthenticated;
 
-    if (!isAuthenticated && !isLoginPage) {
+    if (!isAuthenticated && !isPublicPage) {
       throw redirect({ to: "/login" });
     }
   },
-  loader: ({ context: { queryClient } }) => {
+  loader: async ({ context: { queryClient } }) => {
     if (!useAuthStore.getState().isAuthenticated) return;
-    return queryClient.ensureQueryData(licenceQueryOptions);
+    // Fire-and-forget background prefetches — warm the cache while the user
+    // browses other pages so Hjálparmiðstöð loads instantly when visited.
+    void queryClient.prefetchQuery(kbDataQueryOptions);
+    void queryClient.prefetchQuery(youtubeVideosQueryOptions);
+
+    try {
+      return await queryClient.ensureQueryData(licenceQueryOptions);
+    } catch (err: unknown) {
+      if (typeof err === "object" && err !== null && "status" in err && (err as { status: number }).status === 401) {
+        useAuthStore.getState().clearAuth();
+        throw redirect({ to: "/login" });
+      }
+      throw err;
+    }
   },
   component: RootComponent,
   notFoundComponent: NotFound,
@@ -49,6 +66,7 @@ function RootComponent() {
   const isLoginPage =
     pathname === "/login" ||
     pathname === "/callback" ||
+    pathname === "/select-company" ||
     pathname.startsWith("/reset-password");
 
   if (isLoginPage) {

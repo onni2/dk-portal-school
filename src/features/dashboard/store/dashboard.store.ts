@@ -6,14 +6,15 @@
  */
 import { create } from "zustand";
 import type { UserPermissions } from "@/features/users/types/user-permissions.types";
+import type { LicenceResponse } from "@/features/licence/types/licence.types";
 
 export interface CardDef {
   id: string;
   title: string;
   description: string;
   to: string;
-  /** If set, only users with this permission (or COP role) can see this card */
   permission?: keyof UserPermissions;
+  licenceModule?: keyof LicenceResponse;
 }
 
 /** Every possible card — users pick which ones to show */
@@ -31,6 +32,7 @@ export const ALL_CARDS: CardDef[] = [
     description: "Yfirlit yfir áskrift fyrirtækisins hjá DK.",
     to: "/askrift/yfirlit",
     permission: "subscription",
+    licenceModule: "dkPlus",
   },
   {
     id: "hysing",
@@ -38,6 +40,7 @@ export const ALL_CARDS: CardDef[] = [
     description: "Stjórnaðu hýsingaraðgangi fyrirtækisins.",
     to: "/hosting",
     permission: "hosting",
+    licenceModule: "Hosting",
   },
   {
     id: "pos",
@@ -45,6 +48,7 @@ export const ALL_CARDS: CardDef[] = [
     description: "Yfirlit yfir POS kerfi fyrirtækisins.",
     to: "/pos",
     permission: "pos",
+    licenceModule: "POS",
   },
   {
     id: "dkone",
@@ -52,6 +56,7 @@ export const ALL_CARDS: CardDef[] = [
     description: "Aðgangur að dkOne kerfinu.",
     to: "/dkone",
     permission: "dkOne",
+    licenceModule: "dkOne",
   },
   {
     id: "dkplus",
@@ -59,6 +64,7 @@ export const ALL_CARDS: CardDef[] = [
     description: "Notendur og API tókn fyrir dkPlus.",
     to: "/dkplus",
     permission: "dkPlus",
+    licenceModule: "dkPlus",
   },
   {
     id: "stimpilklukka",
@@ -66,6 +72,7 @@ export const ALL_CARDS: CardDef[] = [
     description: "Skráðu inn og út og skoðaðu tímaskráningar.",
     to: "/timeclock/",
     permission: "timeclock",
+    licenceModule: "TimeClock",
   },
   {
     id: "notendur",

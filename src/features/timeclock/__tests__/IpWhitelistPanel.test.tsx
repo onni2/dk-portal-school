@@ -4,6 +4,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { IpWhitelistPanel } from "../components/IpWhitelistPanel";
 import { useTimeclockStore } from "../store/timeclock.store";
 
+const addIpEntry = vi.fn((ip: string, label: string) =>
+  Promise.resolve({ id: String(Date.now()), ip, label }),
+);
+const removeIpEntry = vi.fn(() => Promise.resolve());
+
 vi.mock("../api/timeclock.queries", () => ({
   useIpWhitelist: () => ({
     data: [
@@ -11,21 +16,23 @@ vi.mock("../api/timeclock.queries", () => ({
       { id: "2", ip: "10.0.0.5", label: "Útibú" },
     ],
   }),
+  useInvalidateIpWhitelist: () => () => Promise.resolve(),
+}));
+
+vi.mock("../api/timeclock.api", () => ({
+  get addIpEntry() { return addIpEntry; },
+  get removeIpEntry() { return removeIpEntry; },
 }));
 
 beforeEach(() => {
   useTimeclockStore.setState({ addIpOpen: false, addPhoneOpen: false });
+  vi.clearAllMocks();
 });
 
 describe("IpWhitelistPanel", () => {
   it("renders the panel title", () => {
     render(<IpWhitelistPanel />);
     expect(screen.getByText("IP-tölur í hvítlista")).toBeInTheDocument();
-  });
-
-  it("renders the Mock badge", () => {
-    render(<IpWhitelistPanel />);
-    expect(screen.getByText("Mock")).toBeInTheDocument();
   });
 
   it("renders all IP entries", () => {
@@ -53,36 +60,28 @@ describe("IpWhitelistPanel", () => {
     expect(screen.queryByPlaceholderText("IP-tala, t.d. 192.168.1.10")).not.toBeInTheDocument();
   });
 
-  it("adds a new IP entry when the form is submitted", async () => {
+  it("calls addIpEntry with the entered values", async () => {
     render(<IpWhitelistPanel />);
     await userEvent.click(screen.getByText("+ Bæta við"));
     await userEvent.type(screen.getByPlaceholderText("IP-tala, t.d. 192.168.1.10"), "172.16.0.1");
+    await userEvent.type(screen.getByPlaceholderText("Lýsing (valkvætt)"), "Prófunarnet");
     await userEvent.click(screen.getByText("Vista"));
-    expect(screen.getByText("172.16.0.1")).toBeInTheDocument();
+    expect(addIpEntry).toHaveBeenCalledWith("172.16.0.1", "Prófunarnet");
   });
 
-  it("does not add an entry when IP field is empty", async () => {
+  it("does not call addIpEntry when IP field is empty", async () => {
     render(<IpWhitelistPanel />);
     await userEvent.click(screen.getByText("+ Bæta við"));
     await userEvent.click(screen.getByText("Vista"));
-    // form should still be open, nothing added
+    expect(addIpEntry).not.toHaveBeenCalled();
     expect(screen.getByPlaceholderText("IP-tala, t.d. 192.168.1.10")).toBeInTheDocument();
   });
 
-  it("removes an entry when Fjarlægja is clicked", async () => {
+  it("calls removeIpEntry with the correct id", async () => {
     render(<IpWhitelistPanel />);
     const removeButtons = screen.getAllByText("Fjarlægja");
     await userEvent.click(removeButtons[0]!);
-    expect(screen.queryByText("192.168.1.10")).not.toBeInTheDocument();
-  });
-
-  it("shows empty state when all entries are removed", async () => {
-    render(<IpWhitelistPanel />);
-    const removeButtons = screen.getAllByText("Fjarlægja");
-    for (const btn of removeButtons) {
-      await userEvent.click(btn);
-    }
-    expect(screen.getByText("Engar IP-tölur skráðar.")).toBeInTheDocument();
+    expect(removeIpEntry).toHaveBeenCalledWith("1");
   });
 
   it("does not add an entry when IP is only whitespace", async () => {
@@ -90,8 +89,7 @@ describe("IpWhitelistPanel", () => {
     await userEvent.click(screen.getByText("+ Bæta við"));
     await userEvent.type(screen.getByPlaceholderText("IP-tala, t.d. 192.168.1.10"), "   ");
     await userEvent.click(screen.getByText("Vista"));
-    // form stays open, no new entry added
-    expect(screen.getByPlaceholderText("IP-tala, t.d. 192.168.1.10")).toBeInTheDocument();
+    expect(addIpEntry).not.toHaveBeenCalled();
   });
 
   it("does not add an entry when only the label is filled in", async () => {
@@ -99,15 +97,15 @@ describe("IpWhitelistPanel", () => {
     await userEvent.click(screen.getByText("+ Bæta við"));
     await userEvent.type(screen.getByPlaceholderText("Lýsing (valkvætt)"), "Skrifstofa");
     await userEvent.click(screen.getByText("Vista"));
-    // form stays open since IP is missing
+    expect(addIpEntry).not.toHaveBeenCalled();
     expect(screen.getByPlaceholderText("IP-tala, t.d. 192.168.1.10")).toBeInTheDocument();
   });
 
-  it("removing one entry does not remove the other", async () => {
+  it("calls removeIpEntry only for the clicked entry", async () => {
     render(<IpWhitelistPanel />);
     const removeButtons = screen.getAllByText("Fjarlægja");
     await userEvent.click(removeButtons[0]!);
-    expect(screen.queryByText("192.168.1.10")).not.toBeInTheDocument();
-    expect(screen.getByText("10.0.0.5")).toBeInTheDocument();
+    expect(removeIpEntry).toHaveBeenCalledTimes(1);
+    expect(removeIpEntry).toHaveBeenCalledWith("1");
   });
 });
