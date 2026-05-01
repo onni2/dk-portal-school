@@ -13,7 +13,7 @@ const SEED_USERS = [
     password: "admin123",
     email: "admin@example.is",
     name: "Admin User",
-    role: "admin",
+    role: "god",
     status: "active",
     must_reset_password: false,
     kennitala: "0000000000",
@@ -25,7 +25,7 @@ const SEED_USERS = [
     password: "admin321",
     email: "admin2@example.is",
     name: "Jón Ágústsson",
-    role: "admin",
+    role: "super_admin",
     status: "active",
     must_reset_password: false,
     kennitala: "0909032330",
@@ -34,6 +34,7 @@ const SEED_USERS = [
 ];
 
 const SEED_COMPANIES = [
+  { id: "holding", name: "Haldsfélag ehf." },
   { id: "hr", name: "HR" },
   { id: "1001nott", name: "1001 Nott" },
   { id: "akurey", name: "Akurey ehf." },
@@ -47,7 +48,7 @@ const SEED_COMPANY_USERS = [
     password: "Nott1234!",
     email: "admin@1001nott.is",
     name: "Björn Gunnarsson",
-    role: "admin",
+    role: "user",
     status: "active",
     must_reset_password: true,
     kennitala: "1111111119",
@@ -59,7 +60,7 @@ const SEED_COMPANY_USERS = [
     password: "Staff123!",
     email: "staff@1001nott.is",
     name: "Sigrún Ólafsdóttir",
-    role: "standard",
+    role: "user",
     status: "active",
     must_reset_password: true,
     kennitala: "2222222229",
@@ -71,7 +72,7 @@ const SEED_COMPANY_USERS = [
     password: "Akurey1!",
     email: "admin@akurey.is",
     name: "Gunnar Sigurðsson",
-    role: "admin",
+    role: "user",
     status: "active",
     must_reset_password: true,
     kennitala: "3333333339",
@@ -83,11 +84,23 @@ const SEED_COMPANY_USERS = [
     password: "Bokhald1!",
     email: "admin@bokhald.is",
     name: "Helga Magnúsdóttir",
-    role: "admin",
+    role: "user",
     status: "active",
     must_reset_password: true,
     kennitala: "4444444449",
     company_id: "bokhald",
+  },
+  {
+    id: "cu-owner",
+    username: "holding.owner",
+    password: "Owner123!",
+    email: "owner@holding.is",
+    name: "Össur Eiríksson",
+    role: "user",
+    status: "active",
+    must_reset_password: false,
+    kennitala: "6666666669",
+    company_id: "holding",
   },
 ];
 
@@ -199,10 +212,27 @@ const SEED_IP_WHITELIST = [
 ];
 
 const SEED_EMPLOYEE_PHONES = [
-  { id: "ph-1", company_id: "hr", employee_number: "1", employee_name: "Jón Jónsson", phone: "5551234" },
-  { id: "ph-2", company_id: "hr", employee_number: "2", employee_name: "Anna Sigurðardóttir", phone: "6662345" },
-  { id: "ph-3", company_id: "hr", employee_number: "3", employee_name: "Magnús Björnsson", phone: "7773456" },
+  { id: "ph-1", company_id: "hr", kennitala: "1234567890", employee_name: "Jón Jónsson", phone: "5551234" },
+  { id: "ph-2", company_id: "hr", kennitala: "9876543210", employee_name: "Anna Sigurðardóttir", phone: "6662345" },
+  { id: "ph-3", company_id: "hr", kennitala: "0101754919", employee_name: "Magnús Björnsson", phone: "7773456" },
 ];
+
+// Per-company module access — mirrors what DK's real licence DB would look like
+const SEED_COMPANY_LICENCES = [
+  { company_id: "holding",  timeclock: true,  hosting: true,  pos: true,  dk_one: true,  dk_plus: true  },
+  { company_id: "hr",       timeclock: true,  hosting: true,  pos: true,  dk_one: true,  dk_plus: true  },
+  { company_id: "1001nott", timeclock: true,  hosting: false, pos: true,  dk_one: false, dk_plus: true  },
+  { company_id: "akurey",   timeclock: false, hosting: true,  pos: false, dk_one: true,  dk_plus: false },
+  { company_id: "bokhald",  timeclock: false, hosting: false, pos: false, dk_one: false, dk_plus: true  },
+];
+
+// Fake stimpilklukka site URL per company — null means not set up yet
+const SEED_TIMECLOCK_URLS = {
+  hr:       "https://stimpill.hr.is",
+  "1001nott": null,
+  akurey:   "https://stimpill.akurey.is",
+  bokhald:  null,
+};
 
 const TEAM_MEMBERS = [
   {
@@ -232,7 +262,7 @@ const ZOHO_TEST_USER = {
   password: "Thora123!",
   email: "thora@fyrirtaeki.is",
   name: "Þóra",
-  role: "standard",
+  role: "user",
   status: "active",
   must_reset_password: false,
   kennitala: "5555555559",
@@ -241,6 +271,40 @@ const ZOHO_TEST_USER = {
 
 async function migrate() {
   await pool.query(`ALTER TABLE companies ADD COLUMN IF NOT EXISTS dk_token TEXT`);
+  await pool.query(`ALTER TABLE companies ADD COLUMN IF NOT EXISTS timeclock_url TEXT`);
+
+  // company_licences — one row per company tracking which portal products are active
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS company_licences (
+      company_id  TEXT PRIMARY KEY REFERENCES companies(id),
+      timeclock   BOOLEAN NOT NULL DEFAULT false,
+      hosting     BOOLEAN NOT NULL DEFAULT false,
+      pos         BOOLEAN NOT NULL DEFAULT false,
+      dk_one      BOOLEAN NOT NULL DEFAULT false,
+      dk_plus     BOOLEAN NOT NULL DEFAULT false,
+      valid_until TIMESTAMPTZ
+    )
+  `);
+
+  // Rename employee_number → kennitala in timeclock_employee_phones
+  await pool.query(`
+    ALTER TABLE timeclock_employee_phones
+    ADD COLUMN IF NOT EXISTS kennitala TEXT
+  `);
+  await pool.query(`
+    DO $$
+    BEGIN
+      IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'timeclock_employee_phones' AND column_name = 'employee_number'
+      ) THEN
+        UPDATE timeclock_employee_phones SET kennitala = employee_number WHERE kennitala IS NULL;
+      END IF;
+    END $$
+  `);
+  await pool.query(`
+    ALTER TABLE timeclock_employee_phones DROP COLUMN IF EXISTS employee_number
+  `);
   await pool.query(`ALTER TABLE portal_users ADD COLUMN IF NOT EXISTS company_id TEXT REFERENCES companies(id)`);
   await pool.query(`ALTER TABLE portal_users ADD COLUMN IF NOT EXISTS hosting_username TEXT`);
   await pool.query(`ALTER TABLE portal_users DROP COLUMN IF EXISTS dk_token`);
@@ -413,7 +477,7 @@ async function migrate() {
     await pool.query(
       `INSERT INTO portal_users
         (id, username, password, email, name, role, status, must_reset_password, company_id, hosting_username)
-       VALUES ($1,$2,$3,$4,$5,'admin','active',$6,'hr',$7)
+       VALUES ($1,$2,$3,$4,$5,'super_admin','active',$6,'hr',$7)
        ON CONFLICT DO NOTHING`,
       [member.id, member.username, hashed, member.email, member.name, member.must_reset_password, member.hosting_username ?? null]
     );
@@ -473,6 +537,17 @@ async function migrate() {
     ON CONFLICT DO NOTHING
   `);
 
+  // Add created_at to companies for ordering in company picker
+  await pool.query(`ALTER TABLE companies ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`);
+
+  // Add parent_id to companies for stakeholder/ownership hierarchy
+  await pool.query(`ALTER TABLE companies ADD COLUMN IF NOT EXISTS parent_id TEXT REFERENCES companies(id)`);
+
+  // Migrate portal_users.role to new three-tier system (idempotent)
+  await pool.query(`UPDATE portal_users SET role = 'god'        WHERE id = '1'`);
+  await pool.query(`UPDATE portal_users SET role = 'super_admin' WHERE id IN ('2', 'tm-jon', 'tm-agusta')`);
+  await pool.query(`UPDATE portal_users SET role = 'user'        WHERE role NOT IN ('user', 'super_admin', 'god')`);
+
   // Ensure user_companies table exists
   await pool.query(`
     CREATE TABLE IF NOT EXISTS user_companies (
@@ -491,8 +566,51 @@ async function migrate() {
     )
   `);
 
+  // Backfill user_companies for company users (idempotent)
+  const COMPANY_USER_MEMBERSHIPS = [
+    { user_id: 'cu-1', company_id: '1001nott', role: 'admin', all: true },
+    { user_id: 'cu-2', company_id: '1001nott', role: 'user',  all: false },
+    { user_id: 'cu-3', company_id: 'akurey',   role: 'admin', all: true },
+    { user_id: 'cu-4', company_id: 'bokhald',  role: 'admin', all: true },
+    { user_id: 'fdeps33p', company_id: 'hr',   role: 'user',  all: false },
+  ];
+  for (const m of COMPANY_USER_MEMBERSHIPS) {
+    await pool.query(
+      `INSERT INTO user_companies (user_id, company_id, role, invoices, subscription, hosting, pos, dk_one, dk_plus, timeclock, users)
+       VALUES ($1, $2, $3, $4, $4, $4, $4, $4, $4, $4, $4)
+       ON CONFLICT DO NOTHING`,
+      [m.user_id, m.company_id, m.role, m.all],
+    );
+  }
+
+  // Seed company licences (upsert so changes to SEED_COMPANY_LICENCES take effect on restart)
+  for (const lic of SEED_COMPANY_LICENCES) {
+    await pool.query(
+      `INSERT INTO company_licences (company_id, timeclock, hosting, pos, dk_one, dk_plus)
+       VALUES ($1,$2,$3,$4,$5,$6)
+       ON CONFLICT (company_id) DO UPDATE SET
+         timeclock = EXCLUDED.timeclock,
+         hosting   = EXCLUDED.hosting,
+         pos       = EXCLUDED.pos,
+         dk_one    = EXCLUDED.dk_one,
+         dk_plus   = EXCLUDED.dk_plus`,
+      [lic.company_id, lic.timeclock, lic.hosting, lic.pos, lic.dk_one, lic.dk_plus],
+    );
+  }
+
+  // Seed timeclock URLs (upsert)
+  for (const [companyId, url] of Object.entries(SEED_TIMECLOCK_URLS)) {
+    await pool.query(
+      `UPDATE companies SET timeclock_url = $1 WHERE id = $2`,
+      [url, companyId],
+    );
+  }
+
+  // Set company ownership — holding owns hr, 1001nott, akurey; bokhald is independent
+  await pool.query(`UPDATE companies SET parent_id = 'holding' WHERE id IN ('hr', '1001nott', 'akurey') AND parent_id IS NULL`);
+
   // Give odinn (id=1) admin access to all companies
-  const ALL_COMPANIES = ['hr', '1001nott', 'akurey', 'bokhald'];
+  const ALL_COMPANIES = ['holding', 'hr', '1001nott', 'akurey', 'bokhald'];
   for (const companyId of ALL_COMPANIES) {
     await pool.query(
       `INSERT INTO user_companies (user_id, company_id, role, invoices, subscription, hosting, pos, dk_one, dk_plus, timeclock, users)
@@ -502,6 +620,12 @@ async function migrate() {
     );
   }
 
+  // Give the holding owner user owner role in the holding company
+  await pool.query(
+    `INSERT INTO user_companies (user_id, company_id, role, invoices, subscription, hosting, pos, dk_one, dk_plus, timeclock, users)
+     VALUES ('cu-owner', 'holding', 'owner', true, true, true, true, true, true, true, true)
+     ON CONFLICT DO NOTHING`,
+  );
   // Auth token API logs table
   await pool.query(`
     CREATE TABLE IF NOT EXISTS auth_token_api_logs (
@@ -845,10 +969,10 @@ async function seed() {
   for (const entry of SEED_EMPLOYEE_PHONES) {
     await pool.query(
       `INSERT INTO timeclock_employee_phones
-        (id, company_id, employee_number, employee_name, phone)
+        (id, company_id, kennitala, employee_name, phone)
        VALUES ($1,$2,$3,$4,$5)
        ON CONFLICT DO NOTHING`,
-      [entry.id, entry.company_id, entry.employee_number, entry.employee_name, entry.phone]
+      [entry.id, entry.company_id, entry.kennitala, entry.employee_name, entry.phone]
     );
   }
 
