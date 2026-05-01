@@ -1,50 +1,33 @@
-/**
- * Panel for viewing and managing whitelisted IP addresses for timeclock kiosks.
- * Data is stored in Neon, scoped per company.
- * Uses: @/shared/components/Button, @/shared/components/Card, @/shared/components/Input,
- *       ../api/timeclock.queries, ../api/timeclock.api, ../store/timeclock.store
- * Exports: IpWhitelistPanel
- */
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { Input } from "@/shared/components/Input";
-import { useIpWhitelist, useInvalidateIpWhitelist } from "../api/timeclock.queries";
+import { useIpWhitelist } from "../api/timeclock.queries";
 import { addIpEntry, removeIpEntry } from "../api/timeclock.api";
 import { useTimeclockStore } from "../store/timeclock.store";
 
 export function IpWhitelistPanel() {
   const { data: entries } = useIpWhitelist();
-  const invalidate = useInvalidateIpWhitelist();
+  const qc = useQueryClient();
   const { addIpOpen, setAddIpOpen } = useTimeclockStore();
   const [ip, setIp] = useState("");
   const [label, setLabel] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [removingId, setRemovingId] = useState<string | null>(null);
 
-  async function handleAdd() {
-    if (!ip.trim()) return;
-    setSaving(true);
-    try {
-      await addIpEntry(ip.trim(), label.trim());
-      await invalidate();
+  const addMutation = useMutation({
+    mutationFn: ({ ip, label }: { ip: string; label: string }) => addIpEntry(ip, label),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["timeclock-ip-whitelist"] });
       setIp("");
       setLabel("");
       setAddIpOpen(false);
-    } finally {
-      setSaving(false);
-    }
-  }
+    },
+  });
 
-  async function handleRemove(id: string) {
-    setRemovingId(id);
-    try {
-      await removeIpEntry(id);
-      await invalidate();
-    } finally {
-      setRemovingId(null);
-    }
-  }
+  const removeMutation = useMutation({
+    mutationFn: (id: string) => removeIpEntry(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["timeclock-ip-whitelist"] }),
+  });
 
   return (
     <Card>
@@ -79,10 +62,10 @@ export function IpWhitelistPanel() {
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => handleRemove(entry.id)}
-                disabled={removingId === entry.id}
+                onClick={() => removeMutation.mutate(entry.id)}
+                disabled={removeMutation.isPending && removeMutation.variables === entry.id}
               >
-                {removingId === entry.id ? "..." : "Fjarlægja"}
+                {removeMutation.isPending && removeMutation.variables === entry.id ? "..." : "Fjarlægja"}
               </Button>
             </li>
           ))}
@@ -102,8 +85,13 @@ export function IpWhitelistPanel() {
             onChange={(e) => setLabel(e.target.value)}
           />
           <div className="flex gap-2">
-            <Button variant="primary" size="sm" onClick={handleAdd} disabled={saving || !ip.trim()}>
-              {saving ? "Vista..." : "Vista"}
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => { if (ip.trim()) addMutation.mutate({ ip: ip.trim(), label: label.trim() }); }}
+              disabled={addMutation.isPending || !ip.trim()}
+            >
+              {addMutation.isPending ? "Vista..." : "Vista"}
             </Button>
             <Button variant="ghost" size="sm" onClick={() => setAddIpOpen(false)}>
               Hætta við
