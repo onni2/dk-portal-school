@@ -63,7 +63,9 @@ function CallbackPage() {
         // Match to a portal user by kennitala via the mock backend
         interface AudkenniLoginResponse {
           token: string;
+          companyDkToken?: string | null;
           user: { id: string; username: string; email: string; name: string; role: string; kennitala?: string; phone?: string; mustResetPassword: boolean; companyId?: string };
+          companies: import("@/features/auth/types/auth.types").CompanyMembership[];
         }
         let portalData: AudkenniLoginResponse;
         try {
@@ -75,6 +77,9 @@ function CallbackPage() {
 
         // Store JWT so subsequent API calls are authenticated
         localStorage.setItem("dk-auth-token", portalData.token);
+        if (portalData.companyDkToken) {
+          localStorage.setItem("dk-company-token", portalData.companyDkToken);
+        }
 
         // Optionally enrich with DK Plus employee info for name/email
         interface EmployeeShape { SSNumber?: string; Name: string; Email?: string }
@@ -92,7 +97,7 @@ function CallbackPage() {
           companyId: portalData.user.companyId,
         };
 
-        setAuth(user, portalData.token, []);
+        setAuth(user, portalData.token, portalData.companies ?? []);
         setRole(authRoleToUserRole(user.role));
         navigate({ to: portalData.user.mustResetPassword ? "/reset-password" : "/" });
       })
