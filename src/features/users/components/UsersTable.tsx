@@ -62,7 +62,7 @@ export function UsersTable({ onSelectUser }: Props) {
   const columns: Column<PortalUser>[] = [
     {
       header: "Nafn",
-      accessor: (u) => <p className="text-(--color-text-secondary)">{u.name}</p>,
+      accessor: (u) => <p className="font-mono text-sm text-(--color-text-secondary)">{u.username}</p>,
     },
     {
       header: "Netfang",
@@ -71,6 +71,14 @@ export function UsersTable({ onSelectUser }: Props) {
           ? <span className="text-(--color-text-secondary)">{u.email}</span>
           : <span className="text-(--color-text-muted)">—</span>,
       hideBelow: "md",
+    },
+    {
+      header: "Hýsingaraðgangur",
+      accessor: (u) =>
+        u.hostingUsername
+          ? <span className="font-mono text-xs text-(--color-text-secondary)">{u.hostingUsername}</span>
+          : <span className="text-(--color-text-muted)">—</span>,
+      hideBelow: "lg",
     },
     ...visiblePermissions.map(({ key, label }) => ({
       header: label,

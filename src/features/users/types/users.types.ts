@@ -20,6 +20,7 @@ export interface PortalUser {
   kennitala?: string;
   phone?: string;
   companyId?: string;
+  hostingUsername?: string | null;
 }
 
 export interface InviteUserInput {
