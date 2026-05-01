@@ -11,17 +11,19 @@ import { loadUserPermissions, saveUserPermissions, DEFAULT_PERMISSIONS } from ".
 import { removeUser, updateUserHosting } from "../api/users.api";
 import { fetchHostingAccounts, type HostingAccount } from "../api/hosting.api";
 import { useInvalidatePermissions, useInvalidateUsers } from "../api/users.queries";
+import { useLicence } from "@/features/licence/api/licence.queries";
+import type { LicenceResponse } from "@/features/licence/types/licence.types";
 import type { UserPermissions } from "../types/user-permissions.types";
 import type { PortalUser } from "../types/users.types";
 
-const PERMISSION_LABELS: { key: keyof UserPermissions; label: string; description: string }[] = [
+const PERMISSION_LABELS: { key: keyof UserPermissions; label: string; description: string; licenceModule?: keyof LicenceResponse }[] = [
   { key: "invoices", label: "Reikningsyfirlit", description: "Sér reikninga frá DK Hugbúnaði" },
-  { key: "subscription", label: "Áskrift", description: "Sér og stjórnar áskrift fyrirtækisins" },
-  { key: "hosting", label: "Hýsing", description: "Getur séð og stjórnað hýsingaraðgangi" },
-  { key: "pos", label: "POS", description: "Aðgangur að kassakerfi" },
-  { key: "dkOne", label: "dkOne", description: "Aðgangur að dkOne lausninni" },
-  { key: "dkPlus", label: "dkPlus", description: "Aðgangur að dkPlus lausninni" },
-  { key: "timeclock", label: "Stimpilklukka", description: "Aðgangur að stimpilklukku" },
+  { key: "subscription", label: "Áskrift", description: "Sér og stjórnar áskrift fyrirtækisins", licenceModule: "dkPlus" },
+  { key: "hosting", label: "Hýsing", description: "Getur séð og stjórnað hýsingaraðgangi", licenceModule: "Hosting" },
+  { key: "pos", label: "POS", description: "Aðgangur að kassakerfi", licenceModule: "POS" },
+  { key: "dkOne", label: "dkOne", description: "Aðgangur að dkOne lausninni", licenceModule: "dkOne" },
+  { key: "dkPlus", label: "dkPlus", description: "Aðgangur að dkPlus lausninni", licenceModule: "dkPlus" },
+  { key: "timeclock", label: "Stimpilklukka", description: "Aðgangur að stimpilklukku", licenceModule: "TimeClock" },
   { key: "users", label: "Notendur", description: "Getur stjórnað öðrum notendum" },
 ];
 
@@ -39,6 +41,13 @@ export function UserPanel({ user, onClose }: Props) {
   const [savingHosting, setSavingHosting] = useState(false);
   const invalidatePermissions = useInvalidatePermissions();
   const invalidateUsers = useInvalidateUsers();
+  const { data: licence } = useLicence();
+
+  const visiblePermissions = PERMISSION_LABELS.filter(({ licenceModule }) => {
+    if (!licenceModule) return true;
+    const entry = licence?.[licenceModule];
+    return entry && typeof entry === "object" && "Enabled" in entry && entry.Enabled;
+  });
 
   useEffect(() => {
     loadUserPermissions(user.id)
@@ -148,7 +157,7 @@ export function UserPanel({ user, onClose }: Props) {
             Aðgangur að einingum
           </h3>
           <div className="space-y-3">
-            {PERMISSION_LABELS.map(({ key, label, description }) => (
+            {visiblePermissions.map(({ key, label, description }) => (
               <label
                 key={key}
                 className="flex cursor-pointer items-start gap-3 rounded-lg border border-(--color-border) p-4 transition-colors hover:bg-(--color-surface-hover)"
