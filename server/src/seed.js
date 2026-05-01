@@ -34,6 +34,7 @@ const SEED_USERS = [
 ];
 
 const SEED_COMPANIES = [
+  { id: "holding", name: "Haldsfélag ehf." },
   { id: "hr", name: "HR" },
   { id: "1001nott", name: "1001 Nott" },
   { id: "akurey", name: "Akurey ehf." },
@@ -88,6 +89,18 @@ const SEED_COMPANY_USERS = [
     must_reset_password: true,
     kennitala: "4444444449",
     company_id: "bokhald",
+  },
+  {
+    id: "cu-owner",
+    username: "holding.owner",
+    password: "Owner123!",
+    email: "owner@holding.is",
+    name: "Össur Eiríksson",
+    role: "user",
+    status: "active",
+    must_reset_password: false,
+    kennitala: "6666666669",
+    company_id: "holding",
   },
 ];
 
@@ -159,6 +172,7 @@ const SEED_EMPLOYEE_PHONES = [
 
 // Per-company module access — mirrors what DK's real licence DB would look like
 const SEED_COMPANY_LICENCES = [
+  { company_id: "holding",  timeclock: true,  hosting: true,  pos: true,  dk_one: true,  dk_plus: true  },
   { company_id: "hr",       timeclock: true,  hosting: true,  pos: true,  dk_one: true,  dk_plus: true  },
   { company_id: "1001nott", timeclock: true,  hosting: false, pos: true,  dk_one: false, dk_plus: true  },
   { company_id: "akurey",   timeclock: false, hosting: true,  pos: false, dk_one: true,  dk_plus: false },
@@ -440,6 +454,9 @@ async function migrate() {
   // Add created_at to companies for ordering in company picker
   await pool.query(`ALTER TABLE companies ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`);
 
+  // Add parent_id to companies for stakeholder/ownership hierarchy
+  await pool.query(`ALTER TABLE companies ADD COLUMN IF NOT EXISTS parent_id TEXT REFERENCES companies(id)`);
+
   // Migrate portal_users.role to new three-tier system (idempotent)
   await pool.query(`UPDATE portal_users SET role = 'god'        WHERE id = '1'`);
   await pool.query(`UPDATE portal_users SET role = 'super_admin' WHERE id IN ('2', 'tm-jon', 'tm-agusta')`);
@@ -503,8 +520,11 @@ async function migrate() {
     );
   }
 
+  // Set company ownership — holding owns hr, 1001nott, akurey; bokhald is independent
+  await pool.query(`UPDATE companies SET parent_id = 'holding' WHERE id IN ('hr', '1001nott', 'akurey') AND parent_id IS NULL`);
+
   // Give odinn (id=1) admin access to all companies
-  const ALL_COMPANIES = ['hr', '1001nott', 'akurey', 'bokhald'];
+  const ALL_COMPANIES = ['holding', 'hr', '1001nott', 'akurey', 'bokhald'];
   for (const companyId of ALL_COMPANIES) {
     await pool.query(
       `INSERT INTO user_companies (user_id, company_id, role, invoices, subscription, hosting, pos, dk_one, dk_plus, timeclock, users)
@@ -513,6 +533,13 @@ async function migrate() {
       [companyId],
     );
   }
+
+  // Give the holding owner user owner role in the holding company
+  await pool.query(
+    `INSERT INTO user_companies (user_id, company_id, role, invoices, subscription, hosting, pos, dk_one, dk_plus, timeclock, users)
+     VALUES ('cu-owner', 'holding', 'owner', true, true, true, true, true, true, true, true)
+     ON CONFLICT DO NOTHING`,
+  );
 
   // Zoho tickets tables
   await pool.query(`
