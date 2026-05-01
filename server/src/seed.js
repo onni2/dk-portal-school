@@ -567,6 +567,67 @@ async function migrate() {
     );
   }
 
+  // dk_users — full DK system roster per company (source of truth for who can be invited to dkOne)
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS dk_users (
+      id              TEXT PRIMARY KEY,
+      company_id      TEXT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+      name            TEXT NOT NULL,
+      email           TEXT NOT NULL,
+      kennitala       TEXT,
+      employee_number TEXT,
+      created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await pool.query(`ALTER TABLE dk_users ADD COLUMN IF NOT EXISTS kennitala TEXT`);
+  await pool.query(`ALTER TABLE dk_users ADD COLUMN IF NOT EXISTS employee_number TEXT`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS dk_users_email_company ON dk_users (email, company_id)`);
+  await pool.query(`ALTER TABLE dkone_users ADD COLUMN IF NOT EXISTS kennitala TEXT`);
+
+  const SEED_DK_USERS = [
+    // HR — mix of people already in dkone_users and new ones not yet invited
+    { id: "dku-hr-1",  company_id: "hr",       name: "Anna Sigurðardóttir",          email: "anna@hr.is",        kennitala: "1501842349", employee_number: "101" },
+    { id: "dku-hr-2",  company_id: "hr",       name: "Gunnar Björnsson",             email: "gunnar@hr.is",      kennitala: "0712763210", employee_number: "102" },
+    { id: "dku-hr-3",  company_id: "hr",       name: "Helga Magnúsdóttir",           email: "helga@hr.is",       kennitala: "2203854321", employee_number: "104" },
+    { id: "dku-hr-4",  company_id: "hr",       name: "Davíð Ásgeirsson",             email: "david@hr.is",       kennitala: "0908901234", employee_number: "110" },
+    { id: "dku-hr-5",  company_id: "hr",       name: "Sigrún Ólafsdóttir",           email: "sigrun@hr.is",      kennitala: "1506885678", employee_number: "103" },
+    // Not yet in dkone_users
+    { id: "dku-hr-6",  company_id: "hr",       name: "Sigga María Sigurðardóttir",   email: "sigga@hr.is",       kennitala: "2809923456", employee_number: "130" },
+    { id: "dku-hr-7",  company_id: "hr",       name: "Aron Freyr Jónsson",           email: "aron.freyr@hr.is",  kennitala: "0304887890", employee_number: "131" },
+    { id: "dku-hr-8",  company_id: "hr",       name: "Berglind Ósk Benediktsdóttir", email: "berglind@hr.is",    kennitala: "1711952345", employee_number: "132" },
+    { id: "dku-hr-9",  company_id: "hr",       name: "Dagur Þór Sigurbjörnsson",     email: "dagur@hr.is",       kennitala: "0601906789", employee_number: "133" },
+    { id: "dku-hr-10", company_id: "hr",       name: "Embla Björk Kristjánsdóttir",  email: "embla@hr.is",       kennitala: "2502991234", employee_number: "134" },
+    // 1001 Nott
+    { id: "dku-nott-1", company_id: "1001nott", name: "Björn Gunnarsson",            email: "bjorn@1001nott.is",   kennitala: "1203854567", employee_number: "201" },
+    { id: "dku-nott-2", company_id: "1001nott", name: "Lilja Benediktsdóttir",       email: "lilja@1001nott.is",   kennitala: "0807902345", employee_number: "202" },
+    { id: "dku-nott-3", company_id: "1001nott", name: "Hildur Rún Björnsdóttir",     email: "hildur@1001nott.is",  kennitala: "1409876543", employee_number: "207" },
+    { id: "dku-nott-4", company_id: "1001nott", name: "Kristín Helga Magnúsdóttir",  email: "kristin@1001nott.is", kennitala: "2211953456", employee_number: "210" },
+    { id: "dku-nott-5", company_id: "1001nott", name: "Þorgeir Einarsson",           email: "thorgeir@1001nott.is",kennitala: "0505887654", employee_number: "211" },
+    { id: "dku-nott-6", company_id: "1001nott", name: "Salóme Rún Sigurðardóttir",   email: "salome@1001nott.is",  kennitala: "1812991234", employee_number: "212" },
+    // Akurey
+    { id: "dku-akurey-1", company_id: "akurey", name: "Guðrún Halldórsdóttir",         email: "gudrun@akurey.is",   kennitala: "0203856789", employee_number: "301" },
+    { id: "dku-akurey-2", company_id: "akurey", name: "Stefán Ármannsson",             email: "stefan@akurey.is",   kennitala: "1506782345", employee_number: "302" },
+    { id: "dku-akurey-3", company_id: "akurey", name: "Geir Ólafsson",                 email: "geir@akurey.is",     kennitala: "2909923456", employee_number: "307" },
+    { id: "dku-akurey-4", company_id: "akurey", name: "Sólveig Inga Kristjánsdóttir", email: "solveig@akurey.is",  kennitala: "1101957890", employee_number: "310" },
+    { id: "dku-akurey-5", company_id: "akurey", name: "Magnús Freyr Þórðarson",        email: "magnus@akurey.is",   kennitala: "0407891234", employee_number: "311" },
+    { id: "dku-akurey-6", company_id: "akurey", name: "Dröfn Sigríður Björnsdóttir",   email: "drofn@akurey.is",    kennitala: "2306946789", employee_number: "312" },
+    // Bokhald
+    { id: "dku-bokhald-1", company_id: "bokhald", name: "Sólveig Kristinsdóttir",      email: "solveig@bokhald.is", kennitala: "0802852345", employee_number: "401" },
+    { id: "dku-bokhald-2", company_id: "bokhald", name: "Árni Þorsteinsson",            email: "arni@bokhald.is",    kennitala: "1607903456", employee_number: "402" },
+    { id: "dku-bokhald-3", company_id: "bokhald", name: "Lilja Dögg Sigurðardóttir",   email: "lilja@bokhald.is",   kennitala: "0911957890", employee_number: "406" },
+    { id: "dku-bokhald-4", company_id: "bokhald", name: "Björn Sigursson",              email: "bjorn@bokhald.is",   kennitala: "2204881234", employee_number: "410" },
+    { id: "dku-bokhald-5", company_id: "bokhald", name: "Tinna Mjöll Eiríksdóttir",   email: "tinna@bokhald.is",   kennitala: "0703956789", employee_number: "411" },
+    { id: "dku-bokhald-6", company_id: "bokhald", name: "Valur Gunnarsson",             email: "valur@bokhald.is",   kennitala: "1508922345", employee_number: "412" },
+  ];
+
+  for (const u of SEED_DK_USERS) {
+    await pool.query(
+      `INSERT INTO dk_users (id, company_id, name, email, kennitala, employee_number)
+       VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT DO NOTHING`,
+      [u.id, u.company_id, u.name, u.email, u.kennitala, u.employee_number],
+    );
+  }
+
   const SEED_TICKETS = [
     {
       id: "tk-1",

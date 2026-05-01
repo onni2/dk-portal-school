@@ -1,5 +1,5 @@
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { fetchDkOneUsers, fetchCompanyUsers, fetchSubCompanies } from "./dkone.api";
+import { fetchDkOneUsers, fetchCompanyUsers, fetchSubCompanies, fetchDkUsers } from "./dkone.api";
 
 export const dkOneUsersQueryOptions = queryOptions({
   queryKey: ["dkone-users"],
@@ -26,4 +26,13 @@ export const subCompaniesQueryOptions = queryOptions({
 
 export function useSubCompanies() {
   return useSuspenseQuery(subCompaniesQueryOptions);
+}
+
+export const dkUsersQueryOptions = queryOptions({
+  queryKey: ["dkone-dk-users"],
+  queryFn: fetchDkUsers,
+});
+
+export function useDkUsers() {
+  return useSuspenseQuery(dkUsersQueryOptions);
 }

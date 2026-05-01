@@ -14,6 +14,23 @@ export interface DkOneUser {
   addedByName: string | null;
 }
 
+export interface DkUser {
+  id: string;
+  name: string;
+  email: string;
+  kennitala: string | null;
+  employeeNumber: string | null;
+  companyId: string;
+  hasAccess: boolean;
+}
+
+export interface DkEmployee {
+  number: string;
+  name: string;
+  ssNumber: string | null;
+  email: string | null;
+}
+
 export interface CompanyUser {
   id: string;
   name: string;
@@ -27,9 +44,6 @@ export interface SubCompany {
 }
 
 export interface InviteDkOneUserInput {
-  employeeNumber?: string;
-  fullName: string;
-  email: string;
-  username: string;
+  dkUserId: string;
   role: DkOneRole;
 }
