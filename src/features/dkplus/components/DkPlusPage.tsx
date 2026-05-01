@@ -29,7 +29,7 @@ export function DkPlusPage() {
   return (
     <PageTemplate
       title={logToken ? `${logToken.description} — Notkun` : "dk vefþjónustur"}
-      description={logToken ? undefined : "Á þessari síðu er hægt að stofna auðkenningartákn til að tengja vefþjónustur við bókhaldskerfið þitt. Einnig er hægt að sjá notkun á auðkenningartáknunum með því að ýta á 'Skoða API log'"}
+      description={logToken ? undefined : "Á þessari síðu er hægt að stofna auðkenningartákn til að tengja vefþjónustur við bókhaldskerfið þitt. Einnig er hægt að sjá notkun á auðkenningartáknunum með því að ýta á 'Sjá notkun' hnappinn."}
       actions={logToken ? undefined : <HelpButton />}
     >
       <Suspense fallback={<LoadingSpinner />}>
