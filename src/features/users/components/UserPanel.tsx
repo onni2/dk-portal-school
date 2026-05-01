@@ -8,7 +8,8 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/shared/components/Button";
 import { loadUserPermissions, saveUserPermissions, DEFAULT_PERMISSIONS } from "../api/permissions.api";
-import { removeUser } from "../api/users.api";
+import { removeUser, updateUserHosting } from "../api/users.api";
+import { fetchHostingAccounts, type HostingAccount } from "../api/hosting.api";
 import { useInvalidatePermissions, useInvalidateUsers } from "../api/users.queries";
 import type { UserPermissions } from "../types/user-permissions.types";
 import type { PortalUser } from "../types/users.types";
@@ -33,6 +34,9 @@ export function UserPanel({ user, onClose }: Props) {
   const [permissions, setPermissions] = useState<UserPermissions>(DEFAULT_PERMISSIONS);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [hostingAccounts, setHostingAccounts] = useState<HostingAccount[]>([]);
+  const [selectedHosting, setSelectedHosting] = useState<string>(user.hostingUsername ?? "");
+  const [savingHosting, setSavingHosting] = useState(false);
   const invalidatePermissions = useInvalidatePermissions();
   const invalidateUsers = useInvalidateUsers();
 
@@ -40,6 +44,9 @@ export function UserPanel({ user, onClose }: Props) {
     loadUserPermissions(user.id)
       .then(setPermissions)
       .catch(() => setPermissions(DEFAULT_PERMISSIONS));
+    fetchHostingAccounts()
+      .then(setHostingAccounts)
+      .catch(() => setHostingAccounts([]));
   }, [user.id]);
 
   function togglePermission(key: keyof UserPermissions) {
@@ -54,6 +61,16 @@ export function UserPanel({ user, onClose }: Props) {
       onClose();
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleSaveHosting() {
+    setSavingHosting(true);
+    try {
+      await updateUserHosting(user.id, selectedHosting || null);
+      void invalidateUsers();
+    } finally {
+      setSavingHosting(false);
     }
   }
 
@@ -75,7 +92,7 @@ export function UserPanel({ user, onClose }: Props) {
       <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} />
 
       {/* Modal */}
-      <div className="fixed left-1/2 top-1/2 z-50 flex w-full max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col rounded-[var(--radius-xl)] bg-(--color-surface) shadow-xl max-h-[calc(100vh-4rem)] overflow-hidden">
+      <div className="fixed left-1/2 top-1/2 z-50 flex w-full max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col rounded-xl bg-(--color-surface) shadow-xl max-h-[calc(100vh-4rem)] overflow-hidden">
         {/* Header */}
         <div className="flex items-start justify-between border-b border-(--color-border) p-6">
           <div>
@@ -89,12 +106,40 @@ export function UserPanel({ user, onClose }: Props) {
           </div>
           <button
             onClick={onClose}
-            className="rounded-[var(--radius-md)] p-1.5 text-(--color-text-muted) transition-colors hover:bg-(--color-surface-hover) hover:text-(--color-text)"
+            className="rounded-md p-1.5 text-(--color-text-muted) transition-colors hover:bg-(--color-surface-hover) hover:text-(--color-text)"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
+        </div>
+
+        {/* Hosting account */}
+        <div className="border-b border-(--color-border) px-6 py-4">
+          <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-(--color-text-muted)">
+            Hýsingaraðgangur
+          </h3>
+          <div className="flex gap-2">
+            <select
+              value={selectedHosting}
+              onChange={(e) => setSelectedHosting(e.target.value)}
+              className="flex-1 rounded-lg border border-(--color-border) bg-(--color-surface) px-3 py-2 text-sm text-(--color-text) outline-none focus:border-(--color-primary) focus:ring-1 focus:ring-(--color-primary)"
+            >
+              <option value="">Enginn hýsingaraðgangur</option>
+              {hostingAccounts.map((a) => (
+                <option key={a.id} value={a.username}>
+                  {a.displayName} ({a.username})
+                </option>
+              ))}
+            </select>
+            <Button
+              size="sm"
+              onClick={() => void handleSaveHosting()}
+              disabled={savingHosting || selectedHosting === (user.hostingUsername ?? "")}
+            >
+              {savingHosting ? "Vista..." : "Vista"}
+            </Button>
+          </div>
         </div>
 
         {/* Permissions */}
@@ -106,7 +151,7 @@ export function UserPanel({ user, onClose }: Props) {
             {PERMISSION_LABELS.map(({ key, label, description }) => (
               <label
                 key={key}
-                className="flex cursor-pointer items-start gap-3 rounded-[var(--radius-lg)] border border-(--color-border) p-4 transition-colors hover:bg-(--color-surface-hover)"
+                className="flex cursor-pointer items-start gap-3 rounded-lg border border-(--color-border) p-4 transition-colors hover:bg-(--color-surface-hover)"
               >
                 <input
                   type="checkbox"

@@ -3,7 +3,7 @@
  * kennitala, optional hosting account, and module permissions.
  * On submit the user is added to the portal store with default password "dk".
  * Uses: ../api/users.api, ../api/permissions.api, @/shared/components/Button,
- *       @/shared/components/Input, @/mocks/hosting.mock
+ *       @/shared/components/Input
  * Exports: InviteUserModal
  */
 import { useState, useEffect } from "react";

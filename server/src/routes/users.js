@@ -54,7 +54,15 @@ async function requireAdminOrUsersPermission(req, res, next) {
 router.get("/", requireAdminOrUsersPermission, async (req, res) => {
   try {
     const { rows } = await pool.query(
-      "SELECT id, username, email, name, role, status, must_reset_password, kennitala, phone, company_id, created_at FROM portal_users WHERE company_id = $1 ORDER BY created_at ASC",
+      `SELECT pu.id, pu.username, pu.email, pu.name, pu.role, pu.status,
+              pu.must_reset_password, pu.kennitala, pu.phone, pu.company_id,
+              ha.username AS hosting_username,
+              pu.created_at
+       FROM portal_users pu
+       LEFT JOIN hosting_accounts ha
+         ON ha.username = pu.hosting_username AND ha.company_id = pu.company_id
+       WHERE pu.company_id = $1
+       ORDER BY pu.created_at ASC`,
       [getCompanyId(req)],
     );
     res.json(rows.map((u) => ({
@@ -68,6 +76,7 @@ router.get("/", requireAdminOrUsersPermission, async (req, res) => {
       kennitala: u.kennitala,
       phone: u.phone,
       companyId: u.company_id,
+      hostingUsername: u.hosting_username ?? null,
       createdAt: u.created_at,
     })));
   } catch (err) {
@@ -120,6 +129,22 @@ router.post("/invite", requireAdminOrUsersPermission, async (req, res) => {
       user: { id, username, email, name, role, status: "pending", mustResetPassword: true, companyId, kennitala: kennitala ?? null, hostingUsername: hostingUsername ?? null },
       generatedPassword,
     });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Villa á þjóni" });
+  }
+});
+
+// PATCH /users/:id/hosting — admin only, link/unlink hosting account
+router.patch("/:id/hosting", requireAdmin, async (req, res) => {
+  const { hostingUsername } = req.body;
+  try {
+    const { rowCount } = await pool.query(
+      `UPDATE portal_users SET hosting_username = $1 WHERE id = $2 AND company_id = $3`,
+      [hostingUsername ?? null, req.params.id, getCompanyId(req)],
+    );
+    if (rowCount === 0) return res.status(404).json({ message: "Notandi ekki fundinn" });
+    res.status(204).send();
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Villa á þjóni" });

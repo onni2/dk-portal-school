@@ -185,7 +185,7 @@ const SEED_POS_LOGS = [
 ];
 
 const SEED_HOSTING_ACCOUNTS = [
-  { id: "ha-1", company_id: "hr", username: "fyr.agusta",  display_name: "Ágústa B.",   email: "agusta@fyrirtaeki.is",  has_mfa: true  },
+  { id: "ha-1", company_id: "hr", username: "dk.agusta",  display_name: "dk.agusta",   email: "agusta@fyrirtaeki.is",  has_mfa: true  },
   { id: "ha-2", company_id: "hr", username: "fyr.bjorn",   display_name: "Björn G.",    email: "bjorn@fyrirtaeki.is",   has_mfa: false },
   { id: "ha-3", company_id: "hr", username: "fyr.gudrun",  display_name: "Guðrún S.",   email: "gudrun@fyrirtaeki.is",  has_mfa: false },
   { id: "ha-4", company_id: "hr", username: "fyr.halldor", display_name: "Halldór Þ.",  email: "halldor@fyrirtaeki.is", has_mfa: true  },
@@ -212,6 +212,8 @@ const TEAM_MEMBERS = [
     email: "agusta@dk.is",
     name: "Ágústa Björk Schweitz Bergsveinsdóttir",
     must_reset_password: true,
+    hosting_username: "dk.agusta",
+    kennitala: "2810003920",
   },
   {
     id: "tm-jon",
@@ -220,6 +222,7 @@ const TEAM_MEMBERS = [
     email: "admin2@example.is",
     name: "Jón Ágústsson",
     must_reset_password: false,
+    hosting_username: null,
   },
 ];
 
@@ -409,11 +412,25 @@ async function migrate() {
 
     await pool.query(
       `INSERT INTO portal_users
-        (id, username, password, email, name, role, status, must_reset_password, company_id)
-       VALUES ($1,$2,$3,$4,$5,'admin','active',$6,'hr')
+        (id, username, password, email, name, role, status, must_reset_password, company_id, hosting_username)
+       VALUES ($1,$2,$3,$4,$5,'admin','active',$6,'hr',$7)
        ON CONFLICT DO NOTHING`,
-      [member.id, member.username, hashed, member.email, member.name, member.must_reset_password]
+      [member.id, member.username, hashed, member.email, member.name, member.must_reset_password, member.hosting_username ?? null]
     );
+
+    // Update hosting_username and kennitala for existing rows (ON CONFLICT DO NOTHING skips them)
+    if (member.hosting_username) {
+      await pool.query(
+        `UPDATE portal_users SET hosting_username = $1 WHERE id = $2 AND hosting_username IS NULL`,
+        [member.hosting_username, member.id]
+      );
+    }
+    if (member.kennitala) {
+      await pool.query(
+        `UPDATE portal_users SET kennitala = $1 WHERE id = $2 AND kennitala IS NULL`,
+        [member.kennitala, member.id]
+      );
+    }
 
     await pool.query(
       `INSERT INTO user_permissions
