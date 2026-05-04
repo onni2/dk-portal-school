@@ -4,7 +4,7 @@ interface Props {
 
 export function MaintenanceOverlay({ message }: Props) {
   return (
-    <div className="flex flex-col items-center justify-center py-20 text-center">
+    <div className="flex flex-1 flex-col items-center justify-center text-center">
       <div className="rounded-[var(--radius-lg)] border border-(--color-border) bg-(--color-surface) shadow-[var(--shadow-sm)] px-8 py-10 max-w-md w-full">
         <div className="mb-4 flex items-center justify-center">
           <svg
