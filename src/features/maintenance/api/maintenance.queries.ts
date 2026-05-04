@@ -4,6 +4,7 @@ import { fetchMaintenanceLocks } from "./maintenance.api";
 export const maintenanceQueryOptions = queryOptions({
   queryKey: ["maintenance-locks"],
   queryFn: fetchMaintenanceLocks,
+  refetchInterval: 30_000,
 });
 
 export function useMaintenanceLocks() {
