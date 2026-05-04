@@ -13,7 +13,8 @@ export interface LicenceResponse {
   Payroll?: { Enabled: boolean };
   Member?: { Enabled: boolean };
   Purchase?: { PurchaseOrders: boolean };
-  // DK product subscriptions — replace mock field names with real API field names when available
+  // Portal product access — served from company_licences table, shaped to match DK API style
+  TimeClock?: { Enabled: boolean };
   Hosting?: { Enabled: boolean };
   POS?: { Enabled: boolean };
   dkOne?: { Enabled: boolean };
@@ -30,6 +31,7 @@ export type LicenceModule =
   | "Payroll"
   | "Member"
   | "Purchase"
+  | "TimeClock"
   | "Hosting"
   | "POS"
   | "dkOne"

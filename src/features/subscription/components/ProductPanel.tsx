@@ -10,7 +10,7 @@ export function parseExtraDesc2(raw: string | null | undefined): {
   if (semi === -1) return { description: raw.trim() || null, articleId: null };
   const description = raw.slice(0, semi).trim() || null;
   const meta = raw.slice(semi + 1);
-  const match = meta.match(/articleId="([^"]+)"/);
+  const match = meta.match(/articleId[=:]\s*"([^"]+)"/);
   return { description, articleId: match?.[1] ?? null };
 }
 

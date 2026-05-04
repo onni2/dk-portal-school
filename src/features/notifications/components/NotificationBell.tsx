@@ -136,7 +136,7 @@ export function NotificationBell() {
                     {/* Content — click to mark as read */}
                     <button
                       type="button"
-                      onClick={(e) => { e.stopPropagation(); !n.read && markAsRead(n.id); }}
+                      onClick={(e) => { e.stopPropagation(); if (!n.read) markAsRead(n.id); }}
                       className="flex-1 min-w-0 text-left"
                     >
                       <p className={cn(
