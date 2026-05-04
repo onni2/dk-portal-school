@@ -45,25 +45,38 @@ router.get("/services", requireAuth, async (req, res) => {
 
 router.post("/services/:id/restart", requireAuth, async (req, res) => {
   const { id } = req.params;
+  const companyId = req.companyId;
   try {
     const executedBy = await getUserName(req.user.id);
 
     await pool.query(
       "INSERT INTO pos_logs (id, service_id, service_type, company_id, description, executed_by) VALUES ($1,$2,'dkpos',$3,$4,$5)",
-      [generateId(), id, req.companyId, "Service State Changed: Stopped", executedBy],
-    );
-    await pool.query(
-      "INSERT INTO pos_logs (id, service_id, service_type, company_id, description, executed_by) VALUES ($1,$2,'dkpos',$3,$4,$5)",
-      [generateId(), id, req.companyId, "Service State Changed: Running", executedBy],
+      [generateId(), id, companyId, "Service State Changed: Stopped", executedBy],
     );
 
     const { rows } = await pool.query(
-      "UPDATE pos_services SET state = 'running' WHERE id = $1 AND company_id = $2 RETURNING id, name, display, server, state, mode, path",
-      [id, req.companyId],
+      "UPDATE pos_services SET state = 'stopped' WHERE id = $1 AND company_id = $2 RETURNING id, name, display, server, state, mode, path",
+      [id, companyId],
     );
 
     if (!rows[0]) return res.status(404).json({ message: "Þjónusta fannst ekki" });
     res.json(mapService(rows[0]));
+
+    const cooldown = 3000 + Math.floor(Math.random() * 4000);
+    setTimeout(async () => {
+      try {
+        await pool.query(
+          "INSERT INTO pos_logs (id, service_id, service_type, company_id, description, executed_by) VALUES ($1,$2,'dkpos',$3,$4,$5)",
+          [generateId(), id, companyId, "Service State Changed: Running", executedBy],
+        );
+        await pool.query(
+          "UPDATE pos_services SET state = 'running' WHERE id = $1 AND company_id = $2",
+          [id, companyId],
+        );
+      } catch (err) {
+        console.error("Error during dkPOS restart cooldown:", err);
+      }
+    }, cooldown);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Villa á þjóni" });
@@ -100,25 +113,38 @@ router.get("/rest", requireAuth, async (req, res) => {
 
 router.post("/rest/:id/restart", requireAuth, async (req, res) => {
   const { id } = req.params;
+  const companyId = req.companyId;
   try {
     const executedBy = await getUserName(req.user.id);
 
     await pool.query(
       "INSERT INTO pos_logs (id, service_id, service_type, company_id, description, executed_by) VALUES ($1,$2,'rest',$3,$4,$5)",
-      [generateId(), id, req.companyId, "Service State Changed: Stopped", executedBy],
-    );
-    await pool.query(
-      "INSERT INTO pos_logs (id, service_id, service_type, company_id, description, executed_by) VALUES ($1,$2,'rest',$3,$4,$5)",
-      [generateId(), id, req.companyId, "Service State Changed: Running", executedBy],
+      [generateId(), id, companyId, "Service State Changed: Stopped", executedBy],
     );
 
     const { rows } = await pool.query(
-      "UPDATE pos_rest SET state = 'running' WHERE id = $1 AND company_id = $2 RETURNING id, name, display, server, state, mode, path",
-      [id, req.companyId],
+      "UPDATE pos_rest SET state = 'stopped' WHERE id = $1 AND company_id = $2 RETURNING id, name, display, server, state, mode, path",
+      [id, companyId],
     );
 
     if (!rows[0]) return res.status(404).json({ message: "Þjónusta fannst ekki" });
     res.json(mapService(rows[0]));
+
+    const cooldown = 3000 + Math.floor(Math.random() * 4000);
+    setTimeout(async () => {
+      try {
+        await pool.query(
+          "INSERT INTO pos_logs (id, service_id, service_type, company_id, description, executed_by) VALUES ($1,$2,'rest',$3,$4,$5)",
+          [generateId(), id, companyId, "Service State Changed: Running", executedBy],
+        );
+        await pool.query(
+          "UPDATE pos_rest SET state = 'running' WHERE id = $1 AND company_id = $2",
+          [id, companyId],
+        );
+      } catch (err) {
+        console.error("Error during REST restart cooldown:", err);
+      }
+    }, cooldown);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Villa á þjóni" });
