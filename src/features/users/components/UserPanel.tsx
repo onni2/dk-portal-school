@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/shared/components/Button";
 import { saveUserPermissions, DEFAULT_PERMISSIONS } from "../api/permissions.api";
@@ -33,12 +33,9 @@ export function UserPanel({ user, onClose }: Props) {
   const { data: licence } = useLicence();
   const { data: loadedPermissions } = useQuery(permissionsQueryOptions(user.id));
   const { data: hostingAccounts = [] } = useQuery(hostingAccountsQueryOptions);
-  const [permissions, setPermissions] = useState<UserPermissions>(DEFAULT_PERMISSIONS);
+  const [editedPermissions, setEditedPermissions] = useState<UserPermissions | null>(null);
+  const permissions = editedPermissions ?? loadedPermissions ?? DEFAULT_PERMISSIONS;
   const [selectedHosting, setSelectedHosting] = useState<string>(user.hostingUsername ?? "");
-
-  useEffect(() => {
-    if (loadedPermissions) setPermissions(loadedPermissions);
-  }, [loadedPermissions]);
 
   const visiblePermissions = PERMISSION_LABELS.filter(({ licenceModule }) => {
     if (!licenceModule) return true;
@@ -47,7 +44,7 @@ export function UserPanel({ user, onClose }: Props) {
   });
 
   function togglePermission(key: keyof UserPermissions) {
-    setPermissions((prev) => ({ ...prev, [key]: !prev[key] }));
+    setEditedPermissions((prev) => ({ ...(prev ?? permissions), [key]: !permissions[key] }));
   }
 
   const saveMutation = useMutation({
