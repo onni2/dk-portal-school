@@ -15,6 +15,7 @@ import { ProfileDropdown } from "@/features/auth/components/ProfileDropdown";
 import { CompanySelector } from "@/features/company/components/CompanySelector";
 import { NotificationBell } from "@/features/notifications/components/NotificationBell";
 import { subCompaniesQueryOptions } from "@/features/dkone/api/dkone.queries";
+import { useRoleStore } from "@/features/licence/store/role.store";
 
 function findActiveChild(children: { to: string }[], path: string): string | null {
   const matches = children.filter((c) => path === c.to || path.startsWith(c.to + "/"));
