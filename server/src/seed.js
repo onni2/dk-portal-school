@@ -269,6 +269,70 @@ const ZOHO_TEST_USER = {
   company_id: "hr",
 };
 
+function seededRand(n) {
+  const x = Math.sin(n + 1) * 10000;
+  return x - Math.floor(x);
+}
+
+function generateBulkApiLogs() {
+  const LOG_URIS = [
+    { uri: "/api/v1/customer/transaction/page/1/1", method: "GET",  download: 11962, upload: 0,   query: "" },
+    { uri: "/api/v1/TimeClock/settings",             method: "GET",  download: 160,   upload: 0,   query: "" },
+    { uri: "/api/v1/general/employee",               method: "GET",  download: 3592,  upload: 0,   query: "" },
+    { uri: "/api/v1/invoice/list",                   method: "GET",  download: 5841,  upload: 0,   query: "status=unpaid" },
+    { uri: "/api/v1/product/search",                 method: "POST", download: 8204,  upload: 312, query: "" },
+    { uri: "/api/v1/account/balance",                method: "GET",  download: 840,   upload: 0,   query: "" },
+    { uri: "/api/v1/order/list",                     method: "GET",  download: 14320, upload: 0,   query: "" },
+    { uri: "/api/v1/customer/profile",               method: "GET",  download: 2104,  upload: 0,   query: "" },
+  ];
+
+  const entries = [];
+  const start = new Date("2025-05-01T00:00:00Z");
+  const end   = new Date("2026-04-30T23:59:00Z");
+  let seq = 0;
+
+  const cursor = new Date(start);
+  while (cursor <= end) {
+    const dayOffset = Math.round((cursor - start) / 86400000);
+    const isWeekend = cursor.getUTCDay() === 0 || cursor.getUTCDay() === 6;
+    const month = cursor.getUTCMonth();
+    const isBusy = month >= 8 || month <= 1; // Sep–Feb busier
+    const base = isWeekend ? 2 : (isBusy ? 18 : 10);
+    const variance = Math.floor(seededRand(dayOffset * 7 + 3) * 8) - 3;
+    const dailyCalls = Math.max(0, base + variance);
+
+    for (let i = 0; i < dailyCalls; i++) {
+      seq++;
+      const u = LOG_URIS[seq % LOG_URIS.length];
+      const hour   = 8  + Math.floor(seededRand(seq * 11) * 9);
+      const minute = Math.floor(seededRand(seq * 13) * 60);
+      const second = Math.floor(seededRand(seq * 17) * 60);
+      const isErr  = seededRand(seq * 31) < 0.05;
+      const status = isErr ? (seededRand(seq * 37) < 0.5 ? 404 : 500) : 200;
+      const ymd    = cursor.toISOString().slice(0, 10);
+      entries.push({
+        id:                 `atal-gen-${seq}`,
+        token_id:           "at-1",
+        company_id:         "hr",
+        user_name:          "Jón Ágústsson",
+        uri:                u.uri,
+        method:             u.method,
+        query:              u.query,
+        status_code:        status,
+        ip_address:         "130.208.24.15",
+        user_agent:         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        bandwidth_upload:   u.upload,
+        bandwidth_download: u.download,
+        time_taken:         5 + Math.floor(seededRand(seq * 19) * 45),
+        error:              status === 404 ? "Not found" : status === 500 ? "Internal server error" : null,
+        created_at:         `${ymd}T${String(hour).padStart(2,"0")}:${String(minute).padStart(2,"0")}:${String(second).padStart(2,"0")}Z`,
+      });
+    }
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+  return entries;
+}
+
 async function migrate() {
   await pool.query(`ALTER TABLE companies ADD COLUMN IF NOT EXISTS dk_token TEXT`);
   await pool.query(`ALTER TABLE companies ADD COLUMN IF NOT EXISTS timeclock_url TEXT`);
@@ -674,6 +738,22 @@ async function migrate() {
        ON CONFLICT DO NOTHING`,
       [l.id, l.token_id, l.company_id, l.user_name, l.uri, l.method, l.query, l.status_code, l.ip_address, l.user_agent, l.bandwidth_upload, l.bandwidth_download, l.time_taken, l.error, l.created_at],
     );
+  }
+
+  const bulkLogs = generateBulkApiLogs();
+  const existingBulk = await pool.query(`SELECT 1 FROM auth_token_api_logs WHERE id = 'atal-gen-1' LIMIT 1`);
+  if (existingBulk.rows.length === 0) {
+    await pool.query("BEGIN");
+    for (const l of bulkLogs) {
+      await pool.query(
+        `INSERT INTO auth_token_api_logs
+           (id, token_id, company_id, user_name, uri, method, query, status_code, ip_address, user_agent, bandwidth_upload, bandwidth_download, time_taken, error, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+         ON CONFLICT DO NOTHING`,
+        [l.id, l.token_id, l.company_id, l.user_name, l.uri, l.method, l.query, l.status_code, l.ip_address, l.user_agent, l.bandwidth_upload, l.bandwidth_download, l.time_taken, l.error, l.created_at],
+      );
+    }
+    await pool.query("COMMIT");
   }
 
   // Auth tokens tables
