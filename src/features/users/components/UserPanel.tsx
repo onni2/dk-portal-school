@@ -1,26 +1,24 @@
-/**
- * Slide-over panel for viewing and editing a portal user's permissions.
- * Opens from the right when a user row is clicked. Allows toggling permissions and deleting the user.
- * Uses: @/shared/components/Button,
- *       ../api/permissions.api, ../store/users.store, ../types/user-permissions.types
- * Exports: UserPanel
- */
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/shared/components/Button";
-import { loadUserPermissions, saveUserPermissions, DEFAULT_PERMISSIONS } from "../api/permissions.api";
-import { removeUser } from "../api/users.api";
-import { useInvalidatePermissions, useInvalidateUsers } from "../api/users.queries";
+import { saveUserPermissions, DEFAULT_PERMISSIONS } from "../api/permissions.api";
+import { removeUser, updateUserHosting } from "../api/users.api";
+import { hostingAccountsQueryOptions } from "@/features/hosting/api/hosting.queries";
+import { permissionsQueryOptions } from "../api/users.queries";
+import { useInvalidateUsers } from "../api/users.queries";
+import { useLicence } from "@/features/licence/api/licence.queries";
+import type { LicenceResponse } from "@/features/licence/types/licence.types";
 import type { UserPermissions } from "../types/user-permissions.types";
 import type { PortalUser } from "../types/users.types";
 
-const PERMISSION_LABELS: { key: keyof UserPermissions; label: string; description: string }[] = [
+const PERMISSION_LABELS: { key: keyof UserPermissions; label: string; description: string; licenceModule?: keyof LicenceResponse }[] = [
   { key: "invoices", label: "Reikningsyfirlit", description: "Sér reikninga frá DK Hugbúnaði" },
-  { key: "subscription", label: "Áskrift", description: "Sér og stjórnar áskrift fyrirtækisins" },
-  { key: "hosting", label: "Hýsing", description: "Getur séð og stjórnað hýsingaraðgangi" },
-  { key: "pos", label: "POS", description: "Aðgangur að kassakerfi" },
-  { key: "dkOne", label: "dkOne", description: "Aðgangur að dkOne lausninni" },
-  { key: "dkPlus", label: "dkPlus", description: "Aðgangur að dkPlus lausninni" },
-  { key: "timeclock", label: "Stimpilklukka", description: "Aðgangur að stimpilklukku" },
+  { key: "subscription", label: "Áskrift", description: "Sér og stjórnar áskrift fyrirtækisins", licenceModule: "dkPlus" },
+  { key: "hosting", label: "Hýsing", description: "Getur séð og stjórnað hýsingaraðgangi", licenceModule: "Hosting" },
+  { key: "pos", label: "POS", description: "Aðgangur að kassakerfi", licenceModule: "POS" },
+  { key: "dkOne", label: "dkOne", description: "Aðgangur að dkOne lausninni", licenceModule: "dkOne" },
+  { key: "dkPlus", label: "dkPlus", description: "Aðgangur að dkPlus lausninni", licenceModule: "dkPlus" },
+  { key: "timeclock", label: "Stimpilklukka", description: "Aðgangur að stimpilklukku", licenceModule: "TimeClock" },
   { key: "users", label: "Notendur", description: "Getur stjórnað öðrum notendum" },
 ];
 
@@ -30,44 +28,48 @@ interface Props {
 }
 
 export function UserPanel({ user, onClose }: Props) {
-  const [permissions, setPermissions] = useState<UserPermissions>(DEFAULT_PERMISSIONS);
-  const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const invalidatePermissions = useInvalidatePermissions();
+  const qc = useQueryClient();
   const invalidateUsers = useInvalidateUsers();
+  const { data: licence } = useLicence();
+  const { data: loadedPermissions } = useQuery(permissionsQueryOptions(user.id));
+  const { data: hostingAccounts = [] } = useQuery(hostingAccountsQueryOptions);
+  const [editedPermissions, setEditedPermissions] = useState<UserPermissions | null>(null);
+  const permissions = editedPermissions ?? loadedPermissions ?? DEFAULT_PERMISSIONS;
+  const [selectedHosting, setSelectedHosting] = useState<string>(user.hostingUsername ?? "");
 
-  useEffect(() => {
-    loadUserPermissions(user.id)
-      .then(setPermissions)
-      .catch(() => setPermissions(DEFAULT_PERMISSIONS));
-  }, [user.id]);
+  const visiblePermissions = PERMISSION_LABELS.filter(({ licenceModule }) => {
+    if (!licenceModule) return true;
+    const entry = licence?.[licenceModule];
+    return entry && typeof entry === "object" && "Enabled" in entry && entry.Enabled;
+  });
 
   function togglePermission(key: keyof UserPermissions) {
-    setPermissions((prev) => ({ ...prev, [key]: !prev[key] }));
+    setEditedPermissions((prev) => ({ ...(prev ?? permissions), [key]: !permissions[key] }));
   }
 
-  async function handleSave() {
-    setSaving(true);
-    try {
-      await saveUserPermissions(user.id, permissions);
-      invalidatePermissions(user.id);
+  const saveMutation = useMutation({
+    mutationFn: () => saveUserPermissions(user.id, permissions),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["user-permissions", user.id] });
       onClose();
-    } finally {
-      setSaving(false);
-    }
-  }
+    },
+  });
 
-  async function handleDelete() {
-    if (!confirm(`Ertu viss um að þú viljir eyða ${user.name}?`)) return;
-    setDeleting(true);
-    try {
-      await removeUser(user.id);
+  const saveHostingMutation = useMutation({
+    mutationFn: () => updateUserHosting(user.id, selectedHosting || null),
+    onSuccess: () => void invalidateUsers(),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => {
+      if (!confirm(`Ertu viss um að þú viljir eyða ${user.name}?`)) return Promise.resolve();
+      return removeUser(user.id);
+    },
+    onSuccess: () => {
       void invalidateUsers();
       onClose();
-    } finally {
-      setDeleting(false);
-    }
-  }
+    },
+  });
 
   return (
     <>
@@ -75,7 +77,7 @@ export function UserPanel({ user, onClose }: Props) {
       <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} />
 
       {/* Modal */}
-      <div className="fixed left-1/2 top-1/2 z-50 flex w-full max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col rounded-[var(--radius-xl)] bg-(--color-surface) shadow-xl max-h-[calc(100vh-4rem)] overflow-hidden">
+      <div className="fixed left-1/2 top-1/2 z-50 flex w-full max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col rounded-xl bg-(--color-surface) shadow-xl max-h-[calc(100vh-4rem)] overflow-hidden">
         {/* Header */}
         <div className="flex items-start justify-between border-b border-(--color-border) p-6">
           <div>
@@ -89,12 +91,40 @@ export function UserPanel({ user, onClose }: Props) {
           </div>
           <button
             onClick={onClose}
-            className="rounded-[var(--radius-md)] p-1.5 text-(--color-text-muted) transition-colors hover:bg-(--color-surface-hover) hover:text-(--color-text)"
+            className="rounded-md p-1.5 text-(--color-text-muted) transition-colors hover:bg-(--color-surface-hover) hover:text-(--color-text)"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
+        </div>
+
+        {/* Hosting account */}
+        <div className="border-b border-(--color-border) px-6 py-4">
+          <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-(--color-text-muted)">
+            Hýsingaraðgangur
+          </h3>
+          <div className="flex gap-2">
+            <select
+              value={selectedHosting}
+              onChange={(e) => setSelectedHosting(e.target.value)}
+              className="flex-1 rounded-lg border border-(--color-border) bg-(--color-surface) px-3 py-2 text-sm text-(--color-text) outline-none focus:border-(--color-primary) focus:ring-1 focus:ring-(--color-primary)"
+            >
+              <option value="">Enginn hýsingaraðgangur</option>
+              {hostingAccounts.map((a) => (
+                <option key={a.id} value={a.username}>
+                  {a.displayName} ({a.username})
+                </option>
+              ))}
+            </select>
+            <Button
+              size="sm"
+              onClick={() => saveHostingMutation.mutate()}
+              disabled={saveHostingMutation.isPending || selectedHosting === (user.hostingUsername ?? "")}
+            >
+              {saveHostingMutation.isPending ? "Vista..." : "Vista"}
+            </Button>
+          </div>
         </div>
 
         {/* Permissions */}
@@ -103,10 +133,10 @@ export function UserPanel({ user, onClose }: Props) {
             Aðgangur að einingum
           </h3>
           <div className="space-y-3">
-            {PERMISSION_LABELS.map(({ key, label, description }) => (
+            {visiblePermissions.map(({ key, label, description }) => (
               <label
                 key={key}
-                className="flex cursor-pointer items-start gap-3 rounded-[var(--radius-lg)] border border-(--color-border) p-4 transition-colors hover:bg-(--color-surface-hover)"
+                className="flex cursor-pointer items-start gap-3 rounded-lg border border-(--color-border) p-4 transition-colors hover:bg-(--color-surface-hover)"
               >
                 <input
                   type="checkbox"
@@ -125,15 +155,15 @@ export function UserPanel({ user, onClose }: Props) {
 
         {/* Footer */}
         <div className="flex items-center justify-between border-t border-(--color-border) p-6">
-          <Button variant="danger" onClick={handleDelete} disabled={deleting}>
-            {deleting ? "Eyði..." : "Eyða notanda"}
+          <Button variant="danger" onClick={() => deleteMutation.mutate()} disabled={deleteMutation.isPending}>
+            {deleteMutation.isPending ? "Eyði..." : "Eyða notanda"}
           </Button>
           <div className="flex gap-3">
             <Button variant="ghost" onClick={onClose} className="w-28">
               Hætta við
             </Button>
-            <Button onClick={handleSave} disabled={saving} className="w-28">
-              {saving ? "Vista..." : "Vista"}
+            <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="w-28">
+              {saveMutation.isPending ? "Vista..." : "Vista"}
             </Button>
           </div>
         </div>

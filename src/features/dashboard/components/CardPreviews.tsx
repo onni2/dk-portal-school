@@ -6,7 +6,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { fetchCustomerTransactions } from "@/features/invoices/api/invoices.api";
-import { fetchTimeclockSettings } from "@/features/timeclock/api/timeclock.api";
+import { fetchTimeclockConfig } from "@/features/timeclock/api/timeclock.api";
 import { fetchLicence } from "@/features/licence/api/licence.api";
 
 const MODULE_LABELS: Record<string, string> = {
@@ -74,8 +74,8 @@ function ReikningarPreview() {
  */
 function StimpilklukkaPreview() {
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["timeclock-settings"],
-    queryFn: fetchTimeclockSettings,
+    queryKey: ["timeclock-config"],
+    queryFn: fetchTimeclockConfig,
   });
 
   if (isLoading) return <Loading />;
@@ -83,9 +83,10 @@ function StimpilklukkaPreview() {
 
   return (
     <div className="space-y-1">
-      <p className="text-xs text-gray-400">
-        Staða: {data.Enabled ? "Virkt" : "Óvirkt"}
-      </p>
+      <p className="text-xs text-gray-400">{data.companyName}</p>
+      {data.timeclockUrl && (
+        <p className="truncate text-xs text-blue-600">{data.timeclockUrl}</p>
+      )}
     </div>
   );
 }

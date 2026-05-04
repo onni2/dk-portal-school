@@ -29,6 +29,13 @@ export async function updateUser(
   return mockClient.patch<void>(`/users/${id}`, data);
 }
 
+export async function updateUserHosting(
+  id: string,
+  hostingUsername: string | null,
+): Promise<void> {
+  return mockClient.patch<void>(`/users/${id}/hosting`, { hostingUsername });
+}
+
 export async function removeUser(id: string): Promise<void> {
   return mockClient.delete<void>(`/users/${id}`);
 }

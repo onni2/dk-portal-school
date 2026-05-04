@@ -1,19 +1,19 @@
 /**
- * Composes the timeclock admin page: settings overview, IP whitelist, and employee phone numbers.
- * Uses: ./TimeclockSettingsCard, ./IpWhitelistPanel, ./EmployeePhonesPanel, ./TimeclockSkeletons
+ * Composes the timeclock admin page: company info, IP whitelist, and employee phone numbers.
+ * Uses: ./TimeclockCompanyCard, ./IpWhitelistPanel, ./EmployeePhonesPanel, ./TimeclockSkeletons
  * Exports: TimeclockPage
  */
 import { Suspense } from "react";
-import { TimeclockSettingsCard } from "./TimeclockSettingsCard";
+import { TimeclockCompanyCard } from "./TimeclockCompanyCard";
 import { IpWhitelistPanel } from "./IpWhitelistPanel";
 import { EmployeePhonesPanel } from "./EmployeePhonesPanel";
-import { SettingsSkeleton, PanelSkeleton } from "./TimeclockSkeletons";
+import { PanelSkeleton } from "./TimeclockSkeletons";
 
 export function TimeclockPage() {
   return (
     <div className="space-y-6">
-      <Suspense fallback={<SettingsSkeleton />}>
-        <TimeclockSettingsCard />
+      <Suspense fallback={<PanelSkeleton />}>
+        <TimeclockCompanyCard />
       </Suspense>
       <div className="grid gap-6 lg:grid-cols-2">
         <Suspense fallback={<PanelSkeleton />}>

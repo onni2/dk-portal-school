@@ -11,7 +11,7 @@ export async function getCompanies(): Promise<Company[]> {
   return res.json();
 }
 
-export async function switchCompany(companyId: string): Promise<{ token: string; companyDkToken: string }> {
+export async function switchCompany(companyId: string): Promise<{ token: string; companyDkToken: string; permissions: Record<string, boolean> }> {
   const res = await fetch(`${import.meta.env.VITE_MOCK_API_URL}/auth/switch-company`, {
     method: "POST",
     headers: {

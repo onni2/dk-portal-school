@@ -1,18 +1,10 @@
 /**
- * /hosting — Hosting page
+ * /hosting — redirects to /hosting/myHosting
  */
-import { createFileRoute } from "@tanstack/react-router";
-import { Suspense } from "react";
-import { HostingPage } from "@/features/hosting/components/HostingPage";
-import { hostingAccountsQueryOptions } from "@/features/hosting/api/hosting.queries";
-import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/hosting/")({
-  loader: ({ context: { queryClient } }) =>
-    queryClient.ensureQueryData(hostingAccountsQueryOptions),
-  component: () => (
-    <Suspense fallback={<LoadingSpinner />}>
-      <HostingPage />
-    </Suspense>
-  ),
+  beforeLoad: () => {
+    throw redirect({ to: "/hosting/myHosting" });
+  },
 });
