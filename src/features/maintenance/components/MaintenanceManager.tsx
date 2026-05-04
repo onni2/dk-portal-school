@@ -6,7 +6,10 @@ import { lockRoute, unlockRoute } from "../api/maintenance.api";
 import { NAV_ITEMS } from "@/features/licence/config/nav-items";
 
 const LOCKABLE_ROUTES = NAV_ITEMS.filter(
-  (item) => item.access.type !== "copOnly" && item.access.type !== "accountantOnly",
+  (item) =>
+    item.access.type !== "copOnly" &&
+    item.access.type !== "accountantOnly" &&
+    item.access.type !== "godOnly",
 ).flatMap((item) => [
   { label: item.label, to: item.to },
   ...(item.children ?? []).map((c) => ({ label: `  ${c.label}`, to: c.to })),
