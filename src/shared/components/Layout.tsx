@@ -183,7 +183,7 @@ export function Layout({ children }: { children: ReactNode }) {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 overflow-y-auto p-8">{children}</main>
+        <main className="flex flex-col flex-1 overflow-y-auto p-8">{children}</main>
       </div>
     </div>
   );

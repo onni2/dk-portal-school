@@ -99,7 +99,11 @@ function MaintenanceGate() {
   );
 
   if (activeLock && user?.role !== "god") {
-    return <MaintenanceOverlay message={activeLock.message} />;
+    return (
+      <div className="flex flex-1 h-full">
+        <MaintenanceOverlay message={activeLock.message} />
+      </div>
+    );
   }
 
   return <Outlet />;
