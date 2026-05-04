@@ -1,3 +1,5 @@
+import { useEffect, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/shared/utils/cn";
 import { Button } from "@/shared/components/Button";
 import { useRestartPosService, useRestartPosRestService } from "../api/pos.queries";
@@ -15,7 +17,18 @@ export function PosServiceCard({ service, serviceType, isSelected, onSelect }: P
   const restRestart = useRestartPosRestService(service.id);
   const { mutate, isPending } = serviceType === "dkpos" ? dkposRestart : restRestart;
 
+  const qc = useQueryClient();
+  const prevState = useRef(service.state);
+  useEffect(() => {
+    if (prevState.current === "stopped" && service.state === "running") {
+      qc.invalidateQueries({ queryKey: ["pos-service-logs", serviceType, service.id] });
+    }
+    prevState.current = service.state;
+  }, [service.state, service.id, serviceType, qc]);
+
   const isRunning = service.state === "running";
+  const isCoolingDown = !isRunning && !isPending;
+  const isDisabled = isPending || isCoolingDown;
 
   return (
     <div
@@ -43,16 +56,21 @@ export function PosServiceCard({ service, serviceType, isSelected, onSelect }: P
           </span>
         </div>
         <Button
-          className="rounded-full bg-green-600 px-5 text-white hover:bg-green-700"
+          className={cn(
+            "rounded-full px-5 text-white transition-colors",
+            isDisabled
+              ? "cursor-not-allowed bg-gray-400 hover:bg-gray-400"
+              : "bg-green-600 hover:bg-green-700",
+          )}
           size="md"
-          disabled={isPending}
+          disabled={isDisabled}
           onClick={(e) => {
             e.stopPropagation();
             onSelect(service.id);
             mutate();
           }}
         >
-          {isPending ? "..." : "Restart"}
+          {isPending ? "..." : isCoolingDown ? "Starting..." : "Restart"}
         </Button>
       </div>
     </div>
