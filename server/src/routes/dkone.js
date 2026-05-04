@@ -13,11 +13,18 @@ function getCompanyId(req) {
   return req.user.active_company_id ?? req.user.company_id;
 }
 
-function requireAdmin(req, res, next) {
-  if (req.user?.role !== "admin") {
-    return res.status(403).json({ message: "Aðeins stjórnendur hafa aðgang" });
-  }
-  next();
+const ELEVATED_ROLES = ["super_admin", "god"];
+
+async function requireAdmin(req, res, next) {
+  if (ELEVATED_ROLES.includes(req.user?.role)) return next();
+  try {
+    const { rows } = await pool.query(
+      "SELECT role FROM user_companies WHERE user_id = $1 AND company_id = $2",
+      [req.user?.id, getCompanyId(req)],
+    );
+    if (rows[0]?.role === "admin") return next();
+  } catch { /* fall through */ }
+  return res.status(403).json({ message: "Aðeins stjórnendur hafa aðgang" });
 }
 
 async function getCompanyDkToken(companyId) {
