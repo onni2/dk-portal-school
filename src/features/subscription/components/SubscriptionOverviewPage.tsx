@@ -132,7 +132,7 @@ function GroupCard({
           const product = productMap[(line.ItemCode ?? "").toLowerCase()];
           return (
             <LineRow
-              key={line.SequenceNumber}
+              key={`${line.SequenceNumber}-${line.ItemCode}`}
               line={line}
               onInfo={() => {
                 if (product) onSelect(product);
