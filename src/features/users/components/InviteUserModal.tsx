@@ -1,19 +1,11 @@
-/**
- * Modal for inviting a new portal user. Admin fills in name, username, email,
- * kennitala, optional hosting account, and module permissions.
- * On submit the user is added to the portal store with default password "dk".
- * Uses: ../api/users.api, ../api/permissions.api, @/shared/components/Button,
- *       @/shared/components/Input
- * Exports: InviteUserModal
- */
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/shared/components/Button";
 import { Input } from "@/shared/components/Input";
 import { inviteUser } from "../api/users.api";
-import { fetchHostingAccounts } from "../api/hosting.api";
+import { hostingAccountsQueryOptions } from "@/features/hosting/api/hosting.queries";
 import { useLicence } from "@/features/licence/api/licence.queries";
 import type { LicenceResponse } from "@/features/licence/types/licence.types";
-import type { HostingAccount } from "../api/hosting.api";
 import type { UserPermissions } from "../types/user-permissions.types";
 
 const PERMISSION_LABELS: { key: keyof UserPermissions; label: string; licenceModule?: keyof LicenceResponse }[] = [
@@ -45,6 +37,7 @@ interface Props {
 
 export function InviteUserModal({ onClose, onInvited }: Props) {
   const { data: licence } = useLicence();
+  const { data: hostingAccounts = [] } = useQuery(hostingAccountsQueryOptions);
   const visiblePermissions = PERMISSION_LABELS.filter(({ licenceModule }) => {
     if (!licenceModule) return true;
     const entry = licence?.[licenceModule];
@@ -57,31 +50,15 @@ export function InviteUserModal({ onClose, onInvited }: Props) {
   const [companyRole, setCompanyRole] = useState<"user" | "admin">("user");
   const [hostingUsername, setHostingUsername] = useState("");
   const [permissions, setPermissions] = useState<UserPermissions>(DEFAULT_PERMISSIONS);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [generatedPassword, setGeneratedPassword] = useState("");
-  const [hostingAccounts, setHostingAccounts] = useState<HostingAccount[]>([]);
 
-  useEffect(() => {
-    fetchHostingAccounts().then(setHostingAccounts).catch(() => setHostingAccounts([]));
-  }, []);
+  const inviteMutation = useMutation({
+    mutationFn: () => inviteUser({ name, username: email, email, kennitala, hostingUsername, companyRole, permissions }),
+    onSuccess: ({ generatedPassword: pw }) => setGeneratedPassword(pw),
+  });
 
   function togglePermission(key: keyof UserPermissions) {
     setPermissions((prev) => ({ ...prev, [key]: !prev[key] }));
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-    try {
-      const { generatedPassword: pw } = await inviteUser({ name, username: email, email, kennitala, hostingUsername, companyRole, permissions });
-      setGeneratedPassword(pw);
-    } catch (err) {
-      setError((err as { message?: string })?.message ?? "Villa kom upp");
-    } finally {
-      setLoading(false);
-    }
   }
 
   if (generatedPassword) {
@@ -110,7 +87,7 @@ export function InviteUserModal({ onClose, onInvited }: Props) {
           Bjóða notanda
         </h2>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form onSubmit={(e) => { e.preventDefault(); inviteMutation.mutate(); }} className="flex flex-col gap-4">
           <Input
             label="Nafn"
             value={name}
@@ -186,16 +163,18 @@ export function InviteUserModal({ onClose, onInvited }: Props) {
             </div>
           </div>
 
-          {error && (
-            <p className="text-sm text-(--color-error)">{error}</p>
+          {inviteMutation.isError && (
+            <p className="text-sm text-(--color-error)">
+              {(inviteMutation.error as { message?: string })?.message ?? "Villa kom upp"}
+            </p>
           )}
 
           <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>
+            <Button type="button" variant="ghost" onClick={onClose} disabled={inviteMutation.isPending}>
               Hætta við
             </Button>
-            <Button type="submit" disabled={loading || !name || !email}>
-              {loading ? "Sendir boð..." : "Senda boð"}
+            <Button type="submit" disabled={inviteMutation.isPending || !name || !email}>
+              {inviteMutation.isPending ? "Sendir boð..." : "Senda boð"}
             </Button>
           </div>
         </form>
