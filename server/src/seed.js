@@ -344,6 +344,8 @@ async function migrate() {
   await pool.query(`ALTER TABLE hosting_accounts ADD COLUMN IF NOT EXISTS email TEXT`);
   await pool.query(`ALTER TABLE hosting_accounts ADD COLUMN IF NOT EXISTS has_mfa BOOLEAN NOT NULL DEFAULT false`);
   await pool.query(`ALTER TABLE hosting_accounts ADD COLUMN IF NOT EXISTS last_restart TIMESTAMPTZ`);
+  await pool.query(`ALTER TABLE hosting_accounts ADD COLUMN IF NOT EXISTS password_hash TEXT`);
+  await pool.query(`ALTER TABLE hosting_accounts ALTER COLUMN password_hash DROP NOT NULL`);
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS pos_services (
