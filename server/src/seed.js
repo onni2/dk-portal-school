@@ -726,6 +726,14 @@ async function migrate() {
     );
   }
 
+  // Maintenance locks — god can disable routes and show a message to users
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS maintenance_locks (
+      route   TEXT PRIMARY KEY,
+      message TEXT NOT NULL DEFAULT 'Þjónusta er tímabundið ekki tiltæk.'
+    )
+  `);
+
   // Zoho tickets tables
   await pool.query(`
     CREATE TABLE IF NOT EXISTS zoho_tickets (
