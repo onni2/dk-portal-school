@@ -1,55 +1,36 @@
-/**
- * Panel for viewing and managing employee phone numbers used to clock in at kiosks.
- * Data is stored in Neon, scoped per company. Employees are identified by kennitala.
- * Uses: @/shared/components/Button, @/shared/components/Card, @/shared/components/Input,
- *       ../api/timeclock.queries, ../api/timeclock.api, ../store/timeclock.store
- * Exports: EmployeePhonesPanel
- */
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { Input } from "@/shared/components/Input";
-import {
-  useEmployeePhones,
-  useInvalidateEmployeePhones,
-} from "../api/timeclock.queries";
+import { useEmployeePhones } from "../api/timeclock.queries";
 import { addEmployeePhone, removeEmployeePhone } from "../api/timeclock.api";
 import { useTimeclockStore } from "../store/timeclock.store";
 
 export function EmployeePhonesPanel() {
   const { data: entries } = useEmployeePhones();
-  const invalidate = useInvalidateEmployeePhones();
+  const qc = useQueryClient();
   const { addPhoneOpen, setAddPhoneOpen } = useTimeclockStore();
   const [kennitala, setKennitala] = useState("");
   const [employeeName, setEmployeeName] = useState("");
   const [phone, setPhone] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [removingId, setRemovingId] = useState<string | null>(null);
 
-  async function handleAdd() {
-    if (!kennitala.trim() || !phone.trim()) return;
-    setSaving(true);
-    try {
-      await addEmployeePhone(kennitala.trim(), employeeName.trim(), phone.trim());
-      await invalidate();
+  const addMutation = useMutation({
+    mutationFn: ({ kennitala, employeeName, phone }: { kennitala: string; employeeName: string; phone: string }) =>
+      addEmployeePhone(kennitala, employeeName, phone),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["timeclock-employee-phones"] });
       setKennitala("");
       setEmployeeName("");
       setPhone("");
       setAddPhoneOpen(false);
-    } finally {
-      setSaving(false);
-    }
-  }
+    },
+  });
 
-  async function handleRemove(id: string) {
-    setRemovingId(id);
-    try {
-      await removeEmployeePhone(id);
-      await invalidate();
-    } finally {
-      setRemovingId(null);
-    }
-  }
+  const removeMutation = useMutation({
+    mutationFn: (id: string) => removeEmployeePhone(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["timeclock-employee-phones"] }),
+  });
 
   return (
     <Card>
@@ -86,10 +67,10 @@ export function EmployeePhonesPanel() {
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => handleRemove(entry.id)}
-                disabled={removingId === entry.id}
+                onClick={() => removeMutation.mutate(entry.id)}
+                disabled={removeMutation.isPending && removeMutation.variables === entry.id}
               >
-                {removingId === entry.id ? "..." : "Fjarlægja"}
+                {removeMutation.isPending && removeMutation.variables === entry.id ? "..." : "Fjarlægja"}
               </Button>
             </li>
           ))}
@@ -117,16 +98,15 @@ export function EmployeePhonesPanel() {
             <Button
               variant="primary"
               size="sm"
-              onClick={handleAdd}
-              disabled={saving || !kennitala.trim() || !phone.trim()}
+              onClick={() => {
+                if (kennitala.trim() && phone.trim())
+                  addMutation.mutate({ kennitala: kennitala.trim(), employeeName: employeeName.trim(), phone: phone.trim() });
+              }}
+              disabled={addMutation.isPending || !kennitala.trim() || !phone.trim()}
             >
-              {saving ? "Vista..." : "Vista"}
+              {addMutation.isPending ? "Vista..." : "Vista"}
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setAddPhoneOpen(false)}
-            >
+            <Button variant="ghost" size="sm" onClick={() => setAddPhoneOpen(false)}>
               Hætta við
             </Button>
           </div>
