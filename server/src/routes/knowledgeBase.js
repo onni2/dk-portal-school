@@ -53,11 +53,21 @@ async function zohoGet(path) {
 router.get("/articles", async (req, res) => {
   if (!ZOHO_CLIENT_ID) return res.json({ categories: [], articles: [] });
   try {
-    const [catData, articleData] = await Promise.all([
-      zohoGet("/kbCategory"),
-      zohoGet("/articles?from=1&limit=50"),
-    ]);
-    res.json({ categories: catData.data ?? [], articles: articleData.data ?? [] });
+    const catData = await zohoGet("/kbCategory");
+
+    // Paginate through all articles
+    const allArticles = [];
+    let from = 1;
+    const limit = 50;
+    while (true) {
+      const data = await zohoGet(`/articles?from=${from}&limit=${limit}`);
+      const batch = data.data ?? [];
+      allArticles.push(...batch);
+      if (batch.length < limit) break;
+      from += limit;
+    }
+
+    res.json({ categories: catData.data ?? [], articles: allArticles });
   } catch (err) {
     console.error("[KB] articles error:", err.message);
     res.status(502).json({ message: "Gat ekki sótt greinar" });
