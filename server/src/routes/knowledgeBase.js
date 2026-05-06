@@ -13,6 +13,14 @@ const YOUTUBE_CHANNEL_ID = process.env.YOUTUBE_CHANNEL_ID;
 let tokenCache = null;
 let inflightToken = null;
 
+const ZOHO_TIMEOUT_MS = 10_000;
+
+function fetchWithTimeout(url, options = {}) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ZOHO_TIMEOUT_MS);
+  return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
 async function getZohoToken() {
   const now = Date.now();
   if (tokenCache && now < tokenCache.expiresAt - 60_000) return tokenCache.token;
@@ -25,7 +33,7 @@ async function getZohoToken() {
       client_secret: ZOHO_CLIENT_SECRET,
       refresh_token: ZOHO_REFRESH_TOKEN,
     });
-    const res = await fetch("https://accounts.zoho.eu/oauth/v2/token", {
+    const res = await fetchWithTimeout("https://accounts.zoho.eu/oauth/v2/token", {
       method: "POST",
       body: params,
     });
@@ -36,13 +44,13 @@ async function getZohoToken() {
     return tokenCache.token;
   })();
 
-  return inflightToken;
+  return inflightToken.catch((err) => { inflightToken = null; throw err; });
 }
 
 async function zohoGet(path) {
   const token = await getZohoToken();
   const sep = path.includes("?") ? "&" : "?";
-  const res = await fetch(`https://desk.zoho.eu/api/v1${path}${sep}orgId=${ZOHO_ORG_ID}`, {
+  const res = await fetchWithTimeout(`https://desk.zoho.eu/api/v1${path}${sep}orgId=${ZOHO_ORG_ID}`, {
     headers: { Authorization: `Zoho-oauthtoken ${token}` },
   });
   if (!res.ok) throw new Error(`Zoho API error ${res.status} for ${path}`);
