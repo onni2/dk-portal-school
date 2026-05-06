@@ -40,7 +40,15 @@ app.use((req, res, next) => {
   next();
 });
 
+// Public routes — no auth required
 app.use("/auth", authRouter);
+
+// Require valid JWT for everything below
+app.use((req, res, next) => {
+  if (!req.user) return res.status(401).json({ message: "Ekki innskráður" });
+  next();
+});
+
 app.use("/users", usersRouter);
 app.use("/timeclock", timeclockRouter);
 app.use("/companies", companiesRouter);
