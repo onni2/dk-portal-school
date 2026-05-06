@@ -1,6 +1,5 @@
 /**
  * Mock data for timeclock IP whitelist and employee phone numbers.
- * Replace with real API calls once the backend supports it.
  */
 import type {
   IpWhitelistEntry,
@@ -16,19 +15,19 @@ export const MOCK_IP_WHITELIST: IpWhitelistEntry[] = [
 export const MOCK_EMPLOYEE_PHONES: EmployeePhoneEntry[] = [
   {
     id: "1",
-    employeeNumber: "1",
+    kennitala: "1234567890",
     employeeName: "Jón Jónsson",
     phone: "5551234",
   },
   {
     id: "2",
-    employeeNumber: "2",
+    kennitala: "9876543210",
     employeeName: "Anna Sigurðardóttir",
     phone: "6662345",
   },
   {
     id: "3",
-    employeeNumber: "3",
+    kennitala: "0101754919",
     employeeName: "Magnús Björnsson",
     phone: "7773456",
   },

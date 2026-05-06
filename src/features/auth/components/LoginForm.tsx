@@ -8,6 +8,7 @@ import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Button } from "@/shared/components/Button";
 import { Input } from "@/shared/components/Input";
+import { PasswordInput } from "@/shared/components/PasswordInput";
 import { login } from "../api/auth.api";
 import { initiateAudkenniLogin } from "../api/audkenni.api";
 import { useAuthStore } from "../store/auth.store";
@@ -65,7 +66,13 @@ export function LoginForm() {
       const { user, token: authToken, companies } = await login({ username, password });
       setAuth(user, authToken, companies ?? []);
       setRole(authRoleToUserRole(user.role));
-      navigate({ to: user.mustResetPassword ? "/reset-password" : "/" });
+      if (user.mustResetPassword) {
+        navigate({ to: "/reset-password" });
+      } else if ((companies ?? []).length > 1) {
+        navigate({ to: "/select-company" });
+      } else {
+        navigate({ to: "/" });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Innskráning mistókst");
     } finally {
@@ -193,9 +200,8 @@ export function LoginForm() {
                   placeholder="notendanafn"
                   required
                 />
-                <Input
+                <PasswordInput
                   label="Lykilorð"
-                  type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"

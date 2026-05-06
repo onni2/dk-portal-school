@@ -1,7 +1,15 @@
 const express = require("express");
 const pool = require("../db");
+const { createNotification } = require("../notifications");
 
 const router = express.Router();
+
+function requireAuth(req, res, next) {
+  if (!req.user) return res.status(401).json({ message: "Ekki innskráður" });
+  next();
+}
+
+router.use(requireAuth);
 
 // GET /notifications
 router.get("/", async (req, res) => {
@@ -48,6 +56,24 @@ router.patch("/:id/read", async (req, res) => {
       [req.params.id, req.user.id],
     );
     res.status(204).send();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Villa á þjóni" });
+  }
+});
+
+// POST /notifications — internal use, admin only
+router.post("/", async (req, res) => {
+  if (req.user?.role !== "admin") {
+    return res.status(403).json({ message: "Aðeins stjórnendur" });
+  }
+  const { userId, companyId, title, message } = req.body;
+  if (!title || !message) {
+    return res.status(400).json({ message: "Vantar title og message" });
+  }
+  try {
+    const id = await createNotification({ userId, companyId, title, message });
+    res.status(201).json({ id });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Villa á þjóni" });

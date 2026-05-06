@@ -27,10 +27,10 @@ describe("MOCK_EMPLOYEE_PHONES", () => {
     expect(MOCK_EMPLOYEE_PHONES.length).toBeGreaterThan(0);
   });
 
-  it("every entry has an id, employeeNumber, and phone", () => {
+  it("every entry has an id, kennitala, and phone", () => {
     MOCK_EMPLOYEE_PHONES.forEach((entry) => {
       expect(entry.id).toBeTruthy();
-      expect(entry.employeeNumber).toBeTruthy();
+      expect(entry.kennitala).toBeTruthy();
       expect(entry.phone).toBeTruthy();
     });
   });
@@ -38,5 +38,11 @@ describe("MOCK_EMPLOYEE_PHONES", () => {
   it("all ids are unique", () => {
     const ids = MOCK_EMPLOYEE_PHONES.map((e) => e.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("all kennitölu are 10 characters", () => {
+    MOCK_EMPLOYEE_PHONES.forEach((entry) => {
+      expect(entry.kennitala).toHaveLength(10);
+    });
   });
 });

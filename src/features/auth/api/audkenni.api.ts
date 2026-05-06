@@ -344,7 +344,7 @@ export async function initiateAudkenniLogin(
 ): Promise<void> {
   // 4-digit verification number shown to the user on both the login screen
   // and inside the Auðkenni app so they can confirm it's the right request.
-  const verificationCode = String(Math.floor(1000 + Math.random() * 9000));
+  const verificationCode = String(1000 + (crypto.getRandomValues(new Uint16Array(1))[0]! % 9000));
   const message = `Innskráning á DK Mínar síður - Öryggistala: ${verificationCode}`;
 
   // Step 1 — start api_v203 session (same for both SIM and card)
