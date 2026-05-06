@@ -2,7 +2,11 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
 const jwt = require("jsonwebtoken");
+
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS ?? "http://localhost:3000").split(",");
 
 const seed = require("./seed");
 const { startPoller } = require("./poller");
@@ -20,9 +24,18 @@ const dkoneRouter = require("./routes/dkone");
 const dkplusRouter = require("./routes/dkplus");
 const duoRouter = require("./routes/duo");
 
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: { message: "Of margar tilraunir, reyndu aftur eftir 15 mínútur" },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 const app = express();
 
-app.use(cors());
+app.use(helmet());
+app.use(cors({ origin: ALLOWED_ORIGINS, credentials: true }));
 app.use(express.json());
 
 // JWT auth middleware — attaches req.user if token is valid
@@ -41,7 +54,7 @@ app.use((req, res, next) => {
 });
 
 // Public routes — no auth required
-app.use("/auth", authRouter);
+app.use("/auth", authLimiter, authRouter);
 
 // Require valid JWT for everything below
 app.use((req, res, next) => {
