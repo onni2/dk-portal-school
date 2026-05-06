@@ -13,6 +13,7 @@ export interface NavItem {
     | { type: "alwaysVisible" }
     | { type: "requiredModules"; modules: LicenceModule[] }
     | { type: "requiredPermission"; permission: keyof UserPermissions }
+    | { type: "licencedModule"; module: LicenceModule; permission: keyof UserPermissions }
     | { type: "copOnly" }
     | { type: "accountantOnly" };
   children?: NavItem[];
@@ -38,24 +39,25 @@ export const NAV_ITEMS: NavItem[] = [
   {
     label: "Áskrift",
     to: "/askrift",
-    access: { type: "requiredPermission", permission: "subscription" },
+    access: { type: "licencedModule", module: "dkPlus", permission: "subscription" },
     children: [
-      { label: "Yfirlit áskriftar", to: "/askrift/yfirlit", access: { type: "requiredPermission", permission: "subscription" } },
-      { label: "Vörur dk", to: "/askrift/vorur", access: { type: "requiredPermission", permission: "subscription" } },
+      { label: "Yfirlit áskriftar", to: "/askrift/yfirlit", access: { type: "licencedModule", module: "dkPlus", permission: "subscription" } },
+      { label: "Vörur dk", to: "/askrift/vorur", access: { type: "licencedModule", module: "dkPlus", permission: "subscription" } },
     ],
   },
   {
     label: "Hýsing",
     to: "/hosting",
-    access: { type: "requiredPermission", permission: "hosting" },
+    access: { type: "licencedModule", module: "Hosting", permission: "hosting" },
     children: [
-      { label: "Notendur", to: "/hosting", access: { type: "requiredPermission", permission: "hosting" } },
+      { label: "Hýsingin mín", to: "/hosting/myHosting", access: { type: "requiredPermission", permission: "hosting" } },
+      { label: "Duo - fjölþátta auðkenning", to: "/hosting/duo", access: { type: "requiredPermission", permission: "hosting" } },
       { label: "Öryggi og persónuvernd", to: "/hosting/oryggi", access: { type: "requiredPermission", permission: "hosting" } },
     ],
   },
   { label: "dkPOS", to: "/pos", access: { type: "requiredPermission", permission: "pos" } },
   { label: "dkOne", to: "/dkone", access: { type: "requiredPermission", permission: "dkOne" } },
-  { label: "dkPlus", to: "/dkplus", access: { type: "requiredPermission", permission: "dkPlus" } },
+  { label: "dk vefþjónustur", to: "/dkplus", access: { type: "requiredPermission", permission: "dkPlus" } },
   { label: "Stimpilklukka", to: "/timeclock", access: { type: "requiredPermission", permission: "timeclock" } },
 
   // Always visible to all logged-in users

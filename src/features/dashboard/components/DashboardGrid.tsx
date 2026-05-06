@@ -20,11 +20,18 @@ import {
   rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import { useAuthStore } from "@/features/auth/store/auth.store";
-import { useRoleStore } from "@/features/licence/store/role.store";
 import { ALL_CARDS, useDashboardLayout } from "../store/dashboard.store";
 import { SortableDashboardCard } from "./DashboardCard";
 import { DEFAULT_PERMISSIONS } from "@/features/users/api/permissions.api";
 import { useUserPermissions } from "@/features/users/api/users.queries";
+import { useLicence } from "@/features/licence/api/licence.queries";
+import type { LicenceResponse } from "@/features/licence/types/licence.types";
+
+
+function isModuleLicenced(licence: LicenceResponse | undefined, module: keyof LicenceResponse): boolean {
+  const entry = licence?.[module];
+  return !!(entry && typeof entry === "object" && "Enabled" in entry && entry.Enabled);
+}
 
 /**
  * The "+" card at the end of the grid — click to add or remove cards.
@@ -33,12 +40,12 @@ function AddCardTile() {
   const { cardIds, addCard, removeCard } = useDashboardLayout();
   const [open, setOpen] = useState(false);
   const user = useAuthStore((s) => s.user);
-  const role = useRoleStore((s) => s.role);
   const { data: userPermissions = DEFAULT_PERMISSIONS } = useUserPermissions(user?.id);
+  const { data: licence } = useLicence();
 
   const availableCards = ALL_CARDS.filter((card) => {
+    if (card.licenceModule && !isModuleLicenced(licence, card.licenceModule)) return false;
     if (!card.permission) return true;
-    if (role === "cop") return true;
     return userPermissions[card.permission] === true;
   });
 
@@ -100,14 +107,11 @@ function AddCardTile() {
 export function DashboardGrid() {
   const { cardIds, setCardIds } = useDashboardLayout();
   const user = useAuthStore((s) => s.user);
-  const role = useRoleStore((s) => s.role);
   const { data: userPermissions = DEFAULT_PERMISSIONS } = useUserPermissions(user?.id);
+  const { data: licence } = useLicence();
 
   const sensors = useSensors(useSensor(PointerSensor));
 
-  /**
-   *
-   */
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (over && active.id !== over.id) {
@@ -121,8 +125,8 @@ export function DashboardGrid() {
     .map((id) => ALL_CARDS.find((c) => c.id === id))
     .filter(Boolean)
     .filter((card) => {
+      if (card!.licenceModule && !isModuleLicenced(licence, card!.licenceModule)) return false;
       if (!card!.permission) return true;
-      if (role === "cop") return true;
       return userPermissions[card!.permission] === true;
     }) as typeof ALL_CARDS;
 
