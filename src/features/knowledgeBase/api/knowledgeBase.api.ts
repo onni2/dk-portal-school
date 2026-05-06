@@ -1,19 +1,7 @@
-/**
- * Knowledge Base data access layer — Zoho Desk Help Center API.
- *
- * Data source: https://desk.dk.is/portal/en/kb (Zoho Desk, global data center)
- *
- * Authentication: OAuth2 refresh-token flow — see zoho.auth.ts for setup.
- */
-
 import type { KbData, KbCategory, KbArticle } from "../types/knowledgeBase.types";
-import { getZohoAccessToken } from "./zoho.auth";
-
-const ORG_ID = import.meta.env.VITE_ZOHO_ORG_ID as string;
+import { mockClient } from "@/shared/api/mockClient";
 
 const RADGJAFADEILD_ID = "691274000000006907";
-
-// ── Private Zoho response shapes ─────────────────────────────────────────────
 
 interface ZohoCategory {
   id: string;
@@ -41,21 +29,9 @@ interface ZohoArticle {
   tags: Array<{ id: string; name: string } | string> | null;
 }
 
-// ── HTTP helper ───────────────────────────────────────────────────────────────
-
-async function zohoGet<T>(path: string): Promise<T> {
-  const token = await getZohoAccessToken();
-  const sep = path.includes("?") ? "&" : "?";
-  const res = await fetch(`/zoho-desk/api/v1${path}${sep}orgId=${ORG_ID}`, {
-    headers: { Authorization: `Zoho-oauthtoken ${token}` },
-  });
-  if (!res.ok) {
-    throw new Error(`Zoho Desk API error ${res.status} for ${path}`);
-  }
-  return res.json() as Promise<T>;
+interface ZohoArticleFull extends ZohoArticle {
+  answer: string | null;
 }
-
-// ── Category helpers ──────────────────────────────────────────────────────────
 
 function flattenCategories(nodes: ZohoCategory[], parentId: string | null = null): KbCategory[] {
   const sorted = [...nodes].sort((a, b) => Number(a.order) - Number(b.order));
@@ -75,80 +51,47 @@ function flattenCategories(nodes: ZohoCategory[], parentId: string | null = null
   return result;
 }
 
-async function fetchCategories(): Promise<KbCategory[]> {
-  const data = await zohoGet<{ data: ZohoCategory[] }>("/kbCategory");
-  const filtered = data.data.filter(
+export async function fetchKbData(): Promise<KbData> {
+  const { categories: rawCats, articles: rawArticles } = await mockClient.get<{
+    categories: ZohoCategory[];
+    articles: ZohoArticle[];
+  }>("/knowledge-base/articles");
+
+  const filtered = rawCats.filter(
     (c) => c.departmentId === RADGJAFADEILD_ID && c.visibility === "NONE",
   );
-  return flattenCategories(filtered);
+  const categories = flattenCategories(filtered);
+
+  const articles: KbArticle[] = rawArticles
+    .filter(
+      (a) =>
+        a.status === "Published" &&
+        a.departmentId === RADGJAFADEILD_ID &&
+        a.permission === "ALL",
+    )
+    .map((a) => ({
+      id: a.id,
+      title: a.title,
+      summary: null,
+      content: null,
+      categoryId: a.category.id,
+      categoryName: a.category.name,
+      slug: a.id,
+      url: a.portalUrl,
+      locale: "is",
+      status: "published" as const,
+      lastModified: a.modifiedTime ?? null,
+      viewCount: Number(a.viewCount ?? 0),
+      tags: (a.tags ?? []).map((t) => (typeof t === "string" ? t : t.name)),
+    }));
+
+  return { categories, articles };
 }
 
-// ── Article helpers ───────────────────────────────────────────────────────────
-
-async function fetchAllArticles(): Promise<KbArticle[]> {
-  const articles: KbArticle[] = [];
-  let from = 1;
-  const limit = 50;
-
-  while (true) {
-    const data = await zohoGet<{ data: ZohoArticle[] }>(
-      `/articles?from=${from}&limit=${limit}`,
-    );
-    const batch = data.data ?? [];
-
-    for (const a of batch) {
-      if (a.status !== "Published") continue;
-      if (a.departmentId !== RADGJAFADEILD_ID) continue;
-      if (a.permission !== "ALL") continue;
-      articles.push({
-        id: a.id,
-        title: a.title,
-        summary: null,
-        content: null,
-        categoryId: a.category.id,
-        categoryName: a.category.name,
-        slug: a.id,
-        url: a.portalUrl,
-        locale: "is",
-        status: "published",
-        lastModified: a.modifiedTime ?? null,
-        viewCount: Number(a.viewCount ?? 0),
-        tags: (a.tags ?? []).map((t) => (typeof t === "string" ? t : t.name)),
-      });
-    }
-
-    if (batch.length < limit) break;
-    from += limit;
-  }
-
-  return articles;
-}
-
-// ── Single article (full content) ────────────────────────────────────────────
-
-interface ZohoArticleFull extends ZohoArticle {
-  answer: string | null;
-}
-
-interface ArticleFull {
-  content: string | null;
-  tags: string[];
-}
-
-export async function fetchArticleFull(id: string): Promise<ArticleFull> {
-  const data = await zohoGet<ZohoArticleFull>(`/articles/${id}`);
+export async function fetchArticleFull(id: string): Promise<{ content: string | null; tags: string[] }> {
+  const data = await mockClient.get<ZohoArticleFull>(`/knowledge-base/articles/${id}`);
   return {
     content: data.answer?.trim() || null,
     tags: (data.tags ?? []).map((t) => (typeof t === "string" ? t : t.name)),
   };
-}
-
-// ── Public export ─────────────────────────────────────────────────────────────
-
-export async function fetchKbData(): Promise<KbData> {
-  const [categories, articles] = await Promise.all([
-    fetchCategories(),
-    fetchAllArticles(),
-  ]);
-  return { categories, articles };
 }

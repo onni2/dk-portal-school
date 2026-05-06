@@ -23,6 +23,7 @@ const posRouter = require("./routes/pos");
 const dkoneRouter = require("./routes/dkone");
 const dkplusRouter = require("./routes/dkplus");
 const duoRouter = require("./routes/duo");
+const knowledgeBaseRouter = require("./routes/knowledgeBase");
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -73,6 +74,7 @@ app.use("/pos", posRouter);
 app.use("/dkone", dkoneRouter);
 app.use("/dkplus", dkplusRouter);
 app.use("/duo", duoRouter);
+app.use("/knowledge-base", knowledgeBaseRouter);
 
 app.get("/health", (_req, res) => {
   res.json({ ok: true });
