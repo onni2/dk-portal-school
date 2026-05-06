@@ -155,7 +155,6 @@ router.post("/invite", requireAdminOrUsersPermission, async (req, res) => {
         status: "pending", mustResetPassword: true, companyId,
         kennitala: kennitala ?? null,
       },
-      generatedPassword,
     });
   } catch (err) {
     console.error(err);
