@@ -6,18 +6,19 @@ import { DkOneUserTable } from "../DkOneUserTable";
 import type { DkOneUser } from "../../types/dkone.types";
 
 const activeUser: DkOneUser = {
-  id: "1", name: "Jón Jónsson", email: "jon@dk.is",
-  username: "jon", role: "admin", status: "active", hasDkOne: true,
+  id: "1", fullName: "Jón Jónsson", email: "jon@dk.is",
+  username: "jon", role: "admin", status: "active",
 };
 
-const pendingUser: DkOneUser = {
-  id: "2", name: "Anna Sigurðardóttir", email: "anna@dk.is",
-  username: "anna", role: "user", status: "pending", hasDkOne: true,
+const invitedUser: DkOneUser = {
+  id: "2", fullName: "Anna Sigurðardóttir", email: "anna@dk.is",
+  username: "anna", role: "user", status: "invited",
 };
 
 vi.mock("../../api/dkone.queries", () => ({
-  useDkOneUsers: () => ({ data: [activeUser, pendingUser] }),
+  useDkOneUsers: () => ({ data: [activeUser, invitedUser] }),
   dkOneUsersQueryOptions: { queryKey: ["dkone-users"] },
+  dkUsersQueryOptions: { queryKey: ["dk-users"] },
 }));
 
 vi.mock("../../api/dkone.api", () => ({
@@ -30,30 +31,29 @@ function renderWithQuery(ui: React.ReactElement) {
 }
 
 describe("DkOneUserTable", () => {
-  it("renders user names", () => {
+  it("renders active user name", () => {
     renderWithQuery(<DkOneUserTable />);
     expect(screen.getByText("Jón Jónsson")).toBeInTheDocument();
-    expect(screen.getByText("Anna Sigurðardóttir")).toBeInTheDocument();
   });
 
-  it("shows Virkur for active user", () => {
+  it("shows Meðlimir tab by default", () => {
     renderWithQuery(<DkOneUserTable />);
-    expect(screen.getByText("Virkur")).toBeInTheDocument();
+    expect(screen.getByText(/Meðlimir/)).toBeInTheDocument();
   });
 
-  it("shows Í bið for pending user", () => {
+  it("shows Boðið tab", () => {
     renderWithQuery(<DkOneUserTable />);
-    expect(screen.getByText("Í bið")).toBeInTheDocument();
+    expect(screen.getByText(/Boðið/)).toBeInTheDocument();
   });
 
-  it("shows remove button for each user", () => {
+  it("shows remove button for active user", () => {
     renderWithQuery(<DkOneUserTable />);
-    expect(screen.getAllByText("Fjarlægja")).toHaveLength(2);
+    expect(screen.getByTitle("Fjarlægja")).toBeInTheDocument();
   });
 
-  it("shows confirm dialog when Fjarlægja clicked", async () => {
+  it("shows confirm dialog when remove clicked", async () => {
     renderWithQuery(<DkOneUserTable />);
-    await userEvent.click(screen.getAllByText("Fjarlægja")[0]!);
+    await userEvent.click(screen.getByTitle("Fjarlægja"));
     expect(screen.getByText("Ertu viss?")).toBeInTheDocument();
   });
 
