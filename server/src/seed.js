@@ -23,7 +23,7 @@ const SEED_USERS = [
     id: "2",
     username: "jon",
     password: "admin321",
-    email: "admin2@example.is",
+    email: "jonsarinn30@gmail.com",
     name: "Jón Ágústsson",
     role: "super_admin",
     status: "active",
@@ -249,7 +249,7 @@ const TEAM_MEMBERS = [
     id: "tm-jon",
     username: "jon",
     password: "admin321",
-    email: "admin2@example.is",
+    email: "jonsarinn30@gmail.com",
     name: "Jón Ágústsson",
     must_reset_password: false,
     hosting_username: null,
@@ -613,6 +613,7 @@ async function migrate() {
   );
 
   await pool.query(`UPDATE portal_users SET kennitala = '0909032330' WHERE username = 'jon'`);
+  await pool.query(`UPDATE portal_users SET email = 'jonsarinn30@gmail.com' WHERE username = 'jon'`);
 
   await pool.query(`
     INSERT INTO user_permissions
@@ -827,6 +828,16 @@ async function migrate() {
       [l.id, l.token_id, l.company_id, l.description, l.executed_by, l.created_at],
     );
   }
+
+  // Password reset tokens — one-time tokens for the forgot-password flow
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS password_reset_tokens (
+      token      TEXT PRIMARY KEY,
+      user_id    TEXT NOT NULL REFERENCES portal_users(id) ON DELETE CASCADE,
+      expires_at TIMESTAMPTZ NOT NULL,
+      used       BOOLEAN NOT NULL DEFAULT false
+    )
+  `);
 
   // Maintenance locks — god can disable routes and show a message to users
   await pool.query(`
