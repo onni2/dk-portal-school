@@ -207,14 +207,10 @@ export function TransactionTable() {
                   <td className="px-4 py-3">
                     <span
                       className={
-                        tx.Settled
-                          ? "text-green-600"
-                          : overdue
-                            ? "font-medium text-amber-600"
-                            : "text-(--color-text-secondary)"
+                        tx.Settled ? "text-green-600" : "text-(--color-text-secondary)"
                       }
                     >
-                      {tx.Settled ? "Greitt" : overdue ? "Gjaldfallið" : "Ógreitt"}
+                      {tx.Settled ? "Greitt" : "Ógreitt"}
                     </span>
                   </td>
                   <td className="w-8 py-3 pr-4">
