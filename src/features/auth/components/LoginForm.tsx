@@ -217,6 +217,14 @@ export function LoginForm() {
                 >
                   {loading ? "Skrái inn..." : "Innskrá"}
                 </Button>
+                <div className="text-center">
+                  <a
+                    href="/forgot-password"
+                    className="text-sm text-(--color-text-muted) hover:text-(--color-text-secondary) underline underline-offset-2"
+                  >
+                    Gleymt lykilorð?
+                  </a>
+                </div>
               </form>
             )}
 
