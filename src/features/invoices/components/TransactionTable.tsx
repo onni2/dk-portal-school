@@ -39,15 +39,6 @@ function isDebit(tx: CustomerTransaction): boolean {
   return tx.Amount >= 0;
 }
 
-function isOverdue(tx: CustomerTransaction): boolean {
-  if (tx.Settled) return false;
-  if (!tx.DueDate) return false;
-  const due = new Date(tx.DueDate);
-  if (isNaN(due.getTime())) return false;
-  // Guard against API default "zero" date (0001-01-01)
-  if (due.getFullYear() < 2000) return false;
-  return due < new Date();
-}
 
 export function TransactionTable() {
   const { data: transactions } = useCustomerTransactions();
@@ -175,7 +166,6 @@ export function TransactionTable() {
           </thead>
           <tbody className="divide-y divide-(--color-border)">
             {paginated.map((tx) => {
-              const overdue = isOverdue(tx);
               const selected = tx.InvoiceNumber === selectedInvoiceNumber;
               return (
                 <tr
@@ -187,9 +177,7 @@ export function TransactionTable() {
                     "cursor-pointer",
                     selected
                       ? "bg-[#87A1FF]/20"
-                      : overdue
-                        ? "bg-amber-50 hover:bg-amber-100"
-                        : "hover:bg-(--color-surface-hover)",
+                      : "hover:bg-(--color-surface-hover)",
                   )}
                 >
                   <td className="px-4 py-3">{formatDate(tx.JournalDate)}</td>
