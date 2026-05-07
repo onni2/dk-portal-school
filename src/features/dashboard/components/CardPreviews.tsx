@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchCustomerTransactions } from "@/features/invoices/api/invoices.api";
+import { fetchDkOneUsers } from "@/features/dkone/api/dkone.api";
 import { fetchTimeclockConfig } from "@/features/timeclock/api/timeclock.api";
 import { fetchLicence } from "@/features/licence/api/licence.api";
 
@@ -142,10 +143,63 @@ function LeyfиPreview() {
   );
 }
 
+function DkOnePreview() {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["dkone-users"],
+    queryFn: fetchDkOneUsers,
+  });
+
+  if (isLoading) return <Loading />;
+  if (isError || !data) return <Err />;
+
+  const active = data.filter((u) => u.status === "active");
+  const invited = data.filter((u) => u.status === "invited");
+  const owners = active.filter((u) => u.role === "owner").length;
+  const admins = active.filter((u) => u.role === "admin").length;
+  const users = active.filter((u) => u.role === "user").length;
+
+  if (data.length === 0) {
+    return <p className="text-sm text-(--color-text-muted)">Engir notendur skráðir.</p>;
+  }
+
+  return (
+    <div className="space-y-3">
+      {/* Hero */}
+      <div>
+        {invited.length > 0 && (
+          <span className="mb-1.5 inline-block rounded-md bg-(--color-warning-bg) px-2 py-0.5 text-xs font-semibold text-(--color-warning)">
+            {invited.length} í bið
+          </span>
+        )}
+        <p className="text-2xl font-bold text-(--color-text)">{active.length}</p>
+        <p className="text-xs text-(--color-text-muted)">virkir notendur í dkOne</p>
+      </div>
+
+      {/* Role breakdown */}
+      <div className="grid grid-cols-3 gap-2 border-t border-(--color-border) pt-2.5">
+        <div>
+          <p className="text-xs text-(--color-text-muted)">Eigendur</p>
+          <p className="text-sm font-semibold text-(--color-text)">{owners}</p>
+        </div>
+        <div>
+          <p className="text-xs text-(--color-text-muted)">Stjórnendur</p>
+          <p className="text-sm font-semibold text-(--color-text)">{admins}</p>
+        </div>
+        <div>
+          <p className="text-xs text-(--color-text-muted)">Notendur</p>
+          <p className="text-sm font-semibold text-(--color-text)">{users}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function CardPreview({ id, fallback }: { id: string; fallback: ReactNode }) {
   switch (id) {
     case "reikningar":
       return <ReikningarPreview />;
+    case "dkone":
+      return <DkOnePreview />;
     case "stimpilklukka":
       return <StimpilklukkaPreview />;
     case "leyfi":
