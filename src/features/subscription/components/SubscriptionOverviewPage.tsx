@@ -23,15 +23,13 @@ function formatISK(n: number): string {
 
 function StatCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="w-fit">
-      <Card padding="none">
-        <div className="px-6 py-5 min-w-72">
-          <p className="text-sm text-(--color-text-muted) mb-1">{label}</p>
-          <p className="text-3xl font-bold text-(--color-primary)">{value}</p>
-          {sub && <p className="mt-1 text-xs text-(--color-text-muted)">{sub}</p>}
-        </div>
-      </Card>
-    </div>
+    <Card padding="none">
+      <div className="px-6 py-5">
+        <p className="text-sm text-(--color-text-muted) mb-1">{label}</p>
+        <p className="text-3xl font-bold text-(--color-primary)">{value}</p>
+        {sub && <p className="mt-1 text-xs text-(--color-text-muted)">{sub}</p>}
+      </div>
+    </Card>
   );
 }
 
@@ -211,7 +209,7 @@ function OverviewContent() {
 
       {cancelTarget && (
         <>
-          <div className="fixed inset-0 z-50 bg-black/30" onClick={() => setCancelTarget(null)} />
+          <div className="fixed inset-0 z-50 bg-(--color-brand-navy)/30" onClick={() => setCancelTarget(null)} />
           <div className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl bg-(--color-surface) shadow-xl">
             <div className="space-y-4 p-6">
               <h2 className="text-lg font-semibold text-(--color-text)">Ertu alveg viss?</h2>
@@ -221,9 +219,9 @@ function OverviewContent() {
               </p>
               <div className="flex gap-3 pt-2">
                 <Button
-                  variant="ghost"
+                  variant="danger"
                   onClick={() => setCancelTarget(null)}
-                  className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                  className="flex-1"
                 >
                   Já, segja upp
                 </Button>
