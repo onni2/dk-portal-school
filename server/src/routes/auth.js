@@ -1,7 +1,9 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const pool = require("../db");
+const { sendPasswordResetEmail } = require("../email");
 
 const router = express.Router();
 
@@ -281,6 +283,84 @@ router.post("/switch-company", async (req, res) => {
     );
 
     res.json({ token, companyDkToken: companyRows[0]?.dk_token ?? null, permissions });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Villa á þjóni" });
+  }
+});
+
+// POST /auth/forgot-password
+router.post("/forgot-password", async (req, res) => {
+  const { username } = req.body;
+  if (!username) {
+    return res.status(400).json({ message: "Vantar notendanafn" });
+  }
+
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, email, name FROM portal_users WHERE username = $1`,
+      [username],
+    );
+
+    const user = rows[0];
+    if (user?.email) {
+      const token = crypto.randomBytes(32).toString("hex");
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+      await pool.query(
+        `INSERT INTO password_reset_tokens (token, user_id, expires_at) VALUES ($1, $2, $3)`,
+        [token, user.id, expiresAt],
+      );
+
+      const appUrl = process.env.APP_URL ?? "http://localhost:3000";
+      await sendPasswordResetEmail(user.email, user.name, `${appUrl}/reset-password-token?token=${token}`);
+    }
+
+    // Always 200 — don't leak whether the username exists
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Villa á þjóni" });
+  }
+});
+
+// POST /auth/reset-password-token
+router.post("/reset-password-token", async (req, res) => {
+  const { token, newPassword } = req.body;
+  if (!token || !newPassword) {
+    return res.status(400).json({ message: "Vantar token eða nýtt lykilorð" });
+  }
+
+  try {
+    const { rows } = await pool.query(
+      `SELECT * FROM password_reset_tokens WHERE token = $1`,
+      [token],
+    );
+
+    const resetToken = rows[0];
+    if (!resetToken) {
+      return res.status(400).json({ message: "Ógildur eða útrunninn tengill" });
+    }
+    if (resetToken.used) {
+      return res.status(400).json({ message: "Þessi tengill hefur þegar verið notaður" });
+    }
+    if (new Date() > new Date(resetToken.expires_at)) {
+      return res.status(400).json({ message: "Tengillinn er útrunninn — biddu um nýjan" });
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+
+    await pool.query(
+      `UPDATE portal_users SET password = $1, must_reset_password = false WHERE id = $2`,
+      [hashed, resetToken.user_id],
+    );
+
+    await pool.query(
+      `UPDATE password_reset_tokens SET used = true WHERE token = $1`,
+      [token],
+    );
+
+    res.json({ ok: true });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Villa á þjóni" });

@@ -54,3 +54,11 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
 export async function logout(): Promise<void> {
   // Nothing to call on the API — the auth store handles clearing localStorage
 }
+
+export async function forgotPassword(username: string): Promise<void> {
+  return mockClient.post<void>("/auth/forgot-password", { username });
+}
+
+export async function resetPasswordWithToken(token: string, newPassword: string): Promise<void> {
+  return mockClient.post<void>("/auth/reset-password-token", { token, newPassword });
+}
