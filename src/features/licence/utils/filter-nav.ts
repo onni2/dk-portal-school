@@ -22,6 +22,7 @@ export function filterNavItems(
   return items.filter((item) => {
     if (item.access.type === "alwaysVisible") return true;
     if (item.access.type === "copOnly") return false;
+    if (item.access.type === "godOnly") return false;
     // accountantOnly items only visible to cop users (handled above)
     if (item.access.type === "accountantOnly") return false;
 
