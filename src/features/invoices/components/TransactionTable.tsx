@@ -99,19 +99,6 @@ export function TransactionTable() {
   const currentPage = Math.min(page, totalPages);
   const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
-  // Summary totals across the full filtered set, grouped by currency
-  const currencyTotals = filtered.reduce<Record<string, { debit: number; kredit: number }>>(
-    (acc, tx) => {
-      const cur = tx.Currency || "ISK";
-      if (!acc[cur]) acc[cur] = { debit: 0, kredit: 0 };
-      if (isDebit(tx)) acc[cur].debit += tx.Amount;
-      else acc[cur].kredit += Math.abs(tx.Amount);
-      return acc;
-    },
-    {},
-  );
-  const summaryEntries = Object.entries(currencyTotals);
-
   if (filtered.length === 0) {
     return (
       <p className="py-8 text-center text-sm text-(--color-text-secondary)">
@@ -220,23 +207,7 @@ export function TransactionTable() {
               );
             })}
           </tbody>
-          <tfoot className="border-t-2 border-(--color-border) bg-(--color-surface)">
-            {summaryEntries.map(([currency, { debit, kredit }]) => (
-              <tr key={currency}>
-                <td colSpan={2} className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-(--color-text-secondary)">
-                  Samtals{summaryEntries.length > 1 ? ` (${currency})` : ""} — {filtered.length} færslur
-                </td>
-                <td />
-                <td className="px-4 py-2.5 text-right text-sm font-semibold text-(--color-text)">
-                  {debit > 0 ? formatAmount(debit, currency) : ""}
-                </td>
-                <td className="px-4 py-2.5 text-right text-sm font-semibold text-(--color-text)">
-                  {kredit > 0 ? formatAmount(kredit, currency) : ""}
-                </td>
-                <td colSpan={3} />
-              </tr>
-            ))}
-          </tfoot>
+
         </table>
       </div>
 
