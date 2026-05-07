@@ -1,9 +1,3 @@
-/**
- * Date-range filter controls for the invoice transaction table.
- * Includes quick period buttons, date pickers, search bar, and PDF download button.
- * Uses: ../store/invoices.store
- * Exports: InvoiceFilters
- */
 import { cn } from "@/shared/utils/cn";
 import { DatePicker } from "@/shared/components/DatePicker";
 import { useInvoiceFilters } from "../store/invoices.store";
@@ -29,7 +23,10 @@ export function InvoiceFilters() {
     setDateTo,
     setActivePeriod,
     setSearch,
+    clearFilters,
   } = useInvoiceFilters();
+
+  const hasFilters = !!(dateFrom || dateTo || search);
 
   function handlePeriod(key: (typeof PERIODS)[number]["key"]) {
     const now = new Date();
@@ -56,8 +53,8 @@ export function InvoiceFilters() {
     <div className="flex flex-col gap-4">
       {/* Period buttons */}
       <div>
-        <p className="mb-2 text-sm font-bold text-[#4743F7]">Veldu tímabil</p>
-        <div className="flex flex-wrap gap-2">
+        <p className="mb-2 text-sm font-bold text-(--color-primary)">Veldu tímabil</p>
+        <div className="flex flex-wrap items-center gap-2">
           {PERIODS.map(({ key, label }) => (
             <button
               key={key}
@@ -72,6 +69,24 @@ export function InvoiceFilters() {
               {label}
             </button>
           ))}
+          {hasFilters && (
+            <button
+              onClick={clearFilters}
+              className="flex items-center gap-1 rounded-full px-3 py-1.5 text-sm text-(--color-text-muted) transition-colors hover:text-(--color-text-secondary)"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-3.5 w-3.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+              </svg>
+              Hreinsaðu síur
+            </button>
+          )}
         </div>
       </div>
 
