@@ -1,9 +1,4 @@
-/**
- * Small live-data preview components, one per dashboard card type.
- * Each fetches just enough data to show a useful snapshot inside the card.
- * Uses: @tanstack/react-query, feature api functions
- * Exports: CardPreview
- */
+import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchCustomerTransactions } from "@/features/invoices/api/invoices.api";
 import { fetchTimeclockConfig } from "@/features/timeclock/api/timeclock.api";
@@ -21,23 +16,14 @@ const MODULE_LABELS: Record<string, string> = {
   Purchase: "Innkaup",
 };
 
-/**
- *
- */
 function Loading() {
-  return <p className="text-xs text-gray-400">Hleð...</p>;
+  return <p className="text-sm text-(--color-text-muted)">Hleð...</p>;
 }
 
-/**
- *
- */
 function Err() {
-  return <p className="text-xs text-red-300">Tókst ekki að sækja gögn</p>;
+  return <p className="text-sm text-(--color-error)">Tókst ekki að sækja gögn</p>;
 }
 
-/**
- *
- */
 function ReikningarPreview() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["invoices-preview"],
@@ -51,16 +37,16 @@ function ReikningarPreview() {
   const recent = data.slice(0, 3);
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-2">
       {unsettled.length > 0 && (
-        <p className="text-xs font-medium text-orange-500">
+        <p className="text-sm font-medium text-(--color-warning)">
           {unsettled.length} ógreiddir reikningar
         </p>
       )}
       {recent.map((t) => (
-        <div key={t.ID} className="flex justify-between text-xs text-gray-600">
+        <div key={t.ID} className="flex justify-between text-sm text-(--color-text-secondary)">
           <span className="truncate">{t.InvoiceNumber || t.Text}</span>
-          <span className="ml-2 shrink-0 font-medium">
+          <span className="ml-2 shrink-0 font-medium text-(--color-text)">
             {t.Amount.toLocaleString("is-IS")} kr.
           </span>
         </div>
@@ -69,9 +55,6 @@ function ReikningarPreview() {
   );
 }
 
-/**
- *
- */
 function StimpilklukkaPreview() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["timeclock-config"],
@@ -83,17 +66,14 @@ function StimpilklukkaPreview() {
 
   return (
     <div className="space-y-1">
-      <p className="text-xs text-gray-400">{data.companyName}</p>
+      <p className="text-sm font-medium text-(--color-text)">{data.companyName}</p>
       {data.timeclockUrl && (
-        <p className="truncate text-xs text-blue-600">{data.timeclockUrl}</p>
+        <p className="truncate text-sm text-(--color-primary)">{data.timeclockUrl}</p>
       )}
     </div>
   );
 }
 
-/**
- *
- */
 function LeyfиPreview() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["licence-preview"],
@@ -113,27 +93,23 @@ function LeyfиPreview() {
   });
 
   return (
-    <div className="flex flex-wrap gap-1">
+    <div className="flex flex-wrap gap-1.5">
       {active.map(([key, label]) => (
         <span
           key={key}
-          className="rounded bg-blue-50 px-1.5 py-0.5 text-xs text-blue-700"
+          className="rounded-md bg-(--color-primary-light) px-2 py-0.5 text-xs font-medium text-(--color-primary)"
         >
           {label}
         </span>
       ))}
       {active.length === 0 && (
-        <p className="text-xs text-gray-400">Engin virk leyfi</p>
+        <p className="text-sm text-(--color-text-muted)">Engin virk leyfi</p>
       )}
     </div>
   );
 }
 
-/**
- * Dispatches to the correct preview component based on card id.
- * Returns null for cards with no live preview.
- */
-export function CardPreview({ id }: { id: string }) {
+export function CardPreview({ id, fallback }: { id: string; fallback: ReactNode }) {
   switch (id) {
     case "reikningar":
       return <ReikningarPreview />;
@@ -142,6 +118,6 @@ export function CardPreview({ id }: { id: string }) {
     case "leyfi":
       return <LeyfиPreview />;
     default:
-      return null;
+      return <>{fallback}</>;
   }
 }

@@ -1,10 +1,3 @@
-/**
- * Dashboard home grid — shows user-selected cards in a draggable grid.
- * Users can add/remove cards via a "+" card at the end and drag to reorder.
- * Layout is saved to localStorage.
- * Uses: @dnd-kit/core, @dnd-kit/sortable, ../store/dashboard.store, ./DashboardCard
- * Exports: DashboardGrid
- */
 import { useState } from "react";
 import {
   DndContext,
@@ -26,16 +19,16 @@ import { DEFAULT_PERMISSIONS } from "@/features/users/api/permissions.api";
 import { useUserPermissions } from "@/features/users/api/users.queries";
 import { useLicence } from "@/features/licence/api/licence.queries";
 import type { LicenceResponse } from "@/features/licence/types/licence.types";
+import { cn } from "@/shared/utils/cn";
 
-
-function isModuleLicenced(licence: LicenceResponse | undefined, module: keyof LicenceResponse): boolean {
+function isModuleLicenced(
+  licence: LicenceResponse | undefined,
+  module: keyof LicenceResponse,
+): boolean {
   const entry = licence?.[module];
   return !!(entry && typeof entry === "object" && "Enabled" in entry && entry.Enabled);
 }
 
-/**
- * The "+" card at the end of the grid — click to add or remove cards.
- */
 function AddCardTile() {
   const { cardIds, addCard, removeCard } = useDashboardLayout();
   const [open, setOpen] = useState(false);
@@ -50,44 +43,43 @@ function AddCardTile() {
   });
 
   return (
-    <div
-      className="relative rounded border-2 border-dashed border-gray-300 bg-white p-4"
-    >
+    <div className="flex flex-col rounded-lg border-2 border-dashed border-(--color-border) bg-(--color-surface) transition-colors hover:border-primary/40">
       {!open ? (
         <button
           onClick={() => setOpen(true)}
-          className="flex h-full min-h-24 w-full flex-col items-center justify-center gap-2 text-gray-400 hover:text-gray-600"
+          className="flex min-h-32 w-full flex-col items-center justify-center gap-2 text-(--color-text-muted) transition-colors hover:text-(--color-primary)"
         >
-          <span className="text-3xl leading-none">+</span>
-          <span className="text-sm">Bæta við spjaldi</span>
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          <span className="text-sm font-medium">Bæta við spjaldi</span>
         </button>
       ) : (
-        <div>
+        <div className="p-4">
           <div className="mb-3 flex items-center justify-between">
-            <p className="text-sm font-medium text-gray-700">Veldu spjöld:</p>
+            <p className="text-sm font-semibold text-(--color-text)">Veldu spjöld</p>
             <button
               onClick={() => setOpen(false)}
-              className="text-xs text-gray-400 hover:text-gray-600"
+              className="text-sm text-(--color-text-muted) transition-colors hover:text-(--color-text)"
             >
               Loka
             </button>
           </div>
-          <div className="flex max-h-48 flex-col gap-1 overflow-y-auto">
+          <div className="flex max-h-52 flex-col gap-1 overflow-y-auto">
             {availableCards.map((card) => {
               const isAdded = cardIds.includes(card.id);
               return (
                 <button
                   key={card.id}
-                  onClick={() =>
-                    isAdded ? removeCard(card.id) : addCard(card.id)
-                  }
-                  className={`flex items-center gap-2 rounded px-2 py-1.5 text-left text-sm transition-colors ${
+                  onClick={() => isAdded ? removeCard(card.id) : addCard(card.id)}
+                  className={cn(
+                    "flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
                     isAdded
-                      ? "bg-blue-50 text-blue-700"
-                      : "text-gray-600 hover:bg-gray-100"
-                  }`}
+                      ? "bg-(--color-primary-light) text-(--color-primary)"
+                      : "text-(--color-text-secondary) hover:bg-(--color-surface-hover)",
+                  )}
                 >
-                  <span className="w-4 text-center">
+                  <span className="w-4 shrink-0 text-center text-xs">
                     {isAdded ? "✓" : "+"}
                   </span>
                   {card.title}
@@ -101,9 +93,6 @@ function AddCardTile() {
   );
 }
 
-/**
- *
- */
 export function DashboardGrid() {
   const { cardIds, setCardIds } = useDashboardLayout();
   const user = useAuthStore((s) => s.user);
@@ -131,8 +120,13 @@ export function DashboardGrid() {
     }) as typeof ALL_CARDS;
 
   return (
-    <div>
-      <h1 className="mb-4 text-2xl font-bold">Yfirlit</h1>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-(--color-text)">Yfirlit</h1>
+        <p className="mt-1 text-sm text-(--color-text-secondary)">
+          Dragðu spjöldin til að endurraða. Smelltu á + til að bæta við eða fjarlægja.
+        </p>
+      </div>
 
       <DndContext
         sensors={sensors}
