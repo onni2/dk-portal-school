@@ -65,8 +65,8 @@ export function InvoiceFilters() {
               className={cn(
                 "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
                 activePeriod === key
-                  ? "bg-[#70F9AE] text-[#20265B]"
-                  : "bg-[#87A1FF] text-[#040B60] hover:opacity-90",
+                  ? "bg-(--color-primary) text-white"
+                  : "border border-(--color-border) bg-(--color-surface) text-(--color-text-secondary) hover:bg-(--color-surface-hover)",
               )}
             >
               {label}
@@ -109,7 +109,7 @@ export function InvoiceFilters() {
             placeholder="Leita..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-[var(--radius-md)] border border-(--color-border) bg-(--color-surface) py-1.5 pl-9 pr-3 text-sm text-(--color-text) placeholder:text-(--color-text-muted)"
+            className="w-full rounded-md border border-(--color-border) bg-(--color-surface) py-1.5 pl-9 pr-3 text-sm text-(--color-text) placeholder:text-(--color-text-muted)"
           />
         </div>
       </div>
