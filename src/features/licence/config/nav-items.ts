@@ -15,6 +15,7 @@ export interface NavItem {
     | { type: "requiredPermission"; permission: keyof UserPermissions }
     | { type: "licencedModule"; module: LicenceModule; permission: keyof UserPermissions }
     | { type: "copOnly" }
+    | { type: "godOnly" }
     | { type: "accountantOnly" };
   children?: NavItem[];
 }
@@ -65,4 +66,5 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Hjálparmiðstöð", to: "/knowledge-base", access: { type: "alwaysVisible" } },
   { label: "Notendur", to: "/notendur", access: { type: "requiredPermission", permission: "users" } },
   { label: "Stillingar", to: "/stillingar", access: { type: "alwaysVisible" } },
+  { label: "Kerfisstjórn", to: "/god", access: { type: "godOnly" } },
 ];
