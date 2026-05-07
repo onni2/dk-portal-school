@@ -26,15 +26,27 @@ function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
 }
 
 function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("is-IS");
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("is-IS");
 }
 
 function formatAmount(amount: number, currency: string): string {
-  return amount.toLocaleString("is-IS") + " " + currency;
+  return amount.toLocaleString("is-IS") + " " + (currency || "ISK");
 }
 
 function isDebit(tx: CustomerTransaction): boolean {
   return tx.Amount >= 0;
+}
+
+function isOverdue(tx: CustomerTransaction): boolean {
+  if (tx.Settled) return false;
+  if (!tx.DueDate) return false;
+  const due = new Date(tx.DueDate);
+  if (isNaN(due.getTime())) return false;
+  // Guard against API default "zero" date (0001-01-01)
+  if (due.getFullYear() < 2000) return false;
+  return due < new Date();
 }
 
 export function TransactionTable() {
@@ -91,8 +103,23 @@ export function TransactionTable() {
       return sortDir === "asc" ? cmp : -cmp;
     });
 
+  // Clamp page so stale page state never produces an empty view after filters change
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const currentPage = Math.min(page, totalPages);
+  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  // Summary totals across the full filtered set, grouped by currency
+  const currencyTotals = filtered.reduce<Record<string, { debit: number; kredit: number }>>(
+    (acc, tx) => {
+      const cur = tx.Currency || "ISK";
+      if (!acc[cur]) acc[cur] = { debit: 0, kredit: 0 };
+      if (isDebit(tx)) acc[cur].debit += tx.Amount;
+      else acc[cur].kredit += Math.abs(tx.Amount);
+      return acc;
+    },
+    {},
+  );
+  const summaryEntries = Object.entries(currencyTotals);
 
   if (filtered.length === 0) {
     return (
@@ -124,15 +151,9 @@ export function TransactionTable() {
                   Reikningsnúmer<SortIcon active={sortKey === "invoiceNumber"} dir={sortDir} />
                 </button>
               </th>
-              <th className="px-4 py-3 font-medium text-(--color-text-secondary)">
-                Text
-              </th>
-              <th className="px-4 py-3 text-right font-medium text-(--color-text-secondary)">
-                Debit
-              </th>
-              <th className="px-4 py-3 text-right font-medium text-(--color-text-secondary)">
-                Kredit
-              </th>
+              <th className="px-4 py-3 font-medium text-(--color-text-secondary)">Text</th>
+              <th className="px-4 py-3 text-right font-medium text-(--color-text-secondary)">Debit</th>
+              <th className="px-4 py-3 text-right font-medium text-(--color-text-secondary)">Kredit</th>
               <th className="px-4 py-3 text-right">
                 <button
                   onClick={() => handleSort("settledAmount")}
@@ -153,84 +174,104 @@ export function TransactionTable() {
             </tr>
           </thead>
           <tbody className="divide-y divide-(--color-border)">
-            {paginated.map((tx) => (
-              <tr
-                key={tx.ID}
-                onClick={() =>
-                  setSelectedInvoiceNumber(
-                    tx.InvoiceNumber === selectedInvoiceNumber
-                      ? null
-                      : tx.InvoiceNumber,
-                  )
-                }
-                className={cn(
-                  "cursor-pointer",
-                  tx.InvoiceNumber === selectedInvoiceNumber
-                    ? "bg-[#87A1FF]/20"
-                    : "hover:bg-(--color-surface-hover)",
-                )}
-              >
-                <td className="px-4 py-3">{formatDate(tx.JournalDate)}</td>
-                <td className="px-4 py-3">{tx.InvoiceNumber}</td>
-                <td className="px-4 py-3">{tx.Text}</td>
-                <td className="px-4 py-3 text-right">
-                  {isDebit(tx) ? formatAmount(tx.Amount, tx.Currency) : ""}
+            {paginated.map((tx) => {
+              const overdue = isOverdue(tx);
+              const selected = tx.InvoiceNumber === selectedInvoiceNumber;
+              return (
+                <tr
+                  key={tx.ID}
+                  onClick={() =>
+                    setSelectedInvoiceNumber(selected ? null : tx.InvoiceNumber)
+                  }
+                  className={cn(
+                    "cursor-pointer",
+                    selected
+                      ? "bg-[#87A1FF]/20"
+                      : overdue
+                        ? "bg-amber-50 hover:bg-amber-100"
+                        : "hover:bg-(--color-surface-hover)",
+                  )}
+                >
+                  <td className="px-4 py-3">{formatDate(tx.JournalDate)}</td>
+                  <td className="px-4 py-3">{tx.InvoiceNumber || "—"}</td>
+                  <td className="px-4 py-3">{tx.Text}</td>
+                  <td className="px-4 py-3 text-right">
+                    {isDebit(tx) ? formatAmount(tx.Amount, tx.Currency) : ""}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    {!isDebit(tx) ? formatAmount(Math.abs(tx.Amount), tx.Currency) : ""}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    {formatAmount(tx.SettledAmount, tx.Currency)}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={
+                        tx.Settled
+                          ? "text-green-600"
+                          : overdue
+                            ? "font-medium text-amber-600"
+                            : "text-(--color-text-secondary)"
+                      }
+                    >
+                      {tx.Settled ? "Greitt" : overdue ? "Gjaldfallið" : "Ógreitt"}
+                    </span>
+                  </td>
+                  <td className="w-8 py-3 pr-4">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (tx.InvoiceNumber) fetchInvoicePdf(tx.InvoiceNumber);
+                      }}
+                      disabled={!tx.InvoiceNumber}
+                      className="text-(--color-text-muted) hover:text-(--color-primary) disabled:cursor-not-allowed disabled:opacity-30"
+                      title={tx.InvoiceNumber ? "Hlaða niður PDF" : "Enginn reikningur"}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1m-4-4-4 4m0 0-4-4m4 4V4" />
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+          <tfoot className="border-t-2 border-(--color-border) bg-(--color-surface)">
+            {summaryEntries.map(([currency, { debit, kredit }]) => (
+              <tr key={currency}>
+                <td colSpan={2} className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-(--color-text-secondary)">
+                  Samtals{summaryEntries.length > 1 ? ` (${currency})` : ""} — {filtered.length} færslur
                 </td>
-                <td className="px-4 py-3 text-right">
-                  {!isDebit(tx)
-                    ? formatAmount(Math.abs(tx.Amount), tx.Currency)
-                    : ""}
+                <td />
+                <td className="px-4 py-2.5 text-right text-sm font-semibold text-(--color-text)">
+                  {debit > 0 ? formatAmount(debit, currency) : ""}
                 </td>
-                <td className="px-4 py-3 text-right">
-                  {formatAmount(tx.SettledAmount, tx.Currency)}
+                <td className="px-4 py-2.5 text-right text-sm font-semibold text-(--color-text)">
+                  {kredit > 0 ? formatAmount(kredit, currency) : ""}
                 </td>
-                <td className="px-4 py-3">
-                  <span
-                    className={
-                      tx.Settled
-                        ? "text-green-600"
-                        : "text-(--color-text-secondary)"
-                    }
-                  >
-                    {tx.Settled ? "Greitt" : "Ógreitt"}
-                  </span>
-                </td>
-                <td className="w-8 py-3 pr-4">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      fetchInvoicePdf(tx.InvoiceNumber);
-                    }}
-                    className="text-(--color-text-muted) hover:text-(--color-primary)"
-                    title="Hlaða niður PDF"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1m-4-4-4 4m0 0-4-4m4 4V4" />
-                    </svg>
-                  </button>
-                </td>
+                <td colSpan={3} />
               </tr>
             ))}
-          </tbody>
+          </tfoot>
         </table>
       </div>
 
       <div className="flex items-center justify-between text-sm text-(--color-text-secondary)">
         <span>
-          Sýni {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} af {filtered.length}
+          Sýni {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} af {filtered.length}
         </span>
         <div className="flex items-center gap-1">
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
+            disabled={currentPage === 1}
             className="rounded px-2 py-1 transition-colors hover:bg-(--color-surface-hover) disabled:opacity-40"
           >
             ‹
           </button>
-          <span className="px-2">{page} / {totalPages}</span>
+          <span className="px-2">{currentPage} / {totalPages}</span>
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
+            disabled={currentPage === totalPages}
             className="rounded px-2 py-1 transition-colors hover:bg-(--color-surface-hover) disabled:opacity-40"
           >
             ›
