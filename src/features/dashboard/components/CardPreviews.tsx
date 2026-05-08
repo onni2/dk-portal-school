@@ -7,6 +7,7 @@ import { fetchUsers } from "@/features/users/api/users.api";
 import { fetchHostingAccounts } from "@/features/hosting/api/hosting.api";
 import { fetchSubscriptionOverview, buildOverview } from "@/features/subscription/api/overview.api";
 import { useAuthStore } from "@/features/auth/store/auth.store";
+import { fetchAuthTokens } from "@/features/dkplus/api/dkplus.api";
 import { fetchTimeclockConfig } from "@/features/timeclock/api/timeclock.api";
 import { fetchLicence } from "@/features/licence/api/licence.api";
 
@@ -254,6 +255,38 @@ function PosPreview() {
   );
 }
 
+function DkPlusPreview() {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["dkplus-tokens-preview"],
+    queryFn: fetchAuthTokens,
+  });
+
+  if (isLoading) return <Loading />;
+  if (isError || !data) return <Err />;
+
+  if (data.length === 0) {
+    return <p className="text-sm text-(--color-text-muted)">Engin API tókn skráð.</p>;
+  }
+
+  const companies = new Set(data.map((t) => t.companyId)).size;
+
+  return (
+    <div className="space-y-3">
+      {/* Hero */}
+      <div>
+        <p className="text-2xl font-bold text-(--color-text)">{data.length}</p>
+        <p className="text-xs text-(--color-text-muted)">API tókn</p>
+      </div>
+
+      {/* Companies */}
+      <div className="border-t border-(--color-border) pt-2.5">
+        <p className="text-xs text-(--color-text-muted)">Tengd fyrirtæki</p>
+        <p className="text-sm font-semibold text-(--color-text)">{companies}</p>
+      </div>
+    </div>
+  );
+}
+
 const ROLE_LABELS: Record<string, string> = {
   god: "Guð",
   super_admin: "Yfirstjórnandi",
@@ -430,6 +463,8 @@ export function CardPreview({ id, fallback }: { id: string; fallback: ReactNode 
       return <DkOnePreview />;
     case "pos":
       return <PosPreview />;
+    case "dkplus":
+      return <DkPlusPreview />;
     case "stillingar":
       return <StillingarPreview />;
     case "askrift":
