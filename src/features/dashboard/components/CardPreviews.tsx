@@ -6,6 +6,7 @@ import { fetchPosServices, fetchPosRestServices } from "@/features/pos/api/pos.a
 import { fetchUsers } from "@/features/users/api/users.api";
 import { fetchHostingAccounts } from "@/features/hosting/api/hosting.api";
 import { fetchSubscriptionOverview, buildOverview } from "@/features/subscription/api/overview.api";
+import { useAuthStore } from "@/features/auth/store/auth.store";
 import { fetchTimeclockConfig } from "@/features/timeclock/api/timeclock.api";
 import { fetchLicence } from "@/features/licence/api/licence.api";
 
@@ -253,6 +254,42 @@ function PosPreview() {
   );
 }
 
+const ROLE_LABELS: Record<string, string> = {
+  god: "Guð",
+  super_admin: "Yfirstjórnandi",
+  admin: "Stjórnandi",
+  user: "Notandi",
+};
+
+function StillingarPreview() {
+  const user = useAuthStore((s) => s.user);
+
+  if (!user) return <p className="text-sm text-(--color-text-muted)">Ekki innskráð(ur).</p>;
+
+  const roleLabel = ROLE_LABELS[user.role] ?? user.role;
+
+  return (
+    <div className="space-y-3">
+      {/* Hero */}
+      <div>
+        {user.mustResetPassword && (
+          <span className="mb-1.5 inline-block rounded-md bg-(--color-warning-bg) px-2 py-0.5 text-xs font-semibold text-(--color-warning)">
+            Lykilorð útrunnið
+          </span>
+        )}
+        <p className="text-base font-semibold text-(--color-text) truncate">{user.name}</p>
+        <p className="text-xs text-(--color-text-muted)">{user.email}</p>
+      </div>
+
+      {/* Role */}
+      <div className="border-t border-(--color-border) pt-2.5">
+        <p className="text-xs text-(--color-text-muted)">Hlutverk</p>
+        <p className="text-sm font-semibold text-(--color-text)">{roleLabel}</p>
+      </div>
+    </div>
+  );
+}
+
 function AskriftPreview() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["subscription-overview-preview"],
@@ -393,6 +430,8 @@ export function CardPreview({ id, fallback }: { id: string; fallback: ReactNode 
       return <DkOnePreview />;
     case "pos":
       return <PosPreview />;
+    case "stillingar":
+      return <StillingarPreview />;
     case "askrift":
       return <AskriftPreview />;
     case "notendur":
