@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchCustomerTransactions } from "@/features/invoices/api/invoices.api";
 import { fetchDkOneUsers } from "@/features/dkone/api/dkone.api";
+import { fetchPosServices, fetchPosRestServices } from "@/features/pos/api/pos.api";
 import { fetchTimeclockConfig } from "@/features/timeclock/api/timeclock.api";
 import { fetchLicence } from "@/features/licence/api/licence.api";
 
@@ -194,12 +195,69 @@ function DkOnePreview() {
   );
 }
 
+function PosPreview() {
+  const dkpos = useQuery({ queryKey: ["pos-services-preview"], queryFn: fetchPosServices });
+  const rest = useQuery({ queryKey: ["pos-rest-preview"], queryFn: fetchPosRestServices });
+
+  if (dkpos.isLoading || rest.isLoading) return <Loading />;
+  if (dkpos.isError || rest.isError) return <Err />;
+
+  const dkposServices = dkpos.data ?? [];
+  const restServices = rest.data ?? [];
+  const all = [...dkposServices, ...restServices];
+
+  const running = all.filter((s) => s.state === "running").length;
+  const stopped = all.filter((s) => s.state === "stopped").length;
+
+  const dkposRunning = dkposServices.filter((s) => s.state === "running").length;
+  const restRunning = restServices.filter((s) => s.state === "running").length;
+
+  if (all.length === 0) {
+    return <p className="text-sm text-(--color-text-muted)">Engar POS þjónustur skráðar.</p>;
+  }
+
+  return (
+    <div className="space-y-3">
+      {/* Hero */}
+      <div>
+        {stopped > 0 && (
+          <span className="mb-1.5 inline-block rounded-md bg-(--color-error-bg) px-2 py-0.5 text-xs font-semibold text-(--color-error)">
+            {stopped} stöðvuð
+          </span>
+        )}
+        <p className="text-2xl font-bold text-(--color-text)">
+          {running} af {all.length}
+        </p>
+        <p className="text-xs text-(--color-text-muted)">þjónustur í gangi</p>
+      </div>
+
+      {/* Split by type */}
+      <div className="grid grid-cols-2 gap-2 border-t border-(--color-border) pt-2.5">
+        <div>
+          <p className="text-xs text-(--color-text-muted)">dkPOS</p>
+          <p className={`text-sm font-semibold ${dkposRunning < dkposServices.length ? "text-(--color-error)" : "text-(--color-text)"}`}>
+            {dkposRunning} / {dkposServices.length}
+          </p>
+        </div>
+        <div>
+          <p className="text-xs text-(--color-text-muted)">REST POS</p>
+          <p className={`text-sm font-semibold ${restRunning < restServices.length ? "text-(--color-error)" : "text-(--color-text)"}`}>
+            {restRunning} / {restServices.length}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function CardPreview({ id, fallback }: { id: string; fallback: ReactNode }) {
   switch (id) {
     case "reikningar":
       return <ReikningarPreview />;
     case "dkone":
       return <DkOnePreview />;
+    case "pos":
+      return <PosPreview />;
     case "stimpilklukka":
       return <StimpilklukkaPreview />;
     case "leyfi":
