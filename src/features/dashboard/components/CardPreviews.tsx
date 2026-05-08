@@ -6,7 +6,6 @@ import { fetchPosServices, fetchPosRestServices } from "@/features/pos/api/pos.a
 import { fetchUsers } from "@/features/users/api/users.api";
 import { fetchHostingAccounts } from "@/features/hosting/api/hosting.api";
 import { fetchSubscriptionOverview, buildOverview } from "@/features/subscription/api/overview.api";
-import { useAuthStore } from "@/features/auth/store/auth.store";
 import { fetchAuthTokens } from "@/features/dkplus/api/dkplus.api";
 import { fetchTimeclockConfig, fetchIpWhitelist, fetchEmployeePhones } from "@/features/timeclock/api/timeclock.api";
 import { fetchLicence } from "@/features/licence/api/licence.api";
@@ -53,7 +52,6 @@ function ReikningarPreview() {
 
   return (
     <div className="space-y-3">
-      {/* Hero: unpaid summary or all-clear */}
       {unsettled.length > 0 ? (
         <div>
           <span className="inline-block rounded-md bg-(--color-warning-bg) px-2 py-0.5 text-xs font-semibold text-(--color-warning)">
@@ -78,7 +76,6 @@ function ReikningarPreview() {
         </div>
       )}
 
-      {/* Summary stats */}
       <div className="grid grid-cols-2 gap-2 border-t border-(--color-border) pt-2.5">
         <div>
           <p className="text-xs text-(--color-text-muted)">Reikningar alls</p>
@@ -109,7 +106,6 @@ function StimpilklukkaPreview() {
 
   return (
     <div className="space-y-3">
-      {/* Hero: URL or warning */}
       <div>
         {!timeclockUrl && (
           <span className="mb-1.5 inline-block rounded-md bg-(--color-warning-bg) px-2 py-0.5 text-xs font-semibold text-(--color-warning)">
@@ -123,7 +119,6 @@ function StimpilklukkaPreview() {
         )}
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 gap-2 border-t border-(--color-border) pt-2.5">
         <div>
           <p className="text-xs text-(--color-text-muted)">Skráðir símar</p>
@@ -194,7 +189,6 @@ function DkOnePreview() {
 
   return (
     <div className="space-y-3">
-      {/* Hero */}
       <div>
         {invited.length > 0 && (
           <span className="mb-1.5 inline-block rounded-md bg-(--color-warning-bg) px-2 py-0.5 text-xs font-semibold text-(--color-warning)">
@@ -205,7 +199,6 @@ function DkOnePreview() {
         <p className="text-xs text-(--color-text-muted)">virkir notendur í dkOne</p>
       </div>
 
-      {/* Role breakdown */}
       <div className="grid grid-cols-3 gap-2 border-t border-(--color-border) pt-2.5">
         <div>
           <p className="text-xs text-(--color-text-muted)">Eigendur</p>
@@ -247,7 +240,6 @@ function PosPreview() {
 
   return (
     <div className="space-y-3">
-      {/* Hero */}
       <div>
         {stopped > 0 && (
           <span className="mb-1.5 inline-block rounded-md bg-(--color-error-bg) px-2 py-0.5 text-xs font-semibold text-(--color-error)">
@@ -260,7 +252,6 @@ function PosPreview() {
         <p className="text-xs text-(--color-text-muted)">þjónustur í gangi</p>
       </div>
 
-      {/* Split by type */}
       <div className="grid grid-cols-2 gap-2 border-t border-(--color-border) pt-2.5">
         <div>
           <p className="text-xs text-(--color-text-muted)">dkPOS</p>
@@ -296,52 +287,14 @@ function DkPlusPreview() {
 
   return (
     <div className="space-y-3">
-      {/* Hero */}
       <div>
         <p className="text-2xl font-bold text-(--color-text)">{data.length}</p>
         <p className="text-xs text-(--color-text-muted)">API tókn</p>
       </div>
 
-      {/* Companies */}
       <div className="border-t border-(--color-border) pt-2.5">
         <p className="text-xs text-(--color-text-muted)">Tengd fyrirtæki</p>
         <p className="text-sm font-semibold text-(--color-text)">{companies}</p>
-      </div>
-    </div>
-  );
-}
-
-const ROLE_LABELS: Record<string, string> = {
-  god: "Guð",
-  super_admin: "Yfirstjórnandi",
-  admin: "Stjórnandi",
-  user: "Notandi",
-};
-
-function StillingarPreview() {
-  const user = useAuthStore((s) => s.user);
-
-  if (!user) return <p className="text-sm text-(--color-text-muted)">Ekki innskráð(ur).</p>;
-
-  const roleLabel = ROLE_LABELS[user.role] ?? user.role;
-
-  return (
-    <div className="space-y-3">
-      {/* Hero */}
-      <div>
-        {user.mustResetPassword && (
-          <span className="mb-1.5 inline-block rounded-md bg-(--color-warning-bg) px-2 py-0.5 text-xs font-semibold text-(--color-warning)">
-            Lykilorð útrunnið
-          </span>
-        )}
-        <p className="text-base font-semibold text-(--color-text) truncate">{user.name}</p>
-        <p className="text-xs text-(--color-text-muted)">{user.email}</p>
-      </div>
-
-      {/* Role */}
-      <div className="border-t border-(--color-border) pt-2.5">
-        <p className="text-xs text-(--color-text-muted)">Hlutverk</p>
-        <p className="text-sm font-semibold text-(--color-text)">{roleLabel}</p>
       </div>
     </div>
   );
@@ -368,7 +321,6 @@ function AskriftPreview() {
 
   return (
     <div className="space-y-3">
-      {/* Hero */}
       <div>
         <p className="text-2xl font-bold tabular-nums text-(--color-primary)">
           {Math.round(grandTotal).toLocaleString("is-IS")} kr.
@@ -376,7 +328,6 @@ function AskriftPreview() {
         <p className="text-xs text-(--color-text-muted)">mánaðarlegt m. vsk</p>
       </div>
 
-      {/* Package */}
       {packageName && (
         <div className="border-t border-(--color-border) pt-2.5">
           <p className="text-xs text-(--color-text-muted)">Grunnpakki</p>
@@ -407,7 +358,6 @@ function NotendurPreview() {
 
   return (
     <div className="space-y-3">
-      {/* Hero */}
       <div>
         {pending.length > 0 && (
           <span className="mb-1.5 inline-block rounded-md bg-(--color-warning-bg) px-2 py-0.5 text-xs font-semibold text-(--color-warning)">
@@ -418,7 +368,6 @@ function NotendurPreview() {
         <p className="text-xs text-(--color-text-muted)">virkir notendur</p>
       </div>
 
-      {/* Role breakdown */}
       <div className="grid grid-cols-2 gap-2 border-t border-(--color-border) pt-2.5">
         <div>
           <p className="text-xs text-(--color-text-muted)">Stjórnendur</p>
@@ -451,7 +400,6 @@ function HysingPreview() {
 
   return (
     <div className="space-y-3">
-      {/* Hero */}
       <div>
         {withoutMfa > 0 && (
           <span className="mb-1.5 inline-block rounded-md bg-(--color-warning-bg) px-2 py-0.5 text-xs font-semibold text-(--color-warning)">
@@ -462,7 +410,6 @@ function HysingPreview() {
         <p className="text-xs text-(--color-text-muted)">hýsingaraðgangar</p>
       </div>
 
-      {/* MFA breakdown */}
       <div className="grid grid-cols-2 gap-2 border-t border-(--color-border) pt-2.5">
         <div>
           <p className="text-xs text-(--color-text-muted)">MFA virkt</p>
@@ -489,8 +436,6 @@ export function CardPreview({ id, fallback }: { id: string; fallback: ReactNode 
       return <PosPreview />;
     case "dkplus":
       return <DkPlusPreview />;
-    case "stillingar":
-      return <StillingarPreview />;
     case "askrift":
       return <AskriftPreview />;
     case "notendur":
