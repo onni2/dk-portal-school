@@ -126,11 +126,11 @@ function StimpilklukkaPreview() {
       {/* Stats */}
       <div className="grid grid-cols-2 gap-2 border-t border-(--color-border) pt-2.5">
         <div>
-          <p className="text-xs text-(--color-text-muted)">Skráðar símar</p>
+          <p className="text-xs text-(--color-text-muted)">Skráðir símar</p>
           <p className="text-sm font-semibold text-(--color-text)">{phoneCount}</p>
         </div>
         <div>
-          <p className="text-xs text-(--color-text-muted)">Leyfðar IP</p>
+          <p className="text-xs text-(--color-text-muted)">Leyfð IP</p>
           <p className="text-sm font-semibold text-(--color-text)">{ipCount}</p>
         </div>
       </div>
