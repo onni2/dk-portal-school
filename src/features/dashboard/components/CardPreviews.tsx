@@ -5,6 +5,7 @@ import { fetchDkOneUsers } from "@/features/dkone/api/dkone.api";
 import { fetchPosServices, fetchPosRestServices } from "@/features/pos/api/pos.api";
 import { fetchUsers } from "@/features/users/api/users.api";
 import { fetchHostingAccounts } from "@/features/hosting/api/hosting.api";
+import { fetchSubscriptionOverview, buildOverview } from "@/features/subscription/api/overview.api";
 import { fetchTimeclockConfig } from "@/features/timeclock/api/timeclock.api";
 import { fetchLicence } from "@/features/licence/api/licence.api";
 
@@ -252,6 +253,46 @@ function PosPreview() {
   );
 }
 
+function AskriftPreview() {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["subscription-overview-preview"],
+    queryFn: fetchSubscriptionOverview,
+  });
+
+  if (isLoading) return <Loading />;
+  if (isError || !data) return <Err />;
+
+  if (data.length === 0) {
+    return <p className="text-sm text-(--color-text-muted)">Engar áskriftarpantanir fundust.</p>;
+  }
+
+  const { packageLines, groups } = buildOverview(data);
+  const packageTotal = packageLines.reduce((sum, l) => sum + (l.TotalAmountWithTax ?? 0), 0);
+  const groupsTotal = groups.reduce((sum, g) => sum + g.total, 0);
+  const grandTotal = packageTotal + groupsTotal;
+  const packageName = packageLines.map((l) => l.Text ?? l.ItemCode).join(", ");
+
+  return (
+    <div className="space-y-3">
+      {/* Hero */}
+      <div>
+        <p className="text-2xl font-bold tabular-nums text-(--color-primary)">
+          {Math.round(grandTotal).toLocaleString("is-IS")} kr.
+        </p>
+        <p className="text-xs text-(--color-text-muted)">mánaðarlegt m. vsk</p>
+      </div>
+
+      {/* Package */}
+      {packageName && (
+        <div className="border-t border-(--color-border) pt-2.5">
+          <p className="text-xs text-(--color-text-muted)">Grunnpakki</p>
+          <p className="text-sm font-semibold text-(--color-text) truncate">{packageName}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function NotendurPreview() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["portal-users-preview"],
@@ -352,6 +393,8 @@ export function CardPreview({ id, fallback }: { id: string; fallback: ReactNode 
       return <DkOnePreview />;
     case "pos":
       return <PosPreview />;
+    case "askrift":
+      return <AskriftPreview />;
     case "notendur":
       return <NotendurPreview />;
     case "hysing":
