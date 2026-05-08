@@ -8,7 +8,7 @@ import { fetchHostingAccounts } from "@/features/hosting/api/hosting.api";
 import { fetchSubscriptionOverview, buildOverview } from "@/features/subscription/api/overview.api";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { fetchAuthTokens } from "@/features/dkplus/api/dkplus.api";
-import { fetchTimeclockConfig } from "@/features/timeclock/api/timeclock.api";
+import { fetchTimeclockConfig, fetchIpWhitelist, fetchEmployeePhones } from "@/features/timeclock/api/timeclock.api";
 import { fetchLicence } from "@/features/licence/api/licence.api";
 
 const MODULE_LABELS: Record<string, string> = {
@@ -96,20 +96,44 @@ function ReikningarPreview() {
 }
 
 function StimpilklukkaPreview() {
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["timeclock-config"],
-    queryFn: fetchTimeclockConfig,
-  });
+  const config = useQuery({ queryKey: ["timeclock-config"], queryFn: fetchTimeclockConfig });
+  const ips = useQuery({ queryKey: ["timeclock-ips-preview"], queryFn: fetchIpWhitelist });
+  const phones = useQuery({ queryKey: ["timeclock-phones-preview"], queryFn: fetchEmployeePhones });
 
-  if (isLoading) return <Loading />;
-  if (isError || !data) return <Err />;
+  if (config.isLoading || ips.isLoading || phones.isLoading) return <Loading />;
+  if (config.isError || !config.data) return <Err />;
+
+  const { timeclockUrl } = config.data;
+  const ipCount = ips.data?.length ?? 0;
+  const phoneCount = phones.data?.length ?? 0;
 
   return (
-    <div className="space-y-1">
-      <p className="text-sm font-medium text-(--color-text)">{data.companyName}</p>
-      {data.timeclockUrl && (
-        <p className="truncate text-sm text-(--color-primary)">{data.timeclockUrl}</p>
-      )}
+    <div className="space-y-3">
+      {/* Hero: URL or warning */}
+      <div>
+        {!timeclockUrl && (
+          <span className="mb-1.5 inline-block rounded-md bg-(--color-warning-bg) px-2 py-0.5 text-xs font-semibold text-(--color-warning)">
+            Slóð ekki stillt
+          </span>
+        )}
+        {timeclockUrl ? (
+          <p className="truncate text-sm font-medium text-(--color-primary)">{timeclockUrl}</p>
+        ) : (
+          <p className="text-sm text-(--color-text-muted)">Engin stimpilklukkuslóð</p>
+        )}
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-2 border-t border-(--color-border) pt-2.5">
+        <div>
+          <p className="text-xs text-(--color-text-muted)">Skráðar símar</p>
+          <p className="text-sm font-semibold text-(--color-text)">{phoneCount}</p>
+        </div>
+        <div>
+          <p className="text-xs text-(--color-text-muted)">Leyfðar IP</p>
+          <p className="text-sm font-semibold text-(--color-text)">{ipCount}</p>
+        </div>
+      </div>
     </div>
   );
 }
