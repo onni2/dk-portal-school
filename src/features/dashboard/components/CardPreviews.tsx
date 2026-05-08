@@ -4,6 +4,7 @@ import { fetchCustomerTransactions } from "@/features/invoices/api/invoices.api"
 import { fetchDkOneUsers } from "@/features/dkone/api/dkone.api";
 import { fetchPosServices, fetchPosRestServices } from "@/features/pos/api/pos.api";
 import { fetchUsers } from "@/features/users/api/users.api";
+import { fetchHostingAccounts } from "@/features/hosting/api/hosting.api";
 import { fetchTimeclockConfig } from "@/features/timeclock/api/timeclock.api";
 import { fetchLicence } from "@/features/licence/api/licence.api";
 
@@ -297,6 +298,52 @@ function NotendurPreview() {
   );
 }
 
+function HysingPreview() {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["hosting-accounts-preview"],
+    queryFn: fetchHostingAccounts,
+  });
+
+  if (isLoading) return <Loading />;
+  if (isError || !data) return <Err />;
+
+  if (data.length === 0) {
+    return <p className="text-sm text-(--color-text-muted)">Engir hýsingaraðgangar skráðir.</p>;
+  }
+
+  const withMfa = data.filter((a) => a.hasMfa).length;
+  const withoutMfa = data.length - withMfa;
+
+  return (
+    <div className="space-y-3">
+      {/* Hero */}
+      <div>
+        {withoutMfa > 0 && (
+          <span className="mb-1.5 inline-block rounded-md bg-(--color-warning-bg) px-2 py-0.5 text-xs font-semibold text-(--color-warning)">
+            {withoutMfa} án MFA
+          </span>
+        )}
+        <p className="text-2xl font-bold text-(--color-text)">{data.length}</p>
+        <p className="text-xs text-(--color-text-muted)">hýsingaraðgangar</p>
+      </div>
+
+      {/* MFA breakdown */}
+      <div className="grid grid-cols-2 gap-2 border-t border-(--color-border) pt-2.5">
+        <div>
+          <p className="text-xs text-(--color-text-muted)">MFA virkt</p>
+          <p className="text-sm font-semibold text-(--color-success)">{withMfa}</p>
+        </div>
+        <div>
+          <p className="text-xs text-(--color-text-muted)">MFA óvirkt</p>
+          <p className={`text-sm font-semibold ${withoutMfa > 0 ? "text-(--color-warning)" : "text-(--color-text)"}`}>
+            {withoutMfa}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function CardPreview({ id, fallback }: { id: string; fallback: ReactNode }) {
   switch (id) {
     case "reikningar":
@@ -307,6 +354,8 @@ export function CardPreview({ id, fallback }: { id: string; fallback: ReactNode 
       return <PosPreview />;
     case "notendur":
       return <NotendurPreview />;
+    case "hysing":
+      return <HysingPreview />;
     case "stimpilklukka":
       return <StimpilklukkaPreview />;
     case "leyfi":
