@@ -81,18 +81,6 @@ export const ALL_CARDS: CardDef[] = [
     to: "/notendur",
     permission: "users",
   },
-  {
-    id: "hjalp",
-    title: "Hjálparmiðstöðin",
-    description: "Leiðbeiningar og myndbönd um notkun á vörum DK.",
-    to: "/knowledge-base",
-  },
-  {
-    id: "stillingar",
-    title: "Stillingar",
-    description: "Stillingar fyrir Mínar síður.",
-    to: "/stillingar",
-  },
 ];
 
 const DEFAULT_CARD_IDS = ["reikningar", "stimpilklukka"];
