@@ -7,13 +7,12 @@ import { useAuthStore } from "@/features/auth/store/auth.store";
 export function useVisibleNavItems() {
   const { data: licence, isLoading } = useLicence();
   const role = useRoleStore((s) => s.role);
+  const user = useAuthStore((s) => s.user);
   const permissions = useAuthStore((s) => s.permissions);
-
-  if (role === "cop") return NAV_ITEMS;
 
   if (isLoading || !licence) {
     return NAV_ITEMS.filter((item) => item.access.type === "alwaysVisible");
   }
 
-  return filterNavItems(NAV_ITEMS, role, licence, permissions);
+  return filterNavItems(NAV_ITEMS, role, licence, permissions, user);
 }

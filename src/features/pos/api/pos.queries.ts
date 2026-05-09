@@ -19,11 +19,19 @@ export const posRestServicesQueryOptions = queryOptions({
 });
 
 export function usePosServices() {
-  return useSuspenseQuery(posServicesQueryOptions);
+  return useSuspenseQuery({
+    ...posServicesQueryOptions,
+    refetchInterval: (query) =>
+      query.state.data?.some((s) => s.state === "stopped") ? 2000 : false,
+  });
 }
 
 export function usePosRestServices() {
-  return useSuspenseQuery(posRestServicesQueryOptions);
+  return useSuspenseQuery({
+    ...posRestServicesQueryOptions,
+    refetchInterval: (query) =>
+      query.state.data?.some((s) => s.state === "stopped") ? 2000 : false,
+  });
 }
 
 export function usePosServiceLogs(serviceId: string) {

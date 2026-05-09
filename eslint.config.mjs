@@ -7,7 +7,7 @@ import globals from "globals";
 
 export default tseslint.config(
   {
-    ignores: ["dist", "src/routeTree.gen.ts", "server/node_modules"],
+    ignores: ["dist", "src/routeTree.gen.ts", "server/node_modules", "odinn/server.cjs"],
   },
 
   js.configs.recommended,
@@ -21,6 +21,12 @@ export default tseslint.config(
       globals: {
         ...globals.node,
       },
+    },
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+      "no-undef": "off",
+      "no-redeclare": "off",
+      "@typescript-eslint/no-unused-vars": "off",
     },
   },
 
