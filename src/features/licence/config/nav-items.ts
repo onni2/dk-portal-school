@@ -19,6 +19,7 @@ export interface NavItem {
     | { type: "hostingManagement" }
     | { type: "hostingSecurityPrivacy" }
     | { type: "copOnly" }
+    | { type: "godOnly" }
     | { type: "accountantOnly" };
   children?: NavItem[];
 }
@@ -71,5 +72,6 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Zoho beiðnir", to: "/zoho", access: { type: "alwaysVisible" } },
   { label: "Hjálparmiðstöð", to: "/knowledge-base", access: { type: "alwaysVisible" } },
   { label: "Notendur", to: "/notendur", access: { type: "requiredPermission", permission: "users" } },
-  { label: "Stillingar", to: "/stillingar", access: { type: "alwaysVisible" } },
+  { label: "Stillingar", to: "/portalUserSettings", access: { type: "alwaysVisible" } },
+  { label: "Kerfisstjórn", to: "/god", access: { type: "godOnly" } },
 ];

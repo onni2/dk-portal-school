@@ -407,6 +407,20 @@ async function migrate() {
   `);
 
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS hosting_accounts (
+      id           TEXT PRIMARY KEY,
+      company_id   TEXT NOT NULL REFERENCES companies(id),
+      username     TEXT NOT NULL,
+      display_name TEXT NOT NULL,
+      created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await pool.query(`ALTER TABLE hosting_accounts ADD COLUMN IF NOT EXISTS email TEXT`);
+  await pool.query(`ALTER TABLE hosting_accounts ADD COLUMN IF NOT EXISTS has_mfa BOOLEAN NOT NULL DEFAULT false`);
+  await pool.query(`ALTER TABLE hosting_accounts ADD COLUMN IF NOT EXISTS last_restart TIMESTAMPTZ`);
+  await pool.query(`ALTER TABLE hosting_accounts ADD COLUMN IF NOT EXISTS password_hash TEXT`);
+  await pool.query(`ALTER TABLE hosting_accounts ALTER COLUMN password_hash DROP NOT NULL`);
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS pos_services (
@@ -832,6 +846,14 @@ async function migrate() {
       [l.id, l.token_id, l.company_id, l.description, l.executed_by, l.created_at],
     );
   }
+
+  // Maintenance locks — god can disable routes and show a message to users
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS maintenance_locks (
+      route   TEXT PRIMARY KEY,
+      message TEXT NOT NULL DEFAULT 'Þjónusta er tímabundið ekki tiltæk.'
+    )
+  `);
 
   // Zoho tickets tables
   await pool.query(`
