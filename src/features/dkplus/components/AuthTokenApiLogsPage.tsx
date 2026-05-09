@@ -6,7 +6,6 @@ import type { AuthToken, AuthTokenApiLog } from "../types/dkplus.types";
 import { cn } from "@/shared/utils/cn";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
-
 const METHOD_OPTIONS = ["", "GET", "POST", "PUT", "DELETE", "PATCH"] as const;
 
 function formatDate(iso: string): string {
@@ -17,6 +16,20 @@ function formatDate(iso: string): string {
   const hh = d.getHours().toString().padStart(2, "0");
   const min = d.getMinutes().toString().padStart(2, "0");
   return `${dd}.${mm}.${yyyy} ${hh}:${min}`;
+}
+
+function bucketKey(d: Date, byWeek: boolean): string {
+  if (byWeek) {
+    const mon = new Date(d);
+    mon.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+    return mon.toISOString().slice(0, 10);
+  }
+  return d.toISOString().slice(0, 10);
+}
+
+function formatDateLabel(dateStr: string): string {
+  const d = new Date(dateStr + "T12:00:00Z");
+  return d.toLocaleDateString("is-IS", { day: "numeric", month: "short", year: "numeric" });
 }
 
 function StatusBadge({ code }: { code: number }) {
@@ -43,6 +56,156 @@ function MethodBadge({ method }: { method: string }) {
     <span className={cn("inline-block rounded px-1.5 py-0.5 text-xs font-mono font-semibold", color)}>
       {method}
     </span>
+  );
+}
+
+type ChartPeriod = 1 | 3 | 6 | 12;
+
+function UsageChart({ logs }: { logs: AuthTokenApiLog[] }) {
+  const [period, setPeriod] = useState<ChartPeriod>(3);
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+
+  const { buckets, total, maxCount, avgPerDay, peakCount, groupByWeek } = useMemo(() => {
+    const now = new Date();
+    const from = new Date(now);
+    from.setMonth(from.getMonth() - period);
+
+    const byWeek = period >= 6;
+    const bucketMap = new Map<string, number>();
+
+    const cursor = new Date(from);
+    while (cursor <= now) {
+      const key = bucketKey(cursor, byWeek);
+      if (!bucketMap.has(key)) bucketMap.set(key, 0);
+      cursor.setUTCDate(cursor.getUTCDate() + 1);
+    }
+
+    let total = 0;
+    for (const log of logs) {
+      const d = new Date(log.createdAt);
+      if (d < from || d > now) continue;
+      total++;
+      const key = bucketKey(d, byWeek);
+      bucketMap.set(key, (bucketMap.get(key) ?? 0) + 1);
+    }
+
+    const buckets = Array.from(bucketMap.entries()).map(([date, count]) => ({ date, count }));
+    const maxCount = Math.max(...buckets.map((b) => b.count), 1);
+    const nonZero = buckets.filter((b) => b.count > 0);
+    const avgPerDay = nonZero.length > 0 ? Math.round(total / nonZero.length) : 0;
+
+    return { buckets, total, maxCount, avgPerDay, peakCount: maxCount, groupByWeek: byWeek };
+  }, [logs, period]);
+
+  return (
+    <div className="rounded-xl border border-(--color-border) bg-(--color-surface) p-4">
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-baseline gap-2">
+          <span className="text-sm font-semibold text-(--color-text)">Notkun</span>
+          <span className="text-xs text-(--color-text-secondary)">
+            {total.toLocaleString("is-IS")} köll
+          </span>
+        </div>
+        <div className="flex overflow-hidden rounded-lg border border-(--color-border)">
+          {([1, 3, 6, 12] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => setPeriod(m)}
+              className={cn(
+                "border-r border-(--color-border) px-3 py-1 text-xs font-medium transition-colors last:border-r-0",
+                period === m
+                  ? "bg-(--color-primary) text-white"
+                  : "bg-(--color-surface) text-(--color-text-secondary) hover:bg-(--color-surface-hover)",
+              )}
+            >
+              {m}M
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="relative">
+        {/* Horizontal grid lines */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 flex h-28 flex-col justify-between">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <div key={i} className="w-full border-t border-(--color-border)/40" />
+          ))}
+        </div>
+
+        {/* Tooltip */}
+        {hoveredIdx !== null && (
+          <div
+            className="pointer-events-none absolute bottom-6 z-10 -translate-x-1/2 whitespace-nowrap rounded-lg bg-(--color-text) px-2.5 py-1.5 text-xs text-white shadow-md"
+            style={{ left: `${((hoveredIdx + 0.5) / buckets.length) * 100}%` }}
+          >
+            <span className="font-medium">{buckets[hoveredIdx].count}</span>
+            <span className="ml-1 opacity-75">
+              {groupByWeek ? "þ/v" : "köll"} · {formatDateLabel(buckets[hoveredIdx].date)}
+            </span>
+          </div>
+        )}
+
+        {/* Bars */}
+        <div className="flex h-28 items-end gap-px">
+          {buckets.map(({ date, count }, idx) => (
+            <div
+              key={date}
+              className="group relative flex h-full flex-1 cursor-default items-end"
+              onMouseEnter={() => setHoveredIdx(idx)}
+              onMouseLeave={() => setHoveredIdx(null)}
+            >
+              {count > 0 ? (
+                <div
+                  className={cn(
+                    "w-full rounded-t-[1px] transition-colors",
+                    hoveredIdx === idx
+                      ? "bg-(--color-primary)"
+                      : "bg-(--color-primary)/50",
+                  )}
+                  style={{ height: `${Math.max(2, Math.round((count / maxCount) * 100))}%` }}
+                />
+              ) : (
+                <div className="w-full rounded-t-[1px] bg-(--color-border)/30" style={{ height: "2px" }} />
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* X-axis month labels */}
+        <div className="relative mt-1 h-4">
+          {buckets.map(({ date }, idx) => {
+            const d = new Date(date + "T12:00:00Z");
+            const isLabel = groupByWeek ? d.getUTCDate() <= 7 : d.getUTCDate() === 1;
+            if (!isLabel) return null;
+            return (
+              <span
+                key={date}
+                className="absolute -translate-x-1/2 text-[10px] text-(--color-text-muted)"
+                style={{ left: `${((idx + 0.5) / buckets.length) * 100}%` }}
+              >
+                {d.toLocaleString("is-IS", { month: "short" })}
+              </span>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Summary stats */}
+      <div className="mt-3 grid grid-cols-3 gap-4 border-t border-(--color-border) pt-3">
+        <div>
+          <p className="text-xs text-(--color-text-muted)">Samtals</p>
+          <p className="text-sm font-semibold text-(--color-text)">{total.toLocaleString("is-IS")}</p>
+        </div>
+        <div>
+          <p className="text-xs text-(--color-text-muted)">Meðaltal / {groupByWeek ? "viku" : "dag"}</p>
+          <p className="text-sm font-semibold text-(--color-text)">{avgPerDay}</p>
+        </div>
+        <div>
+          <p className="text-xs text-(--color-text-muted)">Hæsta {groupByWeek ? "vika" : "dagur"}</p>
+          <p className="text-sm font-semibold text-(--color-text)">{peakCount}</p>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -114,7 +277,9 @@ function FilterPanel({
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-(--color-text-secondary)">Aðferð <span className="font-normal text-(--color-text-muted)">(valkvætt)</span></label>
+          <label className="mb-1 block text-xs font-medium text-(--color-text-secondary)">
+            Aðferð <span className="font-normal text-(--color-text-muted)">(valkvætt)</span>
+          </label>
           <select
             value={filters.method}
             onChange={(e) => onChange({ ...filters, method: e.target.value })}
@@ -127,7 +292,9 @@ function FilterPanel({
           </select>
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-(--color-text-secondary)">Stöðukóði <span className="font-normal text-(--color-text-muted)">(valkvætt)</span></label>
+          <label className="mb-1 block text-xs font-medium text-(--color-text-secondary)">
+            Stöðukóði <span className="font-normal text-(--color-text-muted)">(valkvætt)</span>
+          </label>
           <input
             type="number"
             placeholder="T.d. 200"
@@ -157,13 +324,7 @@ function FilterPanel({
   );
 }
 
-function LogTable({
-  logs,
-  isLoading,
-}: {
-  logs: AuthTokenApiLog[];
-  isLoading: boolean;
-}) {
+function LogTable({ logs, isLoading }: { logs: AuthTokenApiLog[]; isLoading: boolean }) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-16 text-sm text-(--color-text-secondary)">
@@ -238,9 +399,7 @@ function LogTable({
               <td className="whitespace-nowrap px-4 py-2.5 text-right font-mono text-xs text-(--color-text-secondary)">
                 {log.timeTaken}
               </td>
-              <td className="px-4 py-2.5 text-xs text-red-600">
-                {log.error ?? ""}
-              </td>
+              <td className="px-4 py-2.5 text-xs text-red-600">{log.error ?? ""}</td>
             </tr>
           ))}
         </tbody>
@@ -305,6 +464,8 @@ export function AuthTokenApiLogsPage({ token, onBack }: AuthTokenApiLogsPageProp
         <span className="text-sm font-medium text-(--color-text)">API Yfirlit</span>
         <span className="ml-auto font-mono text-xs text-(--color-text-muted)">{token.token}</span>
       </div>
+
+      <UsageChart logs={allLogs} />
 
       <FilterPanel
         filters={draftFilters}

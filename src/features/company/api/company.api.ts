@@ -1,17 +1,12 @@
-import type { Company } from "../types/company.types";
+import type { UserPermissions } from "@/features/auth/types/auth.types";
 
-export async function getCompanies(): Promise<Company[]> {
-  const res = await fetch(`${import.meta.env.VITE_MOCK_API_URL}/companies`, {
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("dk-auth-token") ?? ""}`,
-    },
-  });
-  if (!res.ok) throw new Error("Failed to fetch companies");
-  return res.json();
+export interface SwitchCompanyResponse {
+  token: string;
+  companyDkToken: string | null;
+  permissions: UserPermissions;
 }
 
-export async function switchCompany(companyId: string): Promise<{ token: string; companyDkToken: string; permissions: Record<string, boolean> }> {
+export async function switchCompany(companyId: string): Promise<SwitchCompanyResponse> {
   const res = await fetch(`${import.meta.env.VITE_MOCK_API_URL}/auth/switch-company`, {
     method: "POST",
     headers: {

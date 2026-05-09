@@ -1,3 +1,4 @@
+// src/features/licence/config/nav-items.ts
 /**
  * Static list of all sidebar navigation items, each tagged with the access rule that controls its visibility.
  * Uses: ../types/licence.types, @/features/users/types/users.types
@@ -14,6 +15,9 @@ export interface NavItem {
     | { type: "requiredModules"; modules: LicenceModule[] }
     | { type: "requiredPermission"; permission: keyof UserPermissions }
     | { type: "licencedModule"; module: LicenceModule; permission: keyof UserPermissions }
+    | { type: "hostingConnected" }
+    | { type: "hostingManagement" }
+    | { type: "hostingSecurityPrivacy" }
     | { type: "copOnly" }
     | { type: "accountantOnly" };
   children?: NavItem[];
@@ -23,7 +27,7 @@ export const NAV_ITEMS: NavItem[] = [
   // Always visible to all logged-in users
   { label: "Yfirlit", to: "/", access: { type: "alwaysVisible" } },
 
-    // Accountant-only items
+  // Accountant-only items
   {
     label: "Bókari",
     to: "/accountant",
@@ -36,6 +40,7 @@ export const NAV_ITEMS: NavItem[] = [
 
   // Permission-based items — visible if the admin has granted the user access
   { label: "Reikningsyfirlit", to: "/invoices", access: { type: "requiredPermission", permission: "invoices" } },
+
   {
     label: "Áskrift",
     to: "/askrift",
@@ -45,19 +50,21 @@ export const NAV_ITEMS: NavItem[] = [
       { label: "Vörur dk", to: "/askrift/vorur", access: { type: "licencedModule", module: "dkPlus", permission: "subscription" } },
     ],
   },
+
   {
     label: "Hýsing",
     to: "/hosting",
-    access: { type: "licencedModule", module: "Hosting", permission: "hosting" },
+    access: { type: "requiredModules", modules: ["Hosting"] },
     children: [
-      { label: "Hýsingin mín", to: "/hosting/myHosting", access: { type: "requiredPermission", permission: "hosting" } },
-      { label: "Duo - fjölþátta auðkenning", to: "/hosting/duo", access: { type: "requiredPermission", permission: "hosting" } },
-      { label: "Öryggi og persónuvernd", to: "/hosting/oryggi", access: { type: "requiredPermission", permission: "hosting" } },
+      { label: "Hýsingarstjórnun", to: "/hosting/hostingManagement", access: { type: "hostingManagement" } },
+      { label: "Hýsingin mín", to: "/hosting/myHosting", access: { type: "hostingConnected" } },
+      { label: "Öryggi og persónuvernd", to: "/hosting/securityPrivacy", access: { type: "hostingSecurityPrivacy" } },
     ],
   },
+
   { label: "dkPOS", to: "/pos", access: { type: "requiredPermission", permission: "pos" } },
   { label: "dkOne", to: "/dkone", access: { type: "requiredPermission", permission: "dkOne" } },
-  { label: "dkPlus", to: "/dkplus", access: { type: "requiredPermission", permission: "dkPlus" } },
+  { label: "dk vefþjónustur", to: "/dkplus", access: { type: "requiredPermission", permission: "dkPlus" } },
   { label: "Stimpilklukka", to: "/timeclock", access: { type: "requiredPermission", permission: "timeclock" } },
 
   // Always visible to all logged-in users
