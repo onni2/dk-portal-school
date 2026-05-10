@@ -7,7 +7,7 @@ import { cn } from "@/shared/utils/cn";
 
 const LAST_COMPANY_KEY = "dk-last-company";
 
-function getLastVisitedOrder(companies: { id: string }[]): { id: string }[] {
+function getLastVisitedOrder<T extends { id: string }>(companies: T[]): T[] {
   try {
     const raw = localStorage.getItem(LAST_COMPANY_KEY);
     if (!raw) return companies;
@@ -24,7 +24,7 @@ function getLastVisitedOrder(companies: { id: string }[]): { id: string }[] {
 }
 
 export function CompanyPicker() {
-  const { companies, user, setToken, setActiveCompany, setPermissions } = useAuthStore();
+  const { companies, user, setToken, setActiveCompany } = useAuthStore();
   const isElevated = user?.role === "super_admin" || user?.role === "god";
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -44,8 +44,7 @@ export function CompanyPicker() {
       } else {
         localStorage.removeItem("dk-company-token");
       }
-      if (permissions) setPermissions(permissions as Parameters<typeof setPermissions>[0]);
-      setActiveCompany(companyId);
+      setActiveCompany(companyId, permissions);
 
       try {
         const prev: string[] = JSON.parse(localStorage.getItem(LAST_COMPANY_KEY) ?? "[]");

@@ -1,32 +1,154 @@
 import { mockClient } from "@/shared/api/mockClient";
-import type { DuoStatus } from "../types/duo.types";
+import type { DuoDevice, DuoUser } from "../types/duo.types";
 
-export type DuoActivationResponse = {
-  phone_id: string;
-  activation_barcode?: string | null;
-  activation_msg?: string | null;
-  installation_msg?: string | null;
-};
+export type CreateDuoDevicePayload =
+  | {
+      phoneNumber: string;
+      platform: "ios" | "android";
+      deviceDescription: string;
+      activationMethod: "sms";
+    }
+  | {
+      deviceDescription: string;
+      activationMethod: "qr";
+    };
 
-export async function fetchDuoStatus(): Promise<DuoStatus> {
-  return mockClient.get<DuoStatus>("/duo/status");
+export interface CreateDuoDeviceResponse {
+  ok: true;
+  deviceId: string;
+  phoneNumber: string | null;
+  deviceDescription: string;
+  platform: string | null;
+  status: "pending_activation" | "active";
+  activationMethod: "sms" | "qr";
+  smsSent: boolean;
+  activationUrl: string | null;
+  activationBarcode: string | null;
+  activationExpiresAt: string | null;
+  validSeconds: number;
 }
 
-export async function enrollDuoPhone(
-  number: string
-): Promise<DuoActivationResponse> {
-  return mockClient.post<DuoActivationResponse>("/duo/phones", { number });
+export interface DuoDeviceStatusResponse {
+  activated: boolean;
+  status: "pending_activation" | "active";
+  model: string | null;
+  platform: string | null;
 }
 
-export async function resendDuoActivation(
-  phoneId: string
-): Promise<DuoActivationResponse> {
-  return mockClient.post<DuoActivationResponse>(
-    `/duo/phones/${phoneId}/resend`,
-    {}
+export interface UpdateDuoUserPayload {
+  displayName?: string;
+  email?: string;
+}
+
+export interface UpdateDuoUserResponse {
+  ok: true;
+  duoUserId: string;
+  displayName: string | null;
+  email: string | null;
+  emailStatus: string | null;
+}
+
+/**
+ * Fetch Duo user connected to the logged-in user's hosting account.
+ */
+export async function fetchDuoUser(): Promise<DuoUser> {
+  return mockClient.get<DuoUser>("/duo/me");
+}
+
+/**
+ * Update Duo user's display name and/or email.
+ */
+export async function updateDuoUser(
+  payload: UpdateDuoUserPayload,
+): Promise<UpdateDuoUserResponse> {
+  return mockClient.patch<UpdateDuoUserResponse>("/duo/me", payload);
+}
+
+/**
+ * Fetch devices connected to the logged-in user's Duo user.
+ */
+export async function fetchDuoDevices(): Promise<DuoDevice[]> {
+  return mockClient.get<DuoDevice[]>("/duo/me/devices");
+}
+
+/**
+ * Create a Duo device activation.
+ *
+ * SMS requires phoneNumber + platform.
+ * QR only requires deviceDescription.
+ */
+export async function createDuoDevice(
+  payload: CreateDuoDevicePayload,
+): Promise<CreateDuoDeviceResponse> {
+  return mockClient.post<CreateDuoDeviceResponse>("/duo/me/devices", payload);
+}
+
+/**
+ * Poll activation status for a Duo device.
+ */
+export async function fetchDuoDeviceStatus(
+  deviceId: string,
+): Promise<DuoDeviceStatusResponse> {
+  return mockClient.get<DuoDeviceStatusResponse>(
+    `/duo/me/devices/${deviceId}/status`,
   );
 }
 
-export async function deleteDuoPhone(phoneId: string): Promise<{ ok: true }> {
-  return mockClient.delete<{ ok: true }>(`/duo/phones/${phoneId}`);
+/**
+ * Delete Duo device from the logged-in user's Duo account.
+ */
+export async function deleteDuoDevice(
+  deviceId: string,
+): Promise<{ ok: true; hasMfa: boolean }> {
+  return mockClient.delete<{ ok: true; hasMfa: boolean }>(
+    `/duo/me/devices/${deviceId}`,
+  );
+}
+
+// ─── Admin (Hosting Management) ──────────────────────────────────────────────
+
+export async function updateAdminDuoUser(
+  accountId: string,
+  payload: UpdateDuoUserPayload,
+): Promise<UpdateDuoUserResponse> {
+  return mockClient.patch<UpdateDuoUserResponse>(
+    `/duo/accounts/${accountId}`,
+    payload,
+  );
+}
+
+export async function fetchAdminDuoUser(accountId: string): Promise<DuoUser> {
+  return mockClient.get<DuoUser>(`/duo/accounts/${accountId}`);
+}
+
+export async function fetchAdminDuoDevices(accountId: string): Promise<DuoDevice[]> {
+  return mockClient.get<DuoDevice[]>(`/duo/accounts/${accountId}/devices`);
+}
+
+export async function createAdminDuoDevice(
+  accountId: string,
+  payload: CreateDuoDevicePayload,
+): Promise<CreateDuoDeviceResponse> {
+  return mockClient.post<CreateDuoDeviceResponse>(
+    `/duo/accounts/${accountId}/devices`,
+    payload,
+  );
+}
+
+export async function fetchAdminDuoDeviceStatus(
+  accountId: string,
+  deviceId: string,
+): Promise<DuoDeviceStatusResponse> {
+  return mockClient.get<DuoDeviceStatusResponse>(
+    `/duo/accounts/${accountId}/devices/${deviceId}/status`,
+  );
+}
+
+export async function deleteAdminDuoDevice(
+  accountId: string,
+  deviceId: string,
+): Promise<{ ok: true; hasMfa: boolean }> {
+  return mockClient.delete<{ ok: true; hasMfa: boolean }>(
+    `/duo/accounts/${accountId}/devices/${deviceId}`,
+  );
 }
