@@ -1,10 +1,24 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { fetchDuoStatus, enrollDuoPhone, resendDuoActivation, deleteDuoPhone } from "../duo.api";
+import {
+  fetchDuoUser,
+  updateDuoUser,
+  fetchDuoDevices,
+  createDuoDevice,
+  fetchDuoDeviceStatus,
+  deleteDuoDevice,
+  updateAdminDuoUser,
+  fetchAdminDuoUser,
+  fetchAdminDuoDevices,
+  createAdminDuoDevice,
+  fetchAdminDuoDeviceStatus,
+  deleteAdminDuoDevice,
+} from "../duo.api";
 
 vi.mock("@/shared/api/mockClient", () => ({
   mockClient: {
     get: vi.fn(),
     post: vi.fn(),
+    patch: vi.fn(),
     delete: vi.fn(),
   },
 }));
@@ -13,70 +27,148 @@ import { mockClient } from "@/shared/api/mockClient";
 
 const mockGet = vi.mocked(mockClient.get);
 const mockPost = vi.mocked(mockClient.post);
+const mockPatch = vi.mocked(mockClient.patch);
 const mockDelete = vi.mocked(mockClient.delete);
 
 beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe("fetchDuoStatus", () => {
-  it("calls the correct endpoint", async () => {
-    mockGet.mockResolvedValue({ user: {}, phones: [] });
-    await fetchDuoStatus();
-    expect(mockGet).toHaveBeenCalledWith("/duo/status");
+// ─── My Hosting ──────────────────────────────────────────────────────────────
+
+describe("fetchDuoUser", () => {
+  it("calls GET /duo/me", async () => {
+    mockGet.mockResolvedValue({ duoUserId: "d1", username: "jondoe" });
+    await fetchDuoUser();
+    expect(mockGet).toHaveBeenCalledWith("/duo/me");
   });
 
-  it("returns the status object", async () => {
-    const status = {
-      user: { user_id: "u1", username: "jondoe", realname: "Jón Dóe", email: "jon@dk.is", status: "active" },
-      phones: [{ phone_id: "p1", number: "+354 555 0000", name: "iPhone", model: "iPhone 15", type: "smartphone", platform: "iOS", activated: true }],
-    };
-    mockGet.mockResolvedValue(status);
-    const result = await fetchDuoStatus();
-    expect(result).toEqual(status);
+  it("returns the response", async () => {
+    const user = { duoUserId: "d1", username: "jondoe", displayName: "Jón", email: null };
+    mockGet.mockResolvedValue(user);
+    expect(await fetchDuoUser()).toEqual(user);
   });
 });
 
-describe("enrollDuoPhone", () => {
-  it("calls the correct endpoint with the phone number", async () => {
-    mockPost.mockResolvedValue({ phone_id: "p1" });
-    await enrollDuoPhone("+354 555 0000");
-    expect(mockPost).toHaveBeenCalledWith("/duo/phones", { number: "+354 555 0000" });
+describe("updateDuoUser", () => {
+  it("calls PATCH /duo/me with the payload", async () => {
+    mockPatch.mockResolvedValue({ ok: true, duoUserId: "d1", displayName: "Jón", email: null, emailStatus: null });
+    await updateDuoUser({ displayName: "Jón" });
+    expect(mockPatch).toHaveBeenCalledWith("/duo/me", { displayName: "Jón" });
   });
 
-  it("returns the activation response", async () => {
-    const response = { phone_id: "p1", activation_barcode: "data:image/png;base64,abc" };
-    mockPost.mockResolvedValue(response);
-    const result = await enrollDuoPhone("+354 555 0000");
-    expect(result).toEqual(response);
-  });
-});
-
-describe("resendDuoActivation", () => {
-  it("calls the correct endpoint for the given phoneId", async () => {
-    mockPost.mockResolvedValue({ phone_id: "p1" });
-    await resendDuoActivation("p1");
-    expect(mockPost).toHaveBeenCalledWith("/duo/phones/p1/resend", {});
-  });
-
-  it("returns the new activation response", async () => {
-    const response = { phone_id: "p1", activation_msg: "SMS sent" };
-    mockPost.mockResolvedValue(response);
-    const result = await resendDuoActivation("p1");
-    expect(result).toEqual(response);
+  it("returns the response", async () => {
+    const res = { ok: true, duoUserId: "d1", displayName: "Jón", email: null, emailStatus: null };
+    mockPatch.mockResolvedValue(res);
+    expect(await updateDuoUser({ displayName: "Jón" })).toEqual(res);
   });
 });
 
-describe("deleteDuoPhone", () => {
-  it("calls the correct endpoint for the given phoneId", async () => {
-    mockDelete.mockResolvedValue({ ok: true });
-    await deleteDuoPhone("p1");
-    expect(mockDelete).toHaveBeenCalledWith("/duo/phones/p1");
+describe("fetchDuoDevices", () => {
+  it("calls GET /duo/me/devices", async () => {
+    mockGet.mockResolvedValue([]);
+    await fetchDuoDevices();
+    expect(mockGet).toHaveBeenCalledWith("/duo/me/devices");
+  });
+});
+
+describe("createDuoDevice", () => {
+  it("calls POST /duo/me/devices with SMS payload", async () => {
+    mockPost.mockResolvedValue({ ok: true, deviceId: "dev1" });
+    const payload = { phoneNumber: "+3541234567", platform: "ios" as const, deviceDescription: "iPhone", activationMethod: "sms" as const };
+    await createDuoDevice(payload);
+    expect(mockPost).toHaveBeenCalledWith("/duo/me/devices", payload);
   });
 
-  it("returns ok: true", async () => {
-    mockDelete.mockResolvedValue({ ok: true });
-    const result = await deleteDuoPhone("p1");
-    expect(result).toEqual({ ok: true });
+  it("calls POST /duo/me/devices with QR payload", async () => {
+    mockPost.mockResolvedValue({ ok: true, deviceId: "dev2" });
+    const payload = { deviceDescription: "Tæki", activationMethod: "qr" as const };
+    await createDuoDevice(payload);
+    expect(mockPost).toHaveBeenCalledWith("/duo/me/devices", payload);
+  });
+});
+
+describe("fetchDuoDeviceStatus", () => {
+  it("calls GET /duo/me/devices/:deviceId/status", async () => {
+    mockGet.mockResolvedValue({ activated: false, status: "pending_activation" });
+    await fetchDuoDeviceStatus("dev1");
+    expect(mockGet).toHaveBeenCalledWith("/duo/me/devices/dev1/status");
+  });
+});
+
+describe("deleteDuoDevice", () => {
+  it("calls DELETE /duo/me/devices/:deviceId", async () => {
+    mockDelete.mockResolvedValue({ ok: true, hasMfa: false });
+    await deleteDuoDevice("dev1");
+    expect(mockDelete).toHaveBeenCalledWith("/duo/me/devices/dev1");
+  });
+});
+
+// ─── Admin (Hosting Management) ──────────────────────────────────────────────
+
+describe("fetchAdminDuoUser", () => {
+  it("calls GET /duo/accounts/:accountId", async () => {
+    mockGet.mockResolvedValue({ duoUserId: "d1", username: "jondoe" });
+    await fetchAdminDuoUser("ha-abc");
+    expect(mockGet).toHaveBeenCalledWith("/duo/accounts/ha-abc");
+  });
+});
+
+describe("updateAdminDuoUser", () => {
+  it("calls PATCH /duo/accounts/:accountId with the payload", async () => {
+    mockPatch.mockResolvedValue({ ok: true, duoUserId: "d1", displayName: "Admin", email: null, emailStatus: null });
+    await updateAdminDuoUser("ha-abc", { displayName: "Admin" });
+    expect(mockPatch).toHaveBeenCalledWith("/duo/accounts/ha-abc", { displayName: "Admin" });
+  });
+
+  it("does NOT call /duo/me", async () => {
+    mockPatch.mockResolvedValue({ ok: true, duoUserId: "d1", displayName: "Admin", email: null, emailStatus: null });
+    await updateAdminDuoUser("ha-abc", { displayName: "Admin" });
+    expect(mockPatch).not.toHaveBeenCalledWith("/duo/me", expect.anything());
+  });
+
+  it("returns the response", async () => {
+    const res = { ok: true as const, duoUserId: "d1", displayName: "Admin", email: null, emailStatus: null };
+    mockPatch.mockResolvedValue(res);
+    expect(await updateAdminDuoUser("ha-abc", { displayName: "Admin" })).toEqual(res);
+  });
+
+  it("passes email in the payload when provided", async () => {
+    mockPatch.mockResolvedValue({ ok: true, duoUserId: "d1", displayName: null, email: "a@b.is", emailStatus: "added" });
+    await updateAdminDuoUser("ha-xyz", { email: "a@b.is" });
+    expect(mockPatch).toHaveBeenCalledWith("/duo/accounts/ha-xyz", { email: "a@b.is" });
+  });
+});
+
+describe("fetchAdminDuoDevices", () => {
+  it("calls GET /duo/accounts/:accountId/devices", async () => {
+    mockGet.mockResolvedValue([]);
+    await fetchAdminDuoDevices("ha-abc");
+    expect(mockGet).toHaveBeenCalledWith("/duo/accounts/ha-abc/devices");
+  });
+});
+
+describe("createAdminDuoDevice", () => {
+  it("calls POST /duo/accounts/:accountId/devices", async () => {
+    mockPost.mockResolvedValue({ ok: true, deviceId: "dev1" });
+    const payload = { deviceDescription: "Tæki", activationMethod: "qr" as const };
+    await createAdminDuoDevice("ha-abc", payload);
+    expect(mockPost).toHaveBeenCalledWith("/duo/accounts/ha-abc/devices", payload);
+  });
+});
+
+describe("fetchAdminDuoDeviceStatus", () => {
+  it("calls GET /duo/accounts/:accountId/devices/:deviceId/status", async () => {
+    mockGet.mockResolvedValue({ activated: false, status: "pending_activation" });
+    await fetchAdminDuoDeviceStatus("ha-abc", "dev1");
+    expect(mockGet).toHaveBeenCalledWith("/duo/accounts/ha-abc/devices/dev1/status");
+  });
+});
+
+describe("deleteAdminDuoDevice", () => {
+  it("calls DELETE /duo/accounts/:accountId/devices/:deviceId", async () => {
+    mockDelete.mockResolvedValue({ ok: true, hasMfa: false });
+    await deleteAdminDuoDevice("ha-abc", "dev1");
+    expect(mockDelete).toHaveBeenCalledWith("/duo/accounts/ha-abc/devices/dev1");
   });
 });

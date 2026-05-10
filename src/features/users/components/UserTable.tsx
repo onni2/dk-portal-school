@@ -1,3 +1,4 @@
+// src/features/users/components/UserTable.tsx
 /**
  * Table of portal users with role/status badges and a remove action.
  * The logged-in user cannot remove themselves.
