@@ -30,6 +30,8 @@ function canShowNavItem(
 
   if (item.access.type === "copOnly") return role === "cop";
 
+  if (item.access.type === "godOnly") return user?.role === "god";
+
   if (item.access.type === "accountantOnly") return false;
 
   if (item.access.type === "hostingConnected") {

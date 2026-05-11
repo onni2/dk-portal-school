@@ -11,13 +11,6 @@ export function useVisibleNavItems() {
   const permissions = useAuthStore((s) => s.permissions);
 
 
-  if (role === "cop") {
-    // god sees everything; super_admin sees cop items but not godOnly
-    if (user?.role === "god") return NAV_ITEMS;
-    return NAV_ITEMS.filter((item) => item.access.type !== "godOnly");
-  }
-
-
   if (isLoading || !licence) {
     return NAV_ITEMS.filter((item) => item.access.type === "alwaysVisible");
   }
