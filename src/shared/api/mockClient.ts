@@ -1,3 +1,4 @@
+// src/shared/api/mockClient.ts
 /**
  * HTTP client for the local mock backend (Express + PostgreSQL via Docker).
  * Always sends the JWT token stored in localStorage.
@@ -21,13 +22,15 @@ function authHeaders(): Record<string, string> {
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
     let message = res.statusText;
+    let data: unknown = null;
     try {
       const body = await res.json();
       if (body.message) message = body.message;
+      data = body;
     } catch {
       // keep statusText
     }
-    throw { message, status: res.status };
+    throw { message, status: res.status, data };
   }
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;

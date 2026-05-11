@@ -1,52 +1,36 @@
-/**
- * Panel for viewing and managing employee phone numbers used to clock in at kiosks.
- * Data is stored in Neon, scoped per company.
- * Uses: @/shared/components/Button, @/shared/components/Card, @/shared/components/Input,
- *       ../api/timeclock.queries, ../api/timeclock.api, ../store/timeclock.store
- * Exports: EmployeePhonesPanel
- */
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { Input } from "@/shared/components/Input";
-import { useEmployeePhones, useInvalidateEmployeePhones } from "../api/timeclock.queries";
+import { useEmployeePhones } from "../api/timeclock.queries";
 import { addEmployeePhone, removeEmployeePhone } from "../api/timeclock.api";
 import { useTimeclockStore } from "../store/timeclock.store";
 
 export function EmployeePhonesPanel() {
   const { data: entries } = useEmployeePhones();
-  const invalidate = useInvalidateEmployeePhones();
+  const qc = useQueryClient();
   const { addPhoneOpen, setAddPhoneOpen } = useTimeclockStore();
-  const [employeeNumber, setEmployeeNumber] = useState("");
+  const [kennitala, setKennitala] = useState("");
   const [employeeName, setEmployeeName] = useState("");
   const [phone, setPhone] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [removingId, setRemovingId] = useState<string | null>(null);
 
-  async function handleAdd() {
-    if (!employeeNumber.trim() || !phone.trim()) return;
-    setSaving(true);
-    try {
-      await addEmployeePhone(employeeNumber.trim(), employeeName.trim(), phone.trim());
-      await invalidate();
-      setEmployeeNumber("");
+  const addMutation = useMutation({
+    mutationFn: ({ kennitala, employeeName, phone }: { kennitala: string; employeeName: string; phone: string }) =>
+      addEmployeePhone(kennitala, employeeName, phone),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["timeclock-employee-phones"] });
+      setKennitala("");
       setEmployeeName("");
       setPhone("");
       setAddPhoneOpen(false);
-    } finally {
-      setSaving(false);
-    }
-  }
+    },
+  });
 
-  async function handleRemove(id: string) {
-    setRemovingId(id);
-    try {
-      await removeEmployeePhone(id);
-      await invalidate();
-    } finally {
-      setRemovingId(null);
-    }
-  }
+  const removeMutation = useMutation({
+    mutationFn: (id: string) => removeEmployeePhone(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["timeclock-employee-phones"] }),
+  });
 
   return (
     <Card>
@@ -74,17 +58,19 @@ export function EmployeePhonesPanel() {
             <li key={entry.id} className="flex items-center justify-between py-3">
               <div>
                 <p className="text-sm font-medium text-(--color-text)">
-                  {entry.employeeName || entry.employeeNumber}
+                  {entry.employeeName || entry.kennitala}
                 </p>
-                <p className="text-xs text-(--color-text-muted)">{entry.phone}</p>
+                <p className="text-xs text-(--color-text-muted)">
+                  {entry.kennitala} · {entry.phone}
+                </p>
               </div>
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => handleRemove(entry.id)}
-                disabled={removingId === entry.id}
+                onClick={() => removeMutation.mutate(entry.id)}
+                disabled={removeMutation.isPending && removeMutation.variables === entry.id}
               >
-                {removingId === entry.id ? "..." : "Fjarlægja"}
+                {removeMutation.isPending && removeMutation.variables === entry.id ? "..." : "Fjarlægja"}
               </Button>
             </li>
           ))}
@@ -94,9 +80,9 @@ export function EmployeePhonesPanel() {
       {addPhoneOpen && (
         <div className="mt-4 flex flex-col gap-3 border-t border-(--color-border) pt-4">
           <Input
-            placeholder="Númer starfsmanns"
-            value={employeeNumber}
-            onChange={(e) => setEmployeeNumber(e.target.value)}
+            placeholder="Kennitala (10 tölustafir)"
+            value={kennitala}
+            onChange={(e) => setKennitala(e.target.value)}
           />
           <Input
             placeholder="Nafn (valkvætt)"
@@ -109,8 +95,16 @@ export function EmployeePhonesPanel() {
             onChange={(e) => setPhone(e.target.value)}
           />
           <div className="flex gap-2">
-            <Button variant="primary" size="sm" onClick={handleAdd} disabled={saving || !employeeNumber.trim() || !phone.trim()}>
-              {saving ? "Vista..." : "Vista"}
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                if (kennitala.trim() && phone.trim())
+                  addMutation.mutate({ kennitala: kennitala.trim(), employeeName: employeeName.trim(), phone: phone.trim() });
+              }}
+              disabled={addMutation.isPending || !kennitala.trim() || !phone.trim()}
+            >
+              {addMutation.isPending ? "Vista..." : "Vista"}
             </Button>
             <Button variant="ghost" size="sm" onClick={() => setAddPhoneOpen(false)}>
               Hætta við

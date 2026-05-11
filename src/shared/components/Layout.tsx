@@ -6,19 +6,21 @@
  */
 import { Link, useMatches, useNavigate } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/shared/utils/cn";
 import { useVisibleNavItems } from "@/features/licence/hooks/useVisibleNavItems";
-import { useRoleStore } from "@/features/licence/store/role.store";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { logout } from "@/features/auth/api/auth.api";
 import { ProfileDropdown } from "@/features/auth/components/ProfileDropdown";
 import { CompanySelector } from "@/features/company/components/CompanySelector";
 import { NotificationBell } from "@/features/notifications/components/NotificationBell";
+import { subCompaniesQueryOptions } from "@/features/dkone/api/dkone.queries";
+
 
 function findActiveChild(children: { to: string }[], path: string): string | null {
   const matches = children.filter((c) => path === c.to || path.startsWith(c.to + "/"));
   if (matches.length === 0) return null;
-  return matches.sort((a, b) => b.to.length - a.to.length)[0].to;
+  return matches.sort((a, b) => b.to.length - a.to.length)[0]!.to;
 }
 
 /**
@@ -27,8 +29,20 @@ function findActiveChild(children: { to: string }[], path: string): string | nul
 export function Layout({ children }: { children: ReactNode }) {
   const matches = useMatches();
   const currentPath = matches[matches.length - 1]?.fullPath ?? "/";
-  const navItems = useVisibleNavItems();
-  const { role, toggleRole } = useRoleStore();
+  const rawNavItems = useVisibleNavItems();
+  const hasDkOne = rawNavItems.some((item) => item.to === "/dkone");
+  const { data: subCompanies } = useQuery({ ...subCompaniesQueryOptions, enabled: hasDkOne });
+  const navItems = rawNavItems.map((item) =>
+    item.to === "/dkone" && (subCompanies?.length ?? 0) > 0
+      ? {
+          ...item,
+          children: [
+            { label: "Notendur", to: "/dkone", access: item.access },
+            { label: "Umsýslusvæði", to: "/dkone/umsyslusvaedi", access: item.access },
+          ],
+        }
+      : item,
+  );
   const user = useAuthStore((s) => s.user);
   const clearAuth = useAuthStore((s) => s.clearAuth);
   const navigate = useNavigate();
@@ -171,15 +185,6 @@ export function Layout({ children }: { children: ReactNode }) {
 
           {/* Bottom section */}
           <div className="p-3">
-            {import.meta.env.DEV && (
-              <button
-                onClick={toggleRole}
-                className="mb-3 w-full rounded-[var(--radius-lg)] border border-[var(--color-border)] px-3 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface-hover)]"
-              >
-                Hlutverk: {role === "cop" ? "COP (Admin)" : "Client"} ↔
-              </button>
-            )}
-
             {/* Help box */}
             <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-background)] px-4 py-3">
               <p className="text-[12px] font-medium text-[var(--color-text)]">Þarftu aðstoð?</p>
@@ -194,7 +199,7 @@ export function Layout({ children }: { children: ReactNode }) {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 overflow-y-auto p-8">{children}</main>
+        <main className="flex flex-col flex-1 overflow-y-auto p-8">{children}</main>
       </div>
     </div>
   );

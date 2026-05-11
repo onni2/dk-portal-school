@@ -14,6 +14,7 @@ export const MOCK_LICENCE: LicenceResponse = {
   Payroll: { Enabled: true },
   Member: { Enabled: true },
   Purchase: { PurchaseOrders: true },
+  TimeClock: { Enabled: true },
   Hosting: { Enabled: true },
   POS: { Enabled: true },
   dkOne: { Enabled: true },
