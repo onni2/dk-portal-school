@@ -36,6 +36,8 @@ export const NAV_ITEMS: NavItem[] = [
     children: [
       { label: "Fyrirtækin mín", to: "/accountant/companies", access: { type: "accountantOnly" } },
       { label: "Skilastaða", to: "/accountant/submissions", access: { type: "accountantOnly" } },
+      { label: "Færslur", to: "/accountant/transactions", access: { type: "accountantOnly" } },
+      { label: "Skjöl", to: "/accountant/documents", access: { type: "accountantOnly" } },
     ],
   },
 
