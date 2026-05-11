@@ -16,6 +16,7 @@ import {
 } from "@dnd-kit/sortable";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/features/auth/store/auth.store";
+import { useLangStore } from "@/shared/store/lang.store";
 import { ALL_CARDS, useDashboardLayout, type CardDef } from "../store/dashboard.store";
 import { SortableDashboardCard } from "./DashboardCard";
 import { useLicence } from "@/features/licence/api/licence.queries";
@@ -31,25 +32,21 @@ function isLicenced(licence: LicenceResponse | undefined, module: keyof LicenceR
 
 // ─── Maintenance banner ───────────────────────────────────────────────────────
 
-const ROUTE_LABELS: Record<string, string> = {
-  "/invoices": "Reikningar",
-  "/invoices/": "Reikningar",
-  "/askrift": "Áskrift",
-  "/askrift/yfirlit": "Áskrift",
-  "/hosting": "Hýsing",
-  "/pos": "POS",
-  "/dkone": "dkOne",
-  "/dkplus": "dkPlus",
-  "/timeclock": "Stimpilklukka",
-  "/timeclock/": "Stimpilklukka",
-  "/notendur": "Notendur",
-  "/god": "Kerfisstjórnun",
-  "/god/": "Kerfisstjórnun",
+const ROUTE_LABELS: Record<string, { is: string; en: string }> = {
+  "/invoices":        { is: "Reikningar",     en: "Invoices" },
+  "/invoices/":       { is: "Reikningar",     en: "Invoices" },
+  "/askrift":         { is: "Áskrift",         en: "Subscription" },
+  "/askrift/yfirlit": { is: "Áskrift",         en: "Subscription" },
+  "/hosting":         { is: "Hýsing",          en: "Hosting" },
+  "/pos":             { is: "POS",             en: "POS" },
+  "/dkone":           { is: "dkOne",           en: "dkOne" },
+  "/dkplus":          { is: "dkPlus",          en: "dkPlus" },
+  "/timeclock":       { is: "Stimpilklukka",  en: "Timeclock" },
+  "/timeclock/":      { is: "Stimpilklukka",  en: "Timeclock" },
+  "/notendur":        { is: "Notendur",        en: "Users" },
+  "/god":             { is: "Kerfisstjórnun", en: "System Admin" },
+  "/god/":            { is: "Kerfisstjórnun", en: "System Admin" },
 };
-
-function routeLabel(route: string): string {
-  return ROUTE_LABELS[route] ?? route;
-}
 
 function MaintenanceBanner() {
   const { data: locks } = useQuery({
@@ -57,6 +54,7 @@ function MaintenanceBanner() {
     queryFn: fetchMaintenanceLocks,
     refetchInterval: 30_000,
   });
+  const lang = useLangStore((s) => s.lang);
 
   if (!locks || locks.length === 0) return null;
 
@@ -68,12 +66,16 @@ function MaintenanceBanner() {
         </svg>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-(--color-warning)">
-            Viðhald í gangi — {locks.length} {locks.length === 1 ? "þjónusta" : "þjónustur"} óaðgengilegar
+            {lang === "EN"
+              ? `Maintenance in progress — ${locks.length} ${locks.length === 1 ? "service" : "services"} unavailable`
+              : `Viðhald í gangi — ${locks.length} ${locks.length === 1 ? "þjónusta" : "þjónustur"} óaðgengileg`}
           </p>
           <ul className="mt-1.5 space-y-0.5">
             {locks.map((lock) => (
               <li key={lock.route} className="text-sm text-(--color-warning)">
-                <span className="font-medium">{routeLabel(lock.route)}</span>
+                <span className="font-medium">
+                  {ROUTE_LABELS[lock.route]?.[lang === "EN" ? "en" : "is"] ?? lock.route}
+                </span>
                 {lock.message && (
                   <span className="opacity-75 before:mx-1.5 before:opacity-40 before:content-['—']">{lock.message}</span>
                 )}
@@ -95,6 +97,7 @@ function CustomizePanel({
   onToggle,
   onCompactToggle,
   onClose,
+  lang,
 }: {
   available: CardDef[];
   cardIds: string[];
@@ -102,16 +105,19 @@ function CustomizePanel({
   onToggle: (id: string) => void;
   onCompactToggle: (id: string) => void;
   onClose: () => void;
+  lang: string;
 }) {
   return (
     <div className="rounded-2xl border border-(--color-border) bg-(--color-surface) p-5">
       <div className="mb-4 flex items-center justify-between">
-        <p className="text-sm font-semibold text-(--color-text)">Veldu hluta til að birta</p>
+        <p className="text-sm font-semibold text-(--color-text)">
+          {lang === "EN" ? "Choose sections to display" : "Veldu hluta til að birta"}
+        </p>
         <button
           onClick={onClose}
           className="text-xs text-(--color-text-muted) transition-colors hover:text-(--color-text)"
         >
-          Loka
+          {lang === "EN" ? "Close" : "Loka"}
         </button>
       </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
@@ -134,9 +140,11 @@ function CustomizePanel({
                 </span>
                 <div className="min-w-0 pr-5">
                   <p className={cn("text-sm font-medium", active ? "text-(--color-primary)" : "text-(--color-text)")}>
-                    {card.title}
+                    {lang === "EN" ? card.titleEn : card.title}
                   </p>
-                  <p className="truncate text-xs text-(--color-text-muted)">{card.description}</p>
+                  <p className="truncate text-xs text-(--color-text-muted)">
+                    {lang === "EN" ? card.descriptionEn : card.description}
+                  </p>
                 </div>
               </button>
               {active && (
@@ -149,7 +157,7 @@ function CustomizePanel({
                       : "text-(--color-text-muted) hover:text-(--color-primary)",
                   )}
                 >
-                  {compact ? "Þjappað" : "Þjappa"}
+                  {compact ? (lang === "EN" ? "Compact" : "Þjappað") : (lang === "EN" ? "Compact" : "Þjappa")}
                 </button>
               )}
             </div>
@@ -179,6 +187,7 @@ export function DashboardPage() {
     refetchInterval: 30_000,
   });
   const [customizing, setCustomizing] = useState(false);
+  const lang = useLangStore((s) => s.lang);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -196,7 +205,9 @@ export function DashboardPage() {
     isSystemAdmin || isCompanyAdmin ? FULL_PERMISSIONS : authPermissions;
 
   const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Góðan daginn" : hour < 18 ? "Góðan dag" : "Gott kvöld";
+  const greeting = lang === "EN"
+    ? (hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening")
+    : (hour < 12 ? "Góðan daginn" : hour < 18 ? "Góðan dag" : "Gott kvöld");
   const firstName = user?.name?.split(" ")[0];
 
   const available = ALL_CARDS.filter((card) => {
@@ -238,24 +249,26 @@ export function DashboardPage() {
             </h1>
             {user?.role === "god" && (
               <span className="rounded-full bg-(--color-error-bg) px-2.5 py-0.5 text-xs font-semibold text-(--color-error)">
-                Kerfisstjóri
+                {lang === "EN" ? "System Admin" : "Kerfisstjóri"}
               </span>
             )}
             {user?.role === "super_admin" && (
               <span className="rounded-full bg-(--color-warning-bg) px-2.5 py-0.5 text-xs font-semibold text-(--color-warning)">
-                Yfirstjórnandi
+                {lang === "EN" ? "Super Admin" : "Yfirstjórnandi"}
               </span>
             )}
             {companyRole === "admin" && user?.role === "user" && (
               <span className="rounded-full bg-(--color-primary-light) px-2.5 py-0.5 text-xs font-semibold text-(--color-primary)">
-                Stjórnandi
+                {lang === "EN" ? "Admin" : "Stjórnandi"}
               </span>
             )}
           </div>
           <p className="mt-1 text-sm text-(--color-text-secondary)">
             {maintenanceLocks.length > 0
-              ? `${maintenanceLocks.length} ${maintenanceLocks.length === 1 ? "þjónusta er" : "þjónustur eru"} í viðhaldi.`
-              : "Hér er yfirlit þitt yfir stöðu kerfisins í dag."}
+              ? lang === "EN"
+                ? `${maintenanceLocks.length} ${maintenanceLocks.length === 1 ? "service is" : "services are"} under maintenance.`
+                : `${maintenanceLocks.length} ${maintenanceLocks.length === 1 ? "þjónusta er" : "þjónustur eru"} í viðhaldi.`
+              : (lang === "EN" ? "Here is your overview of the system status today." : "Hér er yfirlit þitt yfir stöðu kerfisins í dag.")}
           </p>
         </div>
         <button
@@ -270,7 +283,7 @@ export function DashboardPage() {
           <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
           </svg>
-          Sérsníða
+          {lang === "EN" ? "Customise" : "Sérsníða"}
         </button>
       </div>
 
@@ -283,6 +296,7 @@ export function DashboardPage() {
           onToggle={toggleCard}
           onCompactToggle={toggleCompact}
           onClose={() => setCustomizing(false)}
+          lang={lang}
         />
       )}
 
@@ -315,12 +329,14 @@ export function DashboardPage() {
         </DndContext>
       ) : (
         <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-(--color-border) py-16 text-center">
-          <p className="text-sm font-medium text-(--color-text-muted)">Engir hlutar valdir</p>
+          <p className="text-sm font-medium text-(--color-text-muted)">
+            {lang === "EN" ? "No sections selected" : "Engir hlutar valdir"}
+          </p>
           <button
             onClick={() => setCustomizing(true)}
             className="text-xs text-(--color-primary) hover:underline"
           >
-            Opna stillingar
+            {lang === "EN" ? "Open settings" : "Opna stillingar"}
           </button>
         </div>
       )}

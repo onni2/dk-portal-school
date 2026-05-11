@@ -5,9 +5,12 @@ import type { LicenceResponse } from "@/features/licence/types/licence.types";
 export interface CardDef {
   id: string;
   title: string;
+  titleEn: string;
   description: string;
+  descriptionEn: string;
   to?: string;
   footerLabel?: string;
+  footerLabelEn?: string;
   permission?: keyof UserPermissions;
   licenceModule?: keyof LicenceResponse;
   requireSystemAdmin?: boolean;
@@ -16,85 +19,95 @@ export interface CardDef {
 export const ALL_CARDS: CardDef[] = [
   {
     id: "company",
-    title: "Fyrirtækið",
+    title: "Fyrirtækið",        titleEn: "Company",
     description: "Grunnupplýsingar um fyrirtækið.",
+    descriptionEn: "Basic information about the company.",
   },
   {
     id: "reikningar",
-    title: "Reikningar",
+    title: "Reikningar",        titleEn: "Invoices",
     description: "Ógreiddir reikningar og stöður.",
+    descriptionEn: "Unpaid invoices and balances.",
     to: "/invoices/",
-    footerLabel: "Sjá alla reikninga",
+    footerLabel: "Sjá alla reikninga",   footerLabelEn: "View all invoices",
     permission: "invoices",
   },
   {
     id: "askrift",
-    title: "Áskrift",
+    title: "Áskrift",           titleEn: "Subscription",
     description: "Mánaðarlegar áskriftargjöld hjá DK.",
+    descriptionEn: "Monthly subscription fees with DK.",
     to: "/askrift/yfirlit",
-    footerLabel: "Sjá áskriftir",
+    footerLabel: "Sjá áskriftir",        footerLabelEn: "View subscriptions",
     permission: "subscription",
     licenceModule: "dkPlus",
   },
   {
     id: "hysing",
-    title: "Hýsing",
+    title: "Hýsing",            titleEn: "Hosting",
     description: "Hýsingaraðgangar og MFA staða.",
+    descriptionEn: "Hosting accounts and MFA status.",
     to: "/hosting",
-    footerLabel: "Opna hýsingu",
+    footerLabel: "Opna hýsingu",         footerLabelEn: "Open hosting",
     permission: "hosting",
     licenceModule: "Hosting",
   },
   {
     id: "pos",
-    title: "POS",
+    title: "POS",               titleEn: "POS",
     description: "Staða POS þjónusta.",
+    descriptionEn: "POS service status.",
     to: "/pos",
-    footerLabel: "Opna POS",
+    footerLabel: "Opna POS",             footerLabelEn: "Open POS",
     permission: "pos",
     licenceModule: "POS",
   },
   {
     id: "dkone",
-    title: "dkOne",
+    title: "dkOne",             titleEn: "dkOne",
     description: "Virkir notendur í dkOne.",
+    descriptionEn: "Active users in dkOne.",
     to: "/dkone",
-    footerLabel: "Opna dkOne",
+    footerLabel: "Opna dkOne",           footerLabelEn: "Open dkOne",
     permission: "dkOne",
     licenceModule: "dkOne",
   },
   {
     id: "dkplus",
-    title: "dkPlus",
+    title: "dkPlus",            titleEn: "dkPlus",
     description: "API tókn og tengd fyrirtæki.",
+    descriptionEn: "API tokens and connected companies.",
     to: "/dkplus",
-    footerLabel: "Opna dkPlus",
+    footerLabel: "Opna dkPlus",          footerLabelEn: "Open dkPlus",
     permission: "dkPlus",
     licenceModule: "dkPlus",
   },
   {
     id: "stimpilklukka",
-    title: "Stimpilklukka",
+    title: "Stimpilklukka",     titleEn: "Timeclock",
     description: "Slóð og stillingar stimpilklukku.",
+    descriptionEn: "Timeclock URL and settings.",
     to: "/timeclock/",
-    footerLabel: "Opna stimpilklukku",
+    footerLabel: "Opna stimpilklukku",   footerLabelEn: "Open timeclock",
     permission: "timeclock",
     licenceModule: "TimeClock",
   },
   {
     id: "notendur",
-    title: "Notendur",
+    title: "Notendur",          titleEn: "Users",
     description: "Notendur á Mínar síður.",
+    descriptionEn: "Users on My Pages.",
     to: "/notendur",
-    footerLabel: "Stjórna notendum",
+    footerLabel: "Stjórna notendum",     footerLabelEn: "Manage users",
     permission: "users",
   },
   {
     id: "system",
-    title: "Kerfisstjórnun",
+    title: "Kerfisstjórnun",    titleEn: "System Admin",
     description: "Viðhaldslásir og kerfistól.",
+    descriptionEn: "Maintenance locks and system tools.",
     to: "/god/",
-    footerLabel: "Opna kerfisstjórnun",
+    footerLabel: "Opna kerfisstjórnun",  footerLabelEn: "Open system admin",
     requireSystemAdmin: true,
   },
 ];

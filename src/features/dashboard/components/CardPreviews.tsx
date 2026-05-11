@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/shared/utils/cn";
+import { useLangStore } from "@/shared/store/lang.store";
 import { fetchCustomerTransactions } from "@/features/invoices/api/invoices.api";
 import { fetchDkOneUsers } from "@/features/dkone/api/dkone.api";
 import { fetchPosServices, fetchPosRestServices } from "@/features/pos/api/pos.api";
@@ -13,6 +14,8 @@ import { fetchSubCompanies } from "@/features/dkone/api/dkone.api";
 import { fetchDashboardSummary } from "@/features/dashboard/api/dashboard.api";
 import { fetchMaintenanceLocks } from "@/features/maintenance/api/maintenance.api";
 
+type Lang = "IS" | "EN";
+
 function Loading() {
   return (
     <div className="space-y-2">
@@ -22,20 +25,30 @@ function Loading() {
   );
 }
 
-function Err() {
-  return <p className="text-sm text-(--color-error)">Tókst ekki að sækja gögn</p>;
+function Err({ lang }: { lang: Lang }) {
+  return <p className="text-sm text-(--color-error)">{lang === "EN" ? "Failed to fetch data" : "Tókst ekki að sækja gögn"}</p>;
+}
+
+function more(n: number, lang: Lang) {
+  return lang === "EN" ? `+${n} more` : `+${n} fleiri`;
+}
+
+function fmtDate(iso: string, lang: Lang) {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString(lang === "EN" ? "en-GB" : "is-IS", { day: "numeric", month: "short", year: "numeric" });
 }
 
 // ─── Previews ─────────────────────────────────────────────────────────────────
 
-function CompanyPreview({ compact }: { compact?: boolean }) {
+function CompanyPreview({ compact, lang }: { compact?: boolean; lang: Lang }) {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["dashboard-summary"],
     queryFn: fetchDashboardSummary,
   });
 
   if (isLoading) return <Loading />;
-  if (isError || !data) return <Err />;
+  if (isError || !data) return <Err lang={lang} />;
 
   const modules = data.leyfi.virk;
 
@@ -51,44 +64,43 @@ function CompanyPreview({ compact }: { compact?: boolean }) {
         </p>
         {modules.length > 0 && (
           <p className="text-xs text-(--color-text-muted)">
-            {modules.length} {modules.length === 1 ? "eining" : "einingar"} virkar
+            {modules.length} {modules.length === 1
+              ? (lang === "EN" ? "module active" : "eining virk")
+              : (lang === "EN" ? "modules active" : "einingar virkar")}
           </p>
         )}
       </div>
       {!compact && modules.length > 0 && (
         <div className="flex flex-wrap gap-1 border-t border-(--color-border) pt-2">
           {modules.map((m) => (
-            <span
-              key={m}
-              className="rounded-md bg-(--color-surface-hover) px-2 py-0.5 text-xs text-(--color-text-secondary)"
-            >
+            <span key={m} className="rounded-md bg-(--color-surface-hover) px-2 py-0.5 text-xs text-(--color-text-secondary)">
               {m}
             </span>
           ))}
         </div>
       )}
       {!compact && modules.length === 0 && (
-        <p className="border-t border-(--color-border) pt-2 text-xs text-(--color-text-muted)">Engar einingar virkar</p>
+        <p className="border-t border-(--color-border) pt-2 text-xs text-(--color-text-muted)">
+          {lang === "EN" ? "No active modules" : "Engar einingar virkar"}
+        </p>
       )}
     </div>
   );
 }
 
-function fmtDate(iso: string) {
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString("is-IS", { day: "numeric", month: "short", year: "numeric" });
-}
-
-function ReikningarPreview({ compact }: { compact?: boolean }) {
+function ReikningarPreview({ compact, lang }: { compact?: boolean; lang: Lang }) {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["invoices-preview"],
     queryFn: fetchCustomerTransactions,
   });
 
   if (isLoading) return <Loading />;
-  if (isError || !data) return <Err />;
-  if (data.length === 0) return <p className="text-sm text-(--color-text-muted)">Engar færslur fundust.</p>;
+  if (isError || !data) return <Err lang={lang} />;
+  if (data.length === 0) return (
+    <p className="text-sm text-(--color-text-muted)">
+      {lang === "EN" ? "No transactions found." : "Engar færslur fundust."}
+    </p>
+  );
 
   const unsettled = data.filter((t) => !t.Settled && t.Amount > 0);
   const totalUnpaid = unsettled.reduce((sum, t) => sum + t.Amount, 0);
@@ -108,14 +120,20 @@ function ReikningarPreview({ compact }: { compact?: boolean }) {
             </svg>
           </div>
           <div>
-            <p className="text-sm font-semibold text-(--color-success)">Allt greitt</p>
-            <p className="text-xs text-(--color-text-muted)">Engir ógreiddir reikningar</p>
+            <p className="text-sm font-semibold text-(--color-success)">
+              {lang === "EN" ? "All paid" : "Allt greitt"}
+            </p>
+            <p className="text-xs text-(--color-text-muted)">
+              {lang === "EN" ? "No unpaid invoices" : "Engir ógreiddir reikningar"}
+            </p>
           </div>
         </div>
         {!compact && newestDate && (
           <div className="border-t border-(--color-border) pt-2">
-            <p className="text-xs text-(--color-text-muted)">Nýjasti reikningur</p>
-            <p className="text-xs font-medium text-(--color-text-secondary)">{fmtDate(newestDate)}</p>
+            <p className="text-xs text-(--color-text-muted)">
+              {lang === "EN" ? "Latest invoice" : "Nýjasti reikningur"}
+            </p>
+            <p className="text-xs font-medium text-(--color-text-secondary)">{fmtDate(newestDate, lang)}</p>
           </div>
         )}
       </div>
@@ -126,25 +144,31 @@ function ReikningarPreview({ compact }: { compact?: boolean }) {
     <div className="space-y-2.5">
       <div>
         <span className="mb-1 inline-block rounded-md bg-(--color-warning-bg) px-2 py-0.5 text-xs font-semibold text-(--color-warning)">
-          {unsettled.length} ógreiddir
+          {unsettled.length} {lang === "EN" ? "unpaid" : "ógreiddir"}
         </span>
         <p className="text-2xl font-bold tabular-nums text-(--color-text)">
           {totalUnpaid.toLocaleString("is-IS")} kr.
         </p>
-        <p className="text-xs text-(--color-text-muted)">ógreiddar skuldir</p>
+        <p className="text-xs text-(--color-text-muted)">
+          {lang === "EN" ? "unpaid debt" : "ógreiddar skuldir"}
+        </p>
       </div>
       {!compact && (newestDate || oldestUnpaidDate) && (
         <div className="grid grid-cols-2 gap-2 border-t border-(--color-border) pt-2">
           {newestDate && (
             <div>
-              <p className="text-xs text-(--color-text-muted)">Nýjasti reikningur</p>
-              <p className="text-xs font-medium text-(--color-text-secondary)">{fmtDate(newestDate)}</p>
+              <p className="text-xs text-(--color-text-muted)">
+                {lang === "EN" ? "Latest invoice" : "Nýjasti reikningur"}
+              </p>
+              <p className="text-xs font-medium text-(--color-text-secondary)">{fmtDate(newestDate, lang)}</p>
             </div>
           )}
           {oldestUnpaidDate && (
             <div>
-              <p className="text-xs text-(--color-text-muted)">Elsta ógreitt</p>
-              <p className="text-xs font-medium text-(--color-warning)">{fmtDate(oldestUnpaidDate)}</p>
+              <p className="text-xs text-(--color-text-muted)">
+                {lang === "EN" ? "Oldest unpaid" : "Elsta ógreitt"}
+              </p>
+              <p className="text-xs font-medium text-(--color-warning)">{fmtDate(oldestUnpaidDate, lang)}</p>
             </div>
           )}
         </div>
@@ -153,12 +177,12 @@ function ReikningarPreview({ compact }: { compact?: boolean }) {
   );
 }
 
-function PosPreview({ compact }: { compact?: boolean }) {
+function PosPreview({ compact, lang }: { compact?: boolean; lang: Lang }) {
   const dkpos = useQuery({ queryKey: ["pos-services-preview"], queryFn: fetchPosServices });
   const rest = useQuery({ queryKey: ["pos-rest-preview"], queryFn: fetchPosRestServices });
 
   if (dkpos.isLoading || rest.isLoading) return <Loading />;
-  if (dkpos.isError || rest.isError) return <Err />;
+  if (dkpos.isError || rest.isError) return <Err lang={lang} />;
 
   const dkposServices = dkpos.data ?? [];
   const restServices = rest.data ?? [];
@@ -166,7 +190,11 @@ function PosPreview({ compact }: { compact?: boolean }) {
   const running = all.filter((s) => s.state === "running").length;
   const stopped = all.filter((s) => s.state === "stopped").length;
 
-  if (all.length === 0) return <p className="text-sm text-(--color-text-muted)">Engar POS þjónustur skráðar.</p>;
+  if (all.length === 0) return (
+    <p className="text-sm text-(--color-text-muted)">
+      {lang === "EN" ? "No POS services registered." : "Engar POS þjónustur skráðar."}
+    </p>
+  );
 
   if (compact) {
     return (
@@ -176,7 +204,9 @@ function PosPreview({ compact }: { compact?: boolean }) {
             <span className="text-(--color-success)">{running}</span>
             <span className="text-(--color-text-muted)"> / {all.length}</span>
           </p>
-          <p className="text-xs text-(--color-text-muted)">þjónustur í gangi</p>
+          <p className="text-xs text-(--color-text-muted)">
+            {lang === "EN" ? "services running" : "þjónustur í gangi"}
+          </p>
         </div>
         <div className="flex flex-wrap gap-1.5 border-t border-(--color-border) pt-2">
           {all.map((s) => (
@@ -200,24 +230,26 @@ function PosPreview({ compact }: { compact?: boolean }) {
   if (restServices.length > 0)
     groups.push({ label: "REST", services: [...restServices].sort(sortByState) });
 
-  // Cap total visible services to 3 across all groups so the card never overflows
-  let remaining = 3;
+  let remaining = 4;
+  let totalHidden = 0;
 
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-1.5">
         <span className="rounded-md bg-(--color-success-bg) px-2 py-0.5 text-xs font-semibold text-(--color-success)">
-          {running} í gangi
+          {running} {lang === "EN" ? "running" : "í gangi"}
         </span>
         {stopped > 0 && (
           <span className="rounded-md bg-(--color-error-bg) px-2 py-0.5 text-xs font-semibold text-(--color-error)">
-            {stopped} stöðvuð
+            {stopped} {lang === "EN" ? "stopped" : "stöðvuð"}
           </span>
         )}
       </div>
       <div className="space-y-2 border-t border-(--color-border) pt-2">
         {groups.map(({ label, services }) => {
           const shown = services.slice(0, remaining);
+          const hidden = services.length - shown.length;
+          totalHidden += hidden;
           remaining -= shown.length;
           if (shown.length === 0) return null;
           return (
@@ -234,18 +266,25 @@ function PosPreview({ compact }: { compact?: boolean }) {
             </div>
           );
         })}
+        {totalHidden > 0 && (
+          <p className="text-xs text-(--color-text-muted)">{more(totalHidden, lang)}</p>
+        )}
       </div>
     </div>
   );
 }
 
-function DkOnePreview({ compact }: { compact?: boolean }) {
+function DkOnePreview({ compact, lang }: { compact?: boolean; lang: Lang }) {
   const users = useQuery({ queryKey: ["dkone-users"], queryFn: fetchDkOneUsers });
   const subs = useQuery({ queryKey: ["dkone-sub-companies"], queryFn: fetchSubCompanies });
 
   if (users.isLoading) return <Loading />;
-  if (users.isError || !users.data) return <Err />;
-  if (users.data.length === 0) return <p className="text-sm text-(--color-text-muted)">Engir notendur skráðir.</p>;
+  if (users.isError || !users.data) return <Err lang={lang} />;
+  if (users.data.length === 0) return (
+    <p className="text-sm text-(--color-text-muted)">
+      {lang === "EN" ? "No users registered." : "Engir notendur skráðir."}
+    </p>
+  );
 
   const active = users.data.filter((u) => u.status === "active");
   const invited = users.data.filter((u) => u.status === "invited");
@@ -254,8 +293,12 @@ function DkOnePreview({ compact }: { compact?: boolean }) {
   const subList = subs.isError ? [] : (subs.data ?? []);
 
   const roleLine = [
-    owners.length > 0 && `${owners.length} ${owners.length === 1 ? "eigandi" : "eigendur"}`,
-    admins.length > 0 && `${admins.length} ${admins.length === 1 ? "stjórnandi" : "stjórnendur"}`,
+    owners.length > 0 && `${owners.length} ${lang === "EN"
+      ? (owners.length === 1 ? "owner" : "owners")
+      : (owners.length === 1 ? "eigandi" : "eigendur")}`,
+    admins.length > 0 && `${admins.length} ${lang === "EN"
+      ? (admins.length === 1 ? "admin" : "admins")
+      : (admins.length === 1 ? "stjórnandi" : "stjórnendur")}`,
   ].filter(Boolean).join(" · ");
 
   return (
@@ -263,12 +306,14 @@ function DkOnePreview({ compact }: { compact?: boolean }) {
       <div>
         {invited.length > 0 && (
           <span className="mb-1 inline-block rounded-md bg-(--color-warning-bg) px-2 py-0.5 text-xs font-semibold text-(--color-warning)">
-            {invited.length} {invited.length === 1 ? "í bið" : "í bið"}
+            {invited.length} {lang === "EN" ? "pending" : "í bið"}
           </span>
         )}
         <p className="text-2xl font-bold text-(--color-text)">{active.length}</p>
         <p className="text-xs text-(--color-text-muted)">
-          {active.length === 1 ? "virkur notandi" : "virkir notendur"}
+          {active.length === 1
+            ? (lang === "EN" ? "active user" : "virkur notandi")
+            : (lang === "EN" ? "active users" : "virkir notendur")}
           {roleLine && <span className="ml-1 opacity-60">· {roleLine}</span>}
         </p>
       </div>
@@ -276,7 +321,9 @@ function DkOnePreview({ compact }: { compact?: boolean }) {
         <>
           {invited.length > 0 ? (
             <div className="space-y-1 border-t border-(--color-border) pt-2">
-              <p className="text-xs text-(--color-text-muted)">Bíður staðfestingar</p>
+              <p className="text-xs text-(--color-text-muted)">
+                {lang === "EN" ? "Awaiting confirmation" : "Bíður staðfestingar"}
+              </p>
               <div className="space-y-1">
                 {invited.slice(0, 2).map((u) => (
                   <div key={u.id} className="flex items-center gap-1.5">
@@ -285,13 +332,15 @@ function DkOnePreview({ compact }: { compact?: boolean }) {
                   </div>
                 ))}
                 {invited.length > 2 && (
-                  <p className="text-xs text-(--color-text-muted)">+{invited.length - 2} fleiri</p>
+                  <p className="text-xs text-(--color-text-muted)">{more(invited.length - 2, lang)}</p>
                 )}
               </div>
             </div>
           ) : subList.length > 0 ? (
             <div className="space-y-1 border-t border-(--color-border) pt-2">
-              <p className="text-xs text-(--color-text-muted)">Tengd fyrirtæki</p>
+              <p className="text-xs text-(--color-text-muted)">
+                {lang === "EN" ? "Connected companies" : "Tengd fyrirtæki"}
+              </p>
               <div className="flex flex-wrap gap-1">
                 {subList.slice(0, 4).map((c) => (
                   <span
@@ -304,7 +353,7 @@ function DkOnePreview({ compact }: { compact?: boolean }) {
                 ))}
                 {subList.length > 4 && (
                   <span className="rounded-md bg-(--color-surface-hover) px-2 py-0.5 text-xs text-(--color-text-muted)">
-                    +{subList.length - 4}
+                    {more(subList.length - 4, lang)}
                   </span>
                 )}
               </div>
@@ -316,15 +365,19 @@ function DkOnePreview({ compact }: { compact?: boolean }) {
   );
 }
 
-function HysingPreview({ compact }: { compact?: boolean }) {
+function HysingPreview({ compact, lang }: { compact?: boolean; lang: Lang }) {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["hosting-accounts-preview"],
     queryFn: fetchHostingAccounts,
   });
 
   if (isLoading) return <Loading />;
-  if (isError || !data) return <Err />;
-  if (data.length === 0) return <p className="text-sm text-(--color-text-muted)">Engir hýsingaraðgangar skráðir.</p>;
+  if (isError || !data) return <Err lang={lang} />;
+  if (data.length === 0) return (
+    <p className="text-sm text-(--color-text-muted)">
+      {lang === "EN" ? "No hosting accounts registered." : "Engir hýsingaraðgangar skráðir."}
+    </p>
+  );
 
   const noMfa = data.filter((a) => !a.hasMfa);
   const withMfa = data.length - noMfa.length;
@@ -334,21 +387,25 @@ function HysingPreview({ compact }: { compact?: boolean }) {
       <div>
         {noMfa.length > 0 ? (
           <span className="mb-1 inline-block rounded-md bg-(--color-warning-bg) px-2 py-0.5 text-xs font-semibold text-(--color-warning)">
-            {noMfa.length} án MFA
+            {noMfa.length} {lang === "EN" ? "without MFA" : "án MFA"}
           </span>
         ) : (
           <span className="mb-1 inline-block rounded-md bg-(--color-success-bg) px-2 py-0.5 text-xs font-semibold text-(--color-success)">
-            Allt með MFA
+            {lang === "EN" ? "All with MFA" : "Allt með MFA"}
           </span>
         )}
         <p className="text-2xl font-bold text-(--color-text)">{data.length}</p>
-        <p className="text-xs text-(--color-text-muted)">hýsingaraðgangar</p>
+        <p className="text-xs text-(--color-text-muted)">
+          {lang === "EN" ? "hosting accounts" : "hýsingaraðgangar"}
+        </p>
       </div>
       {!compact && (
         <div className="border-t border-(--color-border) pt-2">
           {noMfa.length > 0 ? (
             <div className="space-y-1">
-              <p className="text-xs text-(--color-text-muted)">Vantar MFA</p>
+              <p className="text-xs text-(--color-text-muted)">
+                {lang === "EN" ? "Missing MFA" : "Vantar MFA"}
+              </p>
               {noMfa.slice(0, 2).map((a) => (
                 <div key={a.id} className="flex items-center gap-1.5">
                   <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-(--color-warning)" />
@@ -356,12 +413,14 @@ function HysingPreview({ compact }: { compact?: boolean }) {
                 </div>
               ))}
               {noMfa.length > 2 && (
-                <p className="text-xs text-(--color-text-muted)">+{noMfa.length - 2} fleiri</p>
+                <p className="text-xs text-(--color-text-muted)">{more(noMfa.length - 2, lang)}</p>
               )}
             </div>
           ) : (
             <div>
-              <p className="text-xs text-(--color-text-muted)">Með MFA</p>
+              <p className="text-xs text-(--color-text-muted)">
+                {lang === "EN" ? "With MFA" : "Með MFA"}
+              </p>
               <p className="text-sm font-semibold text-(--color-success)">{withMfa}</p>
             </div>
           )}
@@ -371,15 +430,19 @@ function HysingPreview({ compact }: { compact?: boolean }) {
   );
 }
 
-function AskriftPreview({ compact }: { compact?: boolean }) {
+function AskriftPreview({ compact, lang }: { compact?: boolean; lang: Lang }) {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["subscription-overview-preview"],
     queryFn: fetchSubscriptionOverview,
   });
 
   if (isLoading) return <Loading />;
-  if (isError || !data) return <Err />;
-  if (data.length === 0) return <p className="text-sm text-(--color-text-muted)">Engar áskriftarpantanir fundust.</p>;
+  if (isError || !data) return <Err lang={lang} />;
+  if (data.length === 0) return (
+    <p className="text-sm text-(--color-text-muted)">
+      {lang === "EN" ? "No subscription orders found." : "Engar áskriftarpantanir fundust."}
+    </p>
+  );
 
   const { packageLines, groups } = buildOverview(data);
   const grandTotal =
@@ -397,7 +460,9 @@ function AskriftPreview({ compact }: { compact?: boolean }) {
         <p className="text-2xl font-bold tabular-nums text-(--color-primary)">
           {Math.round(grandTotal).toLocaleString("is-IS")} kr.
         </p>
-        <p className="text-xs text-(--color-text-muted)">mánaðarlegt m. vsk</p>
+        <p className="text-xs text-(--color-text-muted)">
+          {lang === "EN" ? "monthly incl. VAT" : "mánaðarlegt m. vsk"}
+        </p>
       </div>
       {!compact && lineItems.length > 0 && (
         <ul className="space-y-1 border-t border-(--color-border) pt-2">
@@ -410,7 +475,7 @@ function AskriftPreview({ compact }: { compact?: boolean }) {
             </li>
           ))}
           {lineItems.length > 3 && (
-            <li className="text-xs text-(--color-text-muted)">+{lineItems.length - 3} fleiri</li>
+            <li className="text-xs text-(--color-text-muted)">{more(lineItems.length - 3, lang)}</li>
           )}
         </ul>
       )}
@@ -418,15 +483,19 @@ function AskriftPreview({ compact }: { compact?: boolean }) {
   );
 }
 
-function DkPlusPreview({ compact }: { compact?: boolean }) {
+function DkPlusPreview({ compact, lang }: { compact?: boolean; lang: Lang }) {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["dkplus-tokens-preview"],
     queryFn: fetchAuthTokens,
   });
 
   if (isLoading) return <Loading />;
-  if (isError || !data) return <Err />;
-  if (data.length === 0) return <p className="text-sm text-(--color-text-muted)">Engin API tókn skráð.</p>;
+  if (isError || !data) return <Err lang={lang} />;
+  if (data.length === 0) return (
+    <p className="text-sm text-(--color-text-muted)">
+      {lang === "EN" ? "No API tokens registered." : "Engin API tókn skráð."}
+    </p>
+  );
 
   const byCompany = Object.values(
     data.reduce<Record<string, { name: string; count: number }>>((acc, t) => {
@@ -442,7 +511,10 @@ function DkPlusPreview({ compact }: { compact?: boolean }) {
       <div>
         <p className="text-2xl font-bold text-(--color-text)">{data.length}</p>
         <p className="text-xs text-(--color-text-muted)">
-          API tókn · {byCompany.length} {byCompany.length === 1 ? "fyrirtæki" : "fyrirtæki"}
+          {lang === "EN" ? "API tokens" : "API tókn"} · {byCompany.length}{" "}
+          {lang === "EN"
+            ? (byCompany.length === 1 ? "company" : "companies")
+            : "fyrirtæki"}
         </p>
       </div>
       {!compact && (
@@ -456,7 +528,7 @@ function DkPlusPreview({ compact }: { compact?: boolean }) {
             ))}
           </ul>
           {byCompany.length > 3 && (
-            <p className="mt-1 text-xs text-(--color-text-muted)">+{byCompany.length - 3} fleiri</p>
+            <p className="mt-1 text-xs text-(--color-text-muted)">{more(byCompany.length - 3, lang)}</p>
           )}
         </div>
       )}
@@ -464,13 +536,13 @@ function DkPlusPreview({ compact }: { compact?: boolean }) {
   );
 }
 
-function StimpilklukkaPreview({ compact }: { compact?: boolean }) {
+function StimpilklukkaPreview({ compact, lang }: { compact?: boolean; lang: Lang }) {
   const config = useQuery({ queryKey: ["timeclock-config"], queryFn: fetchTimeclockConfig });
   const ips = useQuery({ queryKey: ["timeclock-ips-preview"], queryFn: fetchIpWhitelist });
   const phones = useQuery({ queryKey: ["timeclock-phones-preview"], queryFn: fetchEmployeePhones });
 
   if (config.isLoading) return <Loading />;
-  if (config.isError || !config.data) return <Err />;
+  if (config.isError || !config.data) return <Err lang={lang} />;
 
   const { timeclockUrl } = config.data;
   const ipList = ips.isError ? [] : (ips.data ?? []);
@@ -481,22 +553,26 @@ function StimpilklukkaPreview({ compact }: { compact?: boolean }) {
       <div>
         {!timeclockUrl && (
           <span className="mb-1 inline-block rounded-md bg-(--color-warning-bg) px-2 py-0.5 text-xs font-semibold text-(--color-warning)">
-            Slóð ekki stillt
+            {lang === "EN" ? "URL not configured" : "Slóð ekki stillt"}
           </span>
         )}
         <p className={timeclockUrl ? "truncate text-sm font-medium text-(--color-primary)" : "text-sm text-(--color-text-muted)"}>
-          {timeclockUrl ?? "Engin stimpilklukkuslóð"}
+          {timeclockUrl ?? (lang === "EN" ? "No timeclock URL" : "Engin stimpilklukkuslóð")}
         </p>
       </div>
       {!compact && (
         <>
           <div className="grid grid-cols-2 gap-2 border-t border-(--color-border) pt-2">
             <div>
-              <p className="text-xs text-(--color-text-muted)">Skráðir símar</p>
+              <p className="text-xs text-(--color-text-muted)">
+                {lang === "EN" ? "Reg. phones" : "Skráðir símar"}
+              </p>
               <p className="text-sm font-semibold text-(--color-text)">{phoneCount}</p>
             </div>
             <div>
-              <p className="text-xs text-(--color-text-muted)">Leyfðar staðs.</p>
+              <p className="text-xs text-(--color-text-muted)">
+                {lang === "EN" ? "Allowed loc." : "Leyfðar staðs."}
+              </p>
               <p className="text-sm font-semibold text-(--color-text)">{ipList.length}</p>
             </div>
           </div>
@@ -513,7 +589,7 @@ function StimpilklukkaPreview({ compact }: { compact?: boolean }) {
               ))}
               {ipList.length > 4 && (
                 <span className="rounded-md bg-(--color-surface-hover) px-2 py-0.5 text-xs text-(--color-text-muted)">
-                  +{ipList.length - 4}
+                  {more(ipList.length - 4, lang)}
                 </span>
               )}
             </div>
@@ -524,15 +600,19 @@ function StimpilklukkaPreview({ compact }: { compact?: boolean }) {
   );
 }
 
-function NotendurPreview({ compact }: { compact?: boolean }) {
+function NotendurPreview({ compact, lang }: { compact?: boolean; lang: Lang }) {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["portal-users-preview"],
     queryFn: fetchUsers,
   });
 
   if (isLoading) return <Loading />;
-  if (isError || !data) return <Err />;
-  if (data.length === 0) return <p className="text-sm text-(--color-text-muted)">Engir notendur skráðir.</p>;
+  if (isError || !data) return <Err lang={lang} />;
+  if (data.length === 0) return (
+    <p className="text-sm text-(--color-text-muted)">
+      {lang === "EN" ? "No users registered." : "Engir notendur skráðir."}
+    </p>
+  );
 
   const active = data.filter((u) => u.status === "active");
   const pending = data.filter((u) => u.status === "pending");
@@ -540,11 +620,10 @@ function NotendurPreview({ compact }: { compact?: boolean }) {
   const admins = active.filter((u) => u.companyRole === "admin").length;
   const users = active.length - admins;
 
-  // Show at most one badge — pending takes priority over password reset
   const badge = pending.length > 0
-    ? { label: `${pending.length} í bið`, color: "warning" }
+    ? { label: `${pending.length} ${lang === "EN" ? "pending" : "í bið"}` }
     : needsReset.length > 0
-    ? { label: `${needsReset.length} endursetja lykilorð`, color: "warning" }
+    ? { label: `${needsReset.length} ${lang === "EN" ? "reset password" : "endursetja lykilorð"}` }
     : null;
 
   return (
@@ -556,16 +635,22 @@ function NotendurPreview({ compact }: { compact?: boolean }) {
           </span>
         )}
         <p className="text-2xl font-bold text-(--color-text)">{active.length}</p>
-        <p className="text-xs text-(--color-text-muted)">virkir notendur</p>
+        <p className="text-xs text-(--color-text-muted)">
+          {lang === "EN" ? "active users" : "virkir notendur"}
+        </p>
       </div>
       {!compact && (
         <div className="grid grid-cols-2 gap-2 border-t border-(--color-border) pt-2">
           <div>
-            <p className="text-xs text-(--color-text-muted)">Stjórnendur</p>
+            <p className="text-xs text-(--color-text-muted)">
+              {lang === "EN" ? "Admins" : "Stjórnendur"}
+            </p>
             <p className="text-sm font-semibold text-(--color-text)">{admins}</p>
           </div>
           <div>
-            <p className="text-xs text-(--color-text-muted)">Notendur</p>
+            <p className="text-xs text-(--color-text-muted)">
+              {lang === "EN" ? "Users" : "Notendur"}
+            </p>
             <p className="text-sm font-semibold text-(--color-text)">{users}</p>
           </div>
         </div>
@@ -574,15 +659,23 @@ function NotendurPreview({ compact }: { compact?: boolean }) {
   );
 }
 
-const LOCK_ROUTE_LABELS: Record<string, string> = {
-  "/invoices": "Reikningar", "/invoices/": "Reikningar",
-  "/askrift": "Áskrift", "/askrift/yfirlit": "Áskrift",
-  "/hosting": "Hýsing", "/pos": "POS", "/dkone": "dkOne",
-  "/dkplus": "dkPlus", "/timeclock": "Stimpilklukka", "/timeclock/": "Stimpilklukka",
-  "/notendur": "Notendur", "/god": "Kerfisstjórnun", "/god/": "Kerfisstjórnun",
+const LOCK_ROUTE_LABELS: Record<string, { is: string; en: string }> = {
+  "/invoices":       { is: "Reikningar",      en: "Invoices" },
+  "/invoices/":      { is: "Reikningar",      en: "Invoices" },
+  "/askrift":        { is: "Áskrift",          en: "Subscription" },
+  "/askrift/yfirlit":{ is: "Áskrift",          en: "Subscription" },
+  "/hosting":        { is: "Hýsing",           en: "Hosting" },
+  "/pos":            { is: "POS",              en: "POS" },
+  "/dkone":          { is: "dkOne",            en: "dkOne" },
+  "/dkplus":         { is: "dkPlus",           en: "dkPlus" },
+  "/timeclock":      { is: "Stimpilklukka",   en: "Timeclock" },
+  "/timeclock/":     { is: "Stimpilklukka",   en: "Timeclock" },
+  "/notendur":       { is: "Notendur",         en: "Users" },
+  "/god":            { is: "Kerfisstjórnun",  en: "System Admin" },
+  "/god/":           { is: "Kerfisstjórnun",  en: "System Admin" },
 };
 
-function SystemPreview({ compact }: { compact?: boolean }) {
+function SystemPreview({ compact, lang }: { compact?: boolean; lang: Lang }) {
   const { data: locks, isLoading, isError } = useQuery({
     queryKey: ["maintenance-locks"],
     queryFn: fetchMaintenanceLocks,
@@ -590,7 +683,7 @@ function SystemPreview({ compact }: { compact?: boolean }) {
   });
 
   if (isLoading) return <Loading />;
-  if (isError) return <Err />;
+  if (isError) return <Err lang={lang} />;
 
   const activeLocks = locks ?? [];
 
@@ -599,15 +692,19 @@ function SystemPreview({ compact }: { compact?: boolean }) {
       <div>
         {activeLocks.length > 0 ? (
           <span className="mb-1 inline-block rounded-md bg-(--color-warning-bg) px-2 py-0.5 text-xs font-semibold text-(--color-warning)">
-            {activeLocks.length} {activeLocks.length === 1 ? "lás" : "lásir"} virkir
+            {activeLocks.length} {activeLocks.length === 1
+              ? (lang === "EN" ? "lock active" : "lás virkur")
+              : (lang === "EN" ? "locks active" : "lásir virkir")}
           </span>
         ) : (
           <span className="mb-1 inline-block rounded-md bg-(--color-success-bg) px-2 py-0.5 text-xs font-semibold text-(--color-success)">
-            Ekkert viðhald
+            {lang === "EN" ? "No maintenance" : "Ekkert viðhald"}
           </span>
         )}
         <p className="text-2xl font-bold text-(--color-text)">{activeLocks.length}</p>
-        <p className="text-xs text-(--color-text-muted)">virkir viðhaldslásir</p>
+        <p className="text-xs text-(--color-text-muted)">
+          {lang === "EN" ? "active maintenance locks" : "virkir viðhaldslásir"}
+        </p>
       </div>
       {!compact && activeLocks.length > 0 && (
         <ul className="space-y-1 border-t border-(--color-border) pt-2">
@@ -616,7 +713,7 @@ function SystemPreview({ compact }: { compact?: boolean }) {
               <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-(--color-warning)" />
               <div className="min-w-0">
                 <span className="text-xs font-medium text-(--color-text-secondary)">
-                  {LOCK_ROUTE_LABELS[lock.route] ?? lock.route}
+                  {LOCK_ROUTE_LABELS[lock.route]?.[lang === "EN" ? "en" : "is"] ?? lock.route}
                 </span>
                 {lock.message && (
                   <p className="truncate text-xs text-(--color-text-muted)">{lock.message}</p>
@@ -625,7 +722,7 @@ function SystemPreview({ compact }: { compact?: boolean }) {
             </li>
           ))}
           {activeLocks.length > 3 && (
-            <li className="text-xs text-(--color-text-muted)">+{activeLocks.length - 3} fleiri</li>
+            <li className="text-xs text-(--color-text-muted)">{more(activeLocks.length - 3, lang)}</li>
           )}
         </ul>
       )}
@@ -636,17 +733,18 @@ function SystemPreview({ compact }: { compact?: boolean }) {
 // ─── Dispatcher ───────────────────────────────────────────────────────────────
 
 export function CardPreview({ id, fallback, compact }: { id: string; fallback: ReactNode; compact?: boolean }) {
+  const lang = useLangStore((s) => s.lang) as Lang;
   switch (id) {
-    case "company":       return <CompanyPreview compact={compact} />;
-    case "reikningar":    return <ReikningarPreview compact={compact} />;
-    case "pos":           return <PosPreview compact={compact} />;
-    case "dkone":         return <DkOnePreview compact={compact} />;
-    case "hysing":        return <HysingPreview compact={compact} />;
-    case "askrift":       return <AskriftPreview compact={compact} />;
-    case "dkplus":        return <DkPlusPreview compact={compact} />;
-    case "stimpilklukka": return <StimpilklukkaPreview compact={compact} />;
-    case "notendur":      return <NotendurPreview compact={compact} />;
-    case "system":        return <SystemPreview compact={compact} />;
+    case "company":       return <CompanyPreview compact={compact} lang={lang} />;
+    case "reikningar":    return <ReikningarPreview compact={compact} lang={lang} />;
+    case "pos":           return <PosPreview compact={compact} lang={lang} />;
+    case "dkone":         return <DkOnePreview compact={compact} lang={lang} />;
+    case "hysing":        return <HysingPreview compact={compact} lang={lang} />;
+    case "askrift":       return <AskriftPreview compact={compact} lang={lang} />;
+    case "dkplus":        return <DkPlusPreview compact={compact} lang={lang} />;
+    case "stimpilklukka": return <StimpilklukkaPreview compact={compact} lang={lang} />;
+    case "notendur":      return <NotendurPreview compact={compact} lang={lang} />;
+    case "system":        return <SystemPreview compact={compact} lang={lang} />;
     default:              return <>{fallback}</>;
   }
 }
