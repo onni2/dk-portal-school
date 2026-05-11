@@ -64,10 +64,10 @@ export const NAV_ITEMS: NavItem[] = [
     ],
   },
 
-  { label: "dkPOS", labelEn: "dkPOS", to: "/pos", access: { type: "requiredPermission", permission: "pos" } },
-  { label: "dkOne", labelEn: "dkOne", to: "/dkone", access: { type: "requiredPermission", permission: "dkOne" } },
-  { label: "dk vefþjónustur", labelEn: "DK Web Services", to: "/dkplus", access: { type: "requiredPermission", permission: "dkPlus" } },
-  { label: "Stimpilklukka", labelEn: "Timeclock", to: "/timeclock", access: { type: "requiredPermission", permission: "timeclock" } },
+  { label: "dkPOS", labelEn: "dkPOS", to: "/pos", access: { type: "licencedModule", module: "POS", permission: "pos" } },
+  { label: "dkOne", labelEn: "dkOne", to: "/dkone", access: { type: "licencedModule", module: "dkOne", permission: "dkOne" } },
+  { label: "dk vefþjónustur", labelEn: "DK Web Services", to: "/dkplus", access: { type: "licencedModule", module: "dkPlus", permission: "dkPlus" } },
+  { label: "Stimpilklukka", labelEn: "Timeclock", to: "/timeclock", access: { type: "licencedModule", module: "TimeClock", permission: "timeclock" } },
 
   // Always visible to all logged-in users
   { label: "Zoho beiðnir", labelEn: "Support Tickets", to: "/zoho", access: { type: "alwaysVisible" } },
