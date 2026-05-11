@@ -47,7 +47,7 @@ export function ProductPanel({
                 {product.ItemCode.toUpperCase()}
               </p>
               {inSubscription && (
-                <span className="rounded-md bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
+                <span className="rounded-md bg-(--color-success-bg) px-2 py-0.5 text-xs font-medium text-(--color-success)">
                   Í leyfi
                 </span>
               )}
@@ -99,7 +99,7 @@ export function ProductPanel({
             </Button>
           )}
           {onCancelClick && (
-            <Button variant="ghost" onClick={onCancelClick} className="w-full text-red-600 hover:text-red-700 hover:bg-red-50">
+            <Button variant="danger" onClick={onCancelClick} className="w-full">
               Segja upp áskrift
             </Button>
           )}

@@ -18,6 +18,7 @@ interface InvoiceFiltersState {
   setActivePeriod: (period: ActivePeriod) => void;
   setSearch: (search: string) => void;
   setSelectedInvoiceNumber: (invoiceNumber: string | null) => void;
+  clearFilters: () => void;
 }
 
 export const useInvoiceFilters = create<InvoiceFiltersState>((set) => ({
@@ -26,10 +27,12 @@ export const useInvoiceFilters = create<InvoiceFiltersState>((set) => ({
   activePeriod: null,
   search: "",
   selectedInvoiceNumber: null,
-  setDateFrom: (dateFrom) => set({ dateFrom }),
-  setDateTo: (dateTo) => set({ dateTo }),
+  setDateFrom: (dateFrom) => set({ dateFrom, activePeriod: null }),
+  setDateTo: (dateTo) => set({ dateTo, activePeriod: null }),
   setActivePeriod: (activePeriod) => set({ activePeriod }),
   setSearch: (search) => set({ search }),
   setSelectedInvoiceNumber: (selectedInvoiceNumber) =>
     set({ selectedInvoiceNumber }),
+  clearFilters: () =>
+    set({ dateFrom: "", dateTo: "", activePeriod: null, search: "", selectedInvoiceNumber: null }),
 }));

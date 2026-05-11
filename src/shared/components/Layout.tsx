@@ -15,12 +15,12 @@ import { ProfileDropdown } from "@/features/auth/components/ProfileDropdown";
 import { CompanySelector } from "@/features/company/components/CompanySelector";
 import { NotificationBell } from "@/features/notifications/components/NotificationBell";
 import { subCompaniesQueryOptions } from "@/features/dkone/api/dkone.queries";
-import { useRoleStore } from "@/features/licence/store/role.store";
+
 
 function findActiveChild(children: { to: string }[], path: string): string | null {
   const matches = children.filter((c) => path === c.to || path.startsWith(c.to + "/"));
   if (matches.length === 0) return null;
-  return matches.sort((a, b) => b.to.length - a.to.length)[0].to;
+  return matches.sort((a, b) => b.to.length - a.to.length)[0]!.to;
 }
 
 /**
@@ -43,7 +43,6 @@ export function Layout({ children }: { children: ReactNode }) {
         }
       : item,
   );
-  const { role, toggleRole } = useRoleStore();
   const user = useAuthStore((s) => s.user);
   const clearAuth = useAuthStore((s) => s.clearAuth);
   const navigate = useNavigate();
@@ -200,7 +199,7 @@ export function Layout({ children }: { children: ReactNode }) {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 overflow-y-auto p-8">{children}</main>
+        <main className="flex flex-col flex-1 overflow-y-auto p-8">{children}</main>
       </div>
     </div>
   );
