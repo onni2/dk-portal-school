@@ -13,6 +13,7 @@ import {
   rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import { useAuthStore } from "@/features/auth/store/auth.store";
+import { useLangStore } from "@/shared/store/lang.store";
 import { ALL_CARDS, useDashboardLayout } from "../store/dashboard.store";
 import { SortableDashboardCard } from "./DashboardCard";
 import { DEFAULT_PERMISSIONS } from "@/features/users/api/permissions.api";
@@ -33,6 +34,7 @@ function AddCardTile() {
   const { cardIds, addCard, removeCard } = useDashboardLayout();
   const [open, setOpen] = useState(false);
   const user = useAuthStore((s) => s.user);
+  const lang = useLangStore((s) => s.lang);
   const { data: userPermissions = DEFAULT_PERMISSIONS } = useUserPermissions(user?.id);
   const { data: licence } = useLicence();
 
@@ -52,17 +54,17 @@ function AddCardTile() {
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
           </svg>
-          <span className="text-sm font-medium">Bæta við spjaldi</span>
+          <span className="text-sm font-medium">{lang === "EN" ? "Add card" : "Bæta við spjaldi"}</span>
         </button>
       ) : (
         <div className="p-4">
           <div className="mb-3 flex items-center justify-between">
-            <p className="text-sm font-semibold text-(--color-text)">Veldu spjöld</p>
+            <p className="text-sm font-semibold text-(--color-text)">{lang === "EN" ? "Select cards" : "Veldu spjöld"}</p>
             <button
               onClick={() => setOpen(false)}
               className="text-sm text-(--color-text-muted) transition-colors hover:text-(--color-text)"
             >
-              Loka
+              {lang === "EN" ? "Close" : "Loka"}
             </button>
           </div>
           <div className="flex max-h-52 flex-col gap-1 overflow-y-auto">
@@ -82,7 +84,7 @@ function AddCardTile() {
                   <span className="w-4 shrink-0 text-center text-xs">
                     {isAdded ? "✓" : "+"}
                   </span>
-                  {card.title}
+                  {lang === "EN" && card.titleEn ? card.titleEn : card.title}
                 </button>
               );
             })}
@@ -96,6 +98,7 @@ function AddCardTile() {
 export function DashboardGrid() {
   const { cardIds, setCardIds } = useDashboardLayout();
   const user = useAuthStore((s) => s.user);
+  const lang = useLangStore((s) => s.lang);
   const { data: userPermissions = DEFAULT_PERMISSIONS } = useUserPermissions(user?.id);
   const { data: licence } = useLicence();
 
@@ -123,7 +126,7 @@ export function DashboardGrid() {
     <div className="space-y-6">
       <div>
         <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold text-(--color-text)">Yfirlit</h1>
+          <h1 className="text-2xl font-bold text-(--color-text)">{lang === "EN" ? "Overview" : "Yfirlit"}</h1>
           <span className="group relative flex items-center">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -142,7 +145,7 @@ export function DashboardGrid() {
           </span>
         </div>
         <p className="mt-1 text-sm text-(--color-text-secondary)">
-          Dragðu spjöldin til að endurraða. Smelltu á + til að bæta við eða fjarlægja.
+          {lang === "EN" ? "Drag cards to reorder. Click + to add or remove." : "Dragðu spjöldin til að endurraða. Smelltu á + til að bæta við eða fjarlægja."}
         </p>
       </div>
 

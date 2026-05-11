@@ -5,8 +5,10 @@ const router = express.Router();
 
 const DKPLUS_BASE = "https://api.dkplus.is/api/v1";
 
+const { randomUUID } = require("crypto");
+
 function generateId() {
-  return Math.random().toString(36).slice(2, 10);
+  return randomUUID();
 }
 
 function getCompanyId(req) {

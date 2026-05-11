@@ -30,6 +30,8 @@ function canShowNavItem(
   if (item.access.type === "alwaysVisible") return true;
 
   if (item.access.type === "copOnly") return role === "cop";
+  
+  if (item.access.type === "godOnly") return user?.role === "god";
 
   if (item.access.type === "accountantOnly") {
     return companies.some((c) => c.role === "accountant" || c.role === "admin");
@@ -40,6 +42,8 @@ function canShowNavItem(
   }
 
   if (item.access.type === "hostingManagement") {
+    const hasLicence = licence ? isModuleEnabled(licence, "Hosting") : false;
+    if (!hasLicence) return false;
     return (
       canBypassPermissions(role, user) ||
       user?.companyRole === "admin" ||
