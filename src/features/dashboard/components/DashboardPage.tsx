@@ -3,6 +3,7 @@ import {
   DndContext,
   closestCenter,
   PointerSensor,
+  KeyboardSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -11,6 +12,7 @@ import {
   SortableContext,
   arrayMove,
   rectSortingStrategy,
+  sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/features/auth/store/auth.store";
@@ -28,6 +30,26 @@ function isLicenced(licence: LicenceResponse | undefined, module: keyof LicenceR
 }
 
 // ─── Maintenance banner ───────────────────────────────────────────────────────
+
+const ROUTE_LABELS: Record<string, string> = {
+  "/invoices": "Reikningar",
+  "/invoices/": "Reikningar",
+  "/askrift": "Áskrift",
+  "/askrift/yfirlit": "Áskrift",
+  "/hosting": "Hýsing",
+  "/pos": "POS",
+  "/dkone": "dkOne",
+  "/dkplus": "dkPlus",
+  "/timeclock": "Stimpilklukka",
+  "/timeclock/": "Stimpilklukka",
+  "/notendur": "Notendur",
+  "/god": "Kerfisstjórnun",
+  "/god/": "Kerfisstjórnun",
+};
+
+function routeLabel(route: string): string {
+  return ROUTE_LABELS[route] ?? route;
+}
 
 function MaintenanceBanner() {
   const { data: locks } = useQuery({
@@ -51,9 +73,9 @@ function MaintenanceBanner() {
           <ul className="mt-1.5 space-y-0.5">
             {locks.map((lock) => (
               <li key={lock.route} className="text-sm text-(--color-warning)">
-                <span className="font-mono opacity-70">{lock.route}</span>
+                <span className="font-medium">{routeLabel(lock.route)}</span>
                 {lock.message && (
-                  <span className="before:mx-1.5 before:opacity-40 before:content-['—']">{lock.message}</span>
+                  <span className="opacity-75 before:mx-1.5 before:opacity-40 before:content-['—']">{lock.message}</span>
                 )}
               </li>
             ))}
@@ -69,12 +91,16 @@ function MaintenanceBanner() {
 function CustomizePanel({
   available,
   cardIds,
+  compactIds,
   onToggle,
+  onCompactToggle,
   onClose,
 }: {
   available: CardDef[];
   cardIds: string[];
+  compactIds: string[];
   onToggle: (id: string) => void;
+  onCompactToggle: (id: string) => void;
   onClose: () => void;
 }) {
   return (
@@ -91,27 +117,42 @@ function CustomizePanel({
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
         {available.map((card) => {
           const active = cardIds.includes(card.id);
+          const compact = compactIds.includes(card.id);
           return (
-            <button
-              key={card.id}
-              onClick={() => onToggle(card.id)}
-              className={cn(
-                "flex items-start gap-2.5 rounded-xl border p-3 text-left transition-colors",
-                active
-                  ? "border-primary/30 bg-(--color-primary-light)"
-                  : "border-(--color-border) hover:border-(--color-text-muted) hover:bg-(--color-surface-hover)",
+            <div key={card.id} className="relative">
+              <button
+                onClick={() => onToggle(card.id)}
+                className={cn(
+                  "flex w-full items-start gap-2.5 rounded-xl border p-3 text-left transition-colors",
+                  active
+                    ? "border-primary/30 bg-(--color-primary-light)"
+                    : "border-(--color-border) hover:border-(--color-text-muted) hover:bg-(--color-surface-hover)",
+                )}
+              >
+                <span className={cn("mt-0.5 shrink-0 text-xs font-bold", active ? "text-(--color-primary)" : "text-(--color-text-muted)")}>
+                  {active ? "✓" : "+"}
+                </span>
+                <div className="min-w-0 pr-5">
+                  <p className={cn("text-sm font-medium", active ? "text-(--color-primary)" : "text-(--color-text)")}>
+                    {card.title}
+                  </p>
+                  <p className="truncate text-xs text-(--color-text-muted)">{card.description}</p>
+                </div>
+              </button>
+              {active && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onCompactToggle(card.id); }}
+                  className={cn(
+                    "absolute right-1.5 top-1.5 flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors",
+                    compact
+                      ? "bg-(--color-primary-light) text-(--color-primary)"
+                      : "text-(--color-text-muted) hover:text-(--color-primary)",
+                  )}
+                >
+                  {compact ? "Þjappað" : "Þjappa"}
+                </button>
               )}
-            >
-              <span className={cn("mt-0.5 shrink-0 text-xs font-bold", active ? "text-(--color-primary)" : "text-(--color-text-muted)")}>
-                {active ? "✓" : "+"}
-              </span>
-              <div className="min-w-0">
-                <p className={cn("text-sm font-medium", active ? "text-(--color-primary)" : "text-(--color-text)")}>
-                  {card.title}
-                </p>
-                <p className="truncate text-xs text-(--color-text-muted)">{card.description}</p>
-              </div>
-            </button>
+            </div>
           );
         })}
       </div>
@@ -131,7 +172,7 @@ export function DashboardPage() {
   const companies = useAuthStore((s) => s.companies);
   const authPermissions = useAuthStore((s) => s.permissions);
   const { data: licence, isLoading: licenceLoading } = useLicence();
-  const { cardIds, setCardIds, addCard, removeCard } = useDashboardLayout();
+  const { cardIds, setCardIds, addCard, removeCard, compactIds, toggleCompact } = useDashboardLayout();
   const { data: maintenanceLocks = [] } = useQuery({
     queryKey: ["maintenance-locks"],
     queryFn: fetchMaintenanceLocks,
@@ -139,7 +180,10 @@ export function DashboardPage() {
   });
   const [customizing, setCustomizing] = useState(false);
 
-  const sensors = useSensors(useSensor(PointerSensor));
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   const membership = companies.find((c) => c.id === user?.companyId);
   const companyRole = membership?.role;
@@ -209,7 +253,9 @@ export function DashboardPage() {
             )}
           </div>
           <p className="mt-1 text-sm text-(--color-text-secondary)">
-            Hér er yfirlit þitt yfir stöðu kerfisins í dag.
+            {maintenanceLocks.length > 0
+              ? `${maintenanceLocks.length} ${maintenanceLocks.length === 1 ? "þjónusta er" : "þjónustur eru"} í viðhaldi.`
+              : "Hér er yfirlit þitt yfir stöðu kerfisins í dag."}
           </p>
         </div>
         <button
@@ -233,7 +279,9 @@ export function DashboardPage() {
         <CustomizePanel
           available={available}
           cardIds={cardIds}
+          compactIds={compactIds}
           onToggle={toggleCard}
+          onCompactToggle={toggleCompact}
           onClose={() => setCustomizing(false)}
         />
       )}
@@ -243,8 +291,8 @@ export function DashboardPage() {
 
       {/* Card grid */}
       {licenceLoading ? (
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 auto-rows-[14rem]">
-          {Array.from({ length: 4 }).map((_, i) => (
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 auto-rows-[16rem]">
+          {Array.from({ length: Math.min(Math.max(cardIds.length, 2), 6) }).map((_, i) => (
             <div key={i} className="h-full animate-pulse rounded-2xl bg-(--color-surface-hover)" />
           ))}
         </div>
@@ -255,7 +303,7 @@ export function DashboardPage() {
           onDragEnd={handleDragEnd}
         >
           <SortableContext items={cardIds} strategy={rectSortingStrategy}>
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 auto-rows-[14rem]">
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 auto-rows-[16rem]">
               {visibleCards.map((card) => {
                 const isLocked = !!card.to && maintenanceLocks.some(
                   (l) => card.to!.startsWith(l.route),
