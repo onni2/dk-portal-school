@@ -16,7 +16,7 @@ const TYPE_STYLES: Record<string, { bg: string; text: string }> = {
 
 export function AccountantDocuments() {
   const companies = useAuthStore((s) => s.companies);
-  const accountantCompanies = companies.filter((c) => c.role === "accountant");
+  const accountantCompanies = companies.filter((c) => c.role === "accountant" || c.role === "admin");
 
   const [filterCompany, setFilterCompany] = useState("");
   const [filterType, setFilterType] = useState("");

@@ -20,7 +20,7 @@ export function AccountantCompanies() {
   const { data: submissions = [] } = useSubmissions();
 
   // Only show companies where user has accountant role
-  const accountantCompanies = companies.filter((c) => c.role === "accountant");
+  const accountantCompanies = companies.filter((c) => c.role === "accountant" || c.role === "admin");
 
   async function handleSwitch(companyId: string) {
     setSwitching(companyId);

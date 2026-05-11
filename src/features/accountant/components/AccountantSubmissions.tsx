@@ -18,7 +18,7 @@ const STATUS_STYLES: Record<SubmissionStatus, { label: string; bg: string; text:
 export function AccountantSubmissions() {
   const { data: submissions = [], isLoading } = useSubmissions();
   const companies = useAuthStore((s) => s.companies);
-  const accountantCompanies = companies.filter((c) => c.role === "accountant");
+  const accountantCompanies = companies.filter((c) => c.role === "accountant" || c.role === "admin");
 
   const [filterCompany, setFilterCompany] = useState("");
   const [filterStatus, setFilterStatus] = useState("");

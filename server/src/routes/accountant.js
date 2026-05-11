@@ -3,7 +3,7 @@ const pool = require("../db");
 
 const router = express.Router();
 
-// GET /accountant/companies — companies where user has accountant role
+// GET /accountant/companies — companies where user has accountant or admin role
 router.get("/companies", async (req, res) => {
   try {
     const { rows } = await pool.query(
@@ -11,7 +11,7 @@ router.get("/companies", async (req, res) => {
               uc.invoices, uc.subscription, uc.hosting, uc.pos, uc.dk_one, uc.dk_plus, uc.timeclock, uc.users
        FROM user_companies uc
        JOIN companies c ON c.id = uc.company_id
-       WHERE uc.user_id = $1 AND uc.role = 'accountant'`,
+       WHERE uc.user_id = $1 AND uc.role IN ('accountant', 'admin')`,
       [req.user.id]
     );
     res.json(rows);
@@ -21,11 +21,11 @@ router.get("/companies", async (req, res) => {
   }
 });
 
-// GET /accountant/submissions — submissions for accountant's companies
+// GET /accountant/submissions
 router.get("/submissions", async (req, res) => {
   try {
     const { rows: companyRows } = await pool.query(
-      `SELECT company_id FROM user_companies WHERE user_id = $1 AND role = 'accountant'`,
+      `SELECT company_id FROM user_companies WHERE user_id = $1 AND role IN ('accountant', 'admin')`,
       [req.user.id]
     );
 
@@ -33,7 +33,6 @@ router.get("/submissions", async (req, res) => {
 
     const companyIds = companyRows.map((r) => r.company_id);
 
-    // Return mock submissions based on accountant's companies
     const submissions = companyIds.flatMap((companyId) => [
       { companyId, period: "Mars 2026",    type: "VSK",          status: "skilað",      dueDate: "2026-04-05" },
       { companyId, period: "Mars 2026",    type: "Launaskýrsla", status: "í bið",       dueDate: "2026-04-10" },
@@ -43,7 +42,6 @@ router.get("/submissions", async (req, res) => {
       { companyId, period: "Janúar 2026",  type: "Launaskýrsla", status: "gjaldfallið", dueDate: "2026-02-10" },
     ]);
 
-    // Get company names
     const { rows: companies } = await pool.query(
       `SELECT id, name FROM companies WHERE id = ANY($1)`,
       [companyIds]
@@ -62,19 +60,18 @@ router.get("/transactions", async (req, res) => {
   try {
     const { companyId } = req.query;
 
-    // Verify user is accountant for requested company
     const baseQuery = companyId
       ? `SELECT t.id, t.company_id, c.name as company_name, t.date, t.description, t.amount, t.type, t.status
          FROM accountant_transactions t
          JOIN companies c ON c.id = t.company_id
          JOIN user_companies uc ON uc.company_id = t.company_id
-         WHERE uc.user_id = $1 AND uc.role = 'accountant' AND t.company_id = $2
+         WHERE uc.user_id = $1 AND uc.role IN ('accountant', 'admin') AND t.company_id = $2
          ORDER BY t.date DESC`
       : `SELECT t.id, t.company_id, c.name as company_name, t.date, t.description, t.amount, t.type, t.status
          FROM accountant_transactions t
          JOIN companies c ON c.id = t.company_id
          JOIN user_companies uc ON uc.company_id = t.company_id
-         WHERE uc.user_id = $1 AND uc.role = 'accountant'
+         WHERE uc.user_id = $1 AND uc.role IN ('accountant', 'admin')
          ORDER BY t.date DESC`;
 
     const params = companyId ? [req.user.id, companyId] : [req.user.id];
@@ -106,13 +103,13 @@ router.get("/documents", async (req, res) => {
          FROM accountant_documents d
          JOIN companies c ON c.id = d.company_id
          JOIN user_companies uc ON uc.company_id = d.company_id
-         WHERE uc.user_id = $1 AND uc.role = 'accountant' AND d.company_id = $2
+         WHERE uc.user_id = $1 AND uc.role IN ('accountant', 'admin') AND d.company_id = $2
          ORDER BY d.date DESC`
       : `SELECT d.id, d.company_id, c.name as company_name, d.name, d.type, d.date, d.status
          FROM accountant_documents d
          JOIN companies c ON c.id = d.company_id
          JOIN user_companies uc ON uc.company_id = d.company_id
-         WHERE uc.user_id = $1 AND uc.role = 'accountant'
+         WHERE uc.user_id = $1 AND uc.role IN ('accountant', 'admin')
          ORDER BY d.date DESC`;
 
     const params = companyId ? [req.user.id, companyId] : [req.user.id];
