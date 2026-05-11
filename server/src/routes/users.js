@@ -7,8 +7,10 @@ const router = express.Router();
 
 const ELEVATED_ROLES = ["super_admin", "god"];
 
+const crypto = require("crypto");
+
 function generateId() {
-  return Math.random().toString(36).slice(2, 10);
+  return crypto.randomUUID();
 }
 
 function generatePassword() {
@@ -18,13 +20,13 @@ function generatePassword() {
   const special = "!@#$%&*";
   const all = upper + lower + digits + special;
   const required = [
-    upper[Math.floor(Math.random() * upper.length)],
-    lower[Math.floor(Math.random() * lower.length)],
-    digits[Math.floor(Math.random() * digits.length)],
-    special[Math.floor(Math.random() * special.length)],
+    upper[crypto.randomInt(upper.length)],
+    lower[crypto.randomInt(lower.length)],
+    digits[crypto.randomInt(digits.length)],
+    special[crypto.randomInt(special.length)],
   ];
-  const rest = Array.from({ length: 8 }, () => all[Math.floor(Math.random() * all.length)]);
-  return [...required, ...rest].sort(() => Math.random() - 0.5).join("");
+  const rest = Array.from({ length: 8 }, () => all[crypto.randomInt(all.length)]);
+  return [...required, ...rest].sort(() => crypto.randomInt(3) - 1).join("");
 }
 
 function getCompanyId(req) {
@@ -153,7 +155,6 @@ router.post("/invite", requireAdminOrUsersPermission, async (req, res) => {
         status: "pending", mustResetPassword: true, companyId,
         kennitala: kennitala ?? null,
       },
-      generatedPassword,
     });
   } catch (err) {
     console.error(err);
