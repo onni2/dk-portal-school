@@ -1,5 +1,5 @@
-export type AuthRole = "user" | "super_admin" | "god";
-export type CompanyRole = "admin" | "user";
+export type AuthRole = "user" | "super_admin" | "god" | "accountant";
+export type CompanyRole = "admin" | "user" | "accountant";
 
 export interface UserPermissions {
   invoices: boolean;
@@ -28,8 +28,10 @@ export interface User {
   role: AuthRole;
   kennitala?: string;
   phone?: string;
+  hostingUsername?: string;
   mustResetPassword?: boolean;
   companyId?: string;
+  companyRole?: CompanyRole;
 }
 
 export interface LoginCredentials {

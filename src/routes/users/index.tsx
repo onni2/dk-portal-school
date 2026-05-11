@@ -1,3 +1,4 @@
+// src/routes/users/index.tsx
 /**
  * Portal users page — admin only.
  * Lists all portal users and lets admins invite or remove them.

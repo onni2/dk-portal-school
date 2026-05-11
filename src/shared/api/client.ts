@@ -7,7 +7,7 @@
 import type { ApiError } from "./types";
 
 export const BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? "https://api.dkplus.is/api/v1";
+  import.meta.env.VITE_API_BASE_URL ?? "/api/v1";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

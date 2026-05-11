@@ -52,7 +52,7 @@ function renderWithQuery(ui: React.ReactElement) {
 }
 
 describe("DkOneUserTable", () => {
-  it("renders user names", () => {
+  it("renders active user name", () => {
     renderWithQuery(<DkOneUserTable />);
     expect(screen.getByText("Jón Jónsson")).toBeInTheDocument();
   });

@@ -15,12 +15,12 @@ import { ProfileDropdown } from "@/features/auth/components/ProfileDropdown";
 import { CompanySelector } from "@/features/company/components/CompanySelector";
 import { NotificationBell } from "@/features/notifications/components/NotificationBell";
 import { subCompaniesQueryOptions } from "@/features/dkone/api/dkone.queries";
-import { useRoleStore } from "@/features/licence/store/role.store";
+import { useLangStore } from "@/shared/store/lang.store";
 
 function findActiveChild(children: { to: string }[], path: string): string | null {
   const matches = children.filter((c) => path === c.to || path.startsWith(c.to + "/"));
   if (matches.length === 0) return null;
-  return matches.sort((a, b) => b.to.length - a.to.length)[0].to;
+  return matches.sort((a, b) => b.to.length - a.to.length)[0]!.to;
 }
 
 /**
@@ -43,10 +43,13 @@ export function Layout({ children }: { children: ReactNode }) {
         }
       : item,
   );
-  const { role, toggleRole } = useRoleStore();
   const user = useAuthStore((s) => s.user);
   const clearAuth = useAuthStore((s) => s.clearAuth);
   const navigate = useNavigate();
+  const lang = useLangStore((s) => s.lang);
+  const navLabel = (item: { label: string; labelEn?: string }) =>
+    lang === "EN" && item.labelEn ? item.labelEn : item.label;
+
   const [openItems, setOpenItems] = useState<string[]>(() =>
     navItems
       .filter((item) => item.children && findActiveChild(item.children, currentPath) !== null)
@@ -82,6 +85,26 @@ export function Layout({ children }: { children: ReactNode }) {
         </div>
 
         <div className="flex items-center gap-3 px-6">
+          <div className="flex items-center rounded-[var(--radius-md)] border border-[var(--color-border)] text-xs font-medium overflow-hidden">
+            <button
+              onClick={() => useLangStore.getState().setLang("IS")}
+              className={cn(
+                "px-2.5 py-1 transition-colors",
+                lang === "IS"
+                  ? "bg-(--color-primary) text-white"
+                  : "text-(--color-text-secondary) hover:bg-(--color-surface-hover)",
+              )}
+            >IS</button>
+            <button
+              onClick={() => useLangStore.getState().setLang("EN")}
+              className={cn(
+                "px-2.5 py-1 transition-colors",
+                lang === "EN"
+                  ? "bg-(--color-primary) text-white"
+                  : "text-(--color-text-secondary) hover:bg-(--color-surface-hover)",
+              )}
+            >EN</button>
+          </div>
           <NotificationBell />
           {user && <ProfileDropdown user={user} onLogout={handleLogout} />}
         </div>
@@ -117,7 +140,7 @@ export function Layout({ children }: { children: ReactNode }) {
                             : "text-[var(--color-text)]",
                         )}
                       >
-                        {item.label}
+                        {navLabel(item)}
                         <svg
                           className={cn(
                             "h-3 w-3 shrink-0 text-[var(--color-text-secondary)] transition-transform duration-200",
@@ -145,7 +168,7 @@ export function Layout({ children }: { children: ReactNode }) {
                             : "text-[var(--color-text)] hover:bg-[var(--color-surface-hover)]",
                         )}
                       >
-                        {item.label}
+                        {navLabel(item)}
                       </Link>
                     )}
 
@@ -171,7 +194,7 @@ export function Layout({ children }: { children: ReactNode }) {
                                     : "text-[var(--color-text)] hover:bg-[var(--color-surface-hover)]",
                                 )}
                               >
-                                {child.label}
+                                {navLabel(child)}
                               </Link>
                             );
                           })}
