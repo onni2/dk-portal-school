@@ -7,7 +7,7 @@ import type { ReactNode } from "react";
 
 interface PageTemplateProps {
   title: string;
-  description?: string;
+  description?: ReactNode;
   actions?: ReactNode;
   children: ReactNode;
 }
