@@ -21,6 +21,7 @@ const ticketsRouter = require("./routes/tickets");
 const licenceRouter = require("./routes/licence");
 const posRouter = require("./routes/pos");
 const dkoneRouter = require("./routes/dkone");
+const accountantRouter = require("./routes/accountant");
 const dkplusRouter = require("./routes/dkplus");
 const duoRouter = require("./routes/duo");
 const knowledgeBaseRouter = require("./routes/knowledgeBase");
@@ -56,7 +57,9 @@ app.use((req, res, next) => {
 });
 
 // Public routes — no auth required
-app.use("/auth", authLimiter, authRouter);
+// Rate limit only the login endpoint, not switch-company or password reset
+app.use("/auth/login", authLimiter);
+app.use("/auth", authRouter);
 
 // Require valid JWT for everything below
 app.use((req, res, next) => {
@@ -73,6 +76,7 @@ app.use("/tickets", ticketsRouter);
 app.use("/licence", licenceRouter);
 app.use("/pos", posRouter);
 app.use("/dkone", dkoneRouter);
+app.use("/accountant", accountantRouter);
 app.use("/dkplus", dkplusRouter);
 app.use("/duo", duoRouter);
 app.use("/knowledge-base", knowledgeBaseRouter);

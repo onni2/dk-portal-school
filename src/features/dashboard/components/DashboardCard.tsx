@@ -4,8 +4,11 @@ import { Link } from "@tanstack/react-router";
 import { cn } from "@/shared/utils/cn";
 import type { CardDef } from "../store/dashboard.store";
 import { CardPreview } from "./CardPreviews";
+import { useLangStore } from "@/shared/store/lang.store";
 
 export function SortableDashboardCard({ card }: { card: CardDef }) {
+  const lang = useLangStore((s) => s.lang);
+  const title = lang === "EN" && card.titleEn ? card.titleEn : card.title;
   const {
     attributes,
     listeners,
@@ -32,7 +35,7 @@ export function SortableDashboardCard({ card }: { card: CardDef }) {
     >
       {/* Card header */}
       <div className="flex items-start justify-between gap-2 px-5 pt-4 pb-3">
-        <h3 className="text-base font-semibold text-(--color-text)">{card.title}</h3>
+        <h3 className="text-base font-semibold text-(--color-text)">{title}</h3>
 
         {/* Drag handle */}
         <div
@@ -65,7 +68,7 @@ export function SortableDashboardCard({ card }: { card: CardDef }) {
           to={card.to}
           className="text-sm font-medium text-(--color-primary) transition-colors hover:text-(--color-primary-hover)"
         >
-          Skoða →
+          {lang === "EN" ? "View" : "Skoða"} →
         </Link>
       </div>
     </div>
