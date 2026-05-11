@@ -1,3 +1,4 @@
+import type { UserPermissions } from "@/features/auth/types/auth.types";
 import type { Company } from "../types/company.types";
 
 export async function getCompanies(): Promise<Company[]> {
@@ -11,7 +12,13 @@ export async function getCompanies(): Promise<Company[]> {
   return res.json();
 }
 
-export async function switchCompany(companyId: string): Promise<{ token: string; companyDkToken: string; permissions: Record<string, boolean> }> {
+export interface SwitchCompanyResponse {
+  token: string;
+  companyDkToken: string | null;
+  permissions: UserPermissions;
+}
+
+export async function switchCompany(companyId: string): Promise<SwitchCompanyResponse> {
   const res = await fetch(`${import.meta.env.VITE_MOCK_API_URL}/auth/switch-company`, {
     method: "POST",
     headers: {

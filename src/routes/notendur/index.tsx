@@ -1,3 +1,4 @@
+// src/routes/notendur/index.tsx
 /**
  * /notendur — Users page. Prefetches portal users before rendering.
  */

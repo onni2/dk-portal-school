@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { User, CompanyMembership, UserPermissions } from "../types/auth.types";
+import type { User, CompanyMembership, UserPermissions, CompanyRole } from "../types/auth.types";
 
 const STORAGE_KEY_USER = "dk-auth-user";
 const STORAGE_KEY_TOKEN = "dk-auth-token";
@@ -14,6 +14,13 @@ const EMPTY_PERMISSIONS: UserPermissions = {
 function derivePermissions(companies: CompanyMembership[], companyId: string | undefined): UserPermissions {
   const match = companies.find((c) => c.id === companyId);
   return match?.permissions ?? EMPTY_PERMISSIONS;
+}
+
+function deriveCompanyRole(
+  companies: CompanyMembership[],
+  companyId: string | undefined,
+): CompanyRole | undefined {
+  return companies.find((c) => c.id === companyId)?.role;
 }
 
 function loadFromStorage(): {
@@ -65,11 +72,12 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   setAuth: (user, token, companies) => {
     const permissions = derivePermissions(companies, user.companyId);
-    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
+    const updatedUser = { ...user, companyRole: deriveCompanyRole(companies, user.companyId) };
+    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(updatedUser));
     localStorage.setItem(STORAGE_KEY_TOKEN, token);
     localStorage.setItem(STORAGE_KEY_COMPANIES, JSON.stringify(companies));
     localStorage.setItem(STORAGE_KEY_PERMISSIONS, JSON.stringify(permissions));
-    set({ user, token, companies, permissions, isAuthenticated: true });
+    set({ user: updatedUser, token, companies, permissions, isAuthenticated: true });
   },
 
   setToken: (token) => {
@@ -80,7 +88,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   setActiveCompany: (companyId, permissions) => {
     set((state) => {
       if (!state.user) return {};
-      const updatedUser = { ...state.user, companyId };
+      const updatedUser = {
+        ...state.user,
+        companyId,
+        companyRole: deriveCompanyRole(state.companies, companyId),
+      };
       const updatedPermissions = permissions ?? derivePermissions(state.companies, companyId);
       localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(updatedUser));
       localStorage.setItem(STORAGE_KEY_PERMISSIONS, JSON.stringify(updatedPermissions));
