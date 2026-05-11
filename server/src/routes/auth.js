@@ -1,3 +1,4 @@
+// server/src/routes/auth.js
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -133,6 +134,7 @@ router.post("/login", async (req, res) => {
         role: user.role,
         kennitala: user.kennitala,
         phone: user.phone,
+        hostingUsername: user.hosting_username,
         mustResetPassword: user.must_reset_password,
         activeCompanyId,
       },
@@ -184,6 +186,7 @@ router.post("/audkenni", async (req, res) => {
         role: user.role,
         kennitala: user.kennitala,
         phone: user.phone,
+        hostingUsername: user.hosting_username,
         mustResetPassword: user.must_reset_password,
         activeCompanyId,
       },

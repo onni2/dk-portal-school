@@ -49,15 +49,55 @@ CREATE TABLE IF NOT EXISTS user_companies (
 );
 
 CREATE TABLE IF NOT EXISTS hosting_accounts (
-  id           TEXT PRIMARY KEY,
-  company_id   TEXT NOT NULL REFERENCES companies(id),
-  username     TEXT NOT NULL UNIQUE,
-  display_name TEXT NOT NULL,
-  email        TEXT,
-  has_mfa      BOOLEAN NOT NULL DEFAULT false,
-  last_restart TIMESTAMPTZ,
-  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  id               TEXT PRIMARY KEY,
+  company_id       TEXT NOT NULL REFERENCES companies(id),
+  username         TEXT NOT NULL UNIQUE,
+  display_name     TEXT NOT NULL,
+  password_hash    TEXT NOT NULL,
+  has_mfa          BOOLEAN NOT NULL DEFAULT false,
+  status           TEXT,
+  deleted_at       TIMESTAMPTZ,
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS hosting_login_history (
+  id                    TEXT PRIMARY KEY,
+  hosting_account_id    TEXT NOT NULL REFERENCES hosting_accounts(id) ON DELETE CASCADE,
+  company_id            TEXT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  event_type            TEXT NOT NULL,
+  ip_address            INET,
+  device                TEXT,
+  user_agent            TEXT,
+  created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+
+CREATE TABLE IF NOT EXISTS hosting_duo_users (
+  duo_user_id        TEXT PRIMARY KEY,                   
+  hosting_account_id TEXT NOT NULL UNIQUE REFERENCES hosting_accounts(id) ON DELETE CASCADE,
+  duo_username       TEXT NOT NULL UNIQUE,
+  duo_display_name   TEXT,
+  duo_email          TEXT,
+  email_status       TEXT NOT NULL DEFAULT 'not_added',
+  status             TEXT,
+  created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS hosting_duo_devices (
+  device_id             TEXT PRIMARY KEY,                
+  duo_user_id           TEXT NOT NULL REFERENCES hosting_duo_users(duo_user_id) ON DELETE CASCADE,
+  device_description    TEXT NOT NULL,                   
+  device_type           TEXT NOT NULL,
+  device_platform       TEXT,
+  device_model          TEXT,                           
+  phone_number          TEXT,                      
+  status                TEXT NOT NULL DEFAULT 'pending_activation',
+  activation_url        TEXT,
+  activation_barcode    TEXT,
+  activation_expires_at TIMESTAMPTZ,
+  created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 
 CREATE TABLE IF NOT EXISTS pos_services (
   id         TEXT PRIMARY KEY,
