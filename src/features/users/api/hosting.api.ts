@@ -1,3 +1,4 @@
+// src/features/users/api/hosting.api.ts
 /**
  * Hosting accounts API — fetches the company's hosting accounts for the invite modal.
  * Uses: @/shared/api/mockClient
@@ -11,6 +12,7 @@ export interface HostingAccount {
   displayName: string;
 }
 
+// 
 export async function fetchHostingAccounts(): Promise<HostingAccount[]> {
   return mockClient.get<HostingAccount[]>("/hosting/accounts");
 }

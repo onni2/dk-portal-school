@@ -1,18 +1,34 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Suspense } from "react";
-import { myHostingAccountQueryOptions, myHostingLogQueryOptions } from "@/features/hosting/api/hosting.queries";
+/**
+ * /hosting/myHosting
+ *
+ * MyHosting page.
+ * Only shown to users that have a hosting account connected.
+ */
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { useAuthStore } from "@/features/auth/store/auth.store";
 import { MyHostingPage } from "@/features/hosting/components/MyHostingPage";
-import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 
 export const Route = createFileRoute("/hosting/myHosting/")({
-  loader: ({ context: { queryClient } }) =>
-    Promise.all([
-      queryClient.prefetchQuery(myHostingAccountQueryOptions),
-      queryClient.ensureQueryData(myHostingLogQueryOptions),
-    ]),
-  component: () => (
-    <Suspense fallback={<LoadingSpinner />}>
-      <MyHostingPage />
-    </Suspense>
-  ),
+  beforeLoad: () => {
+    const { user, companies, permissions } = useAuthStore.getState();
+    const activeCompany = companies.find((c) => c.id === user?.companyId);
+
+    const canAccessMyHosting = Boolean(user?.hostingUsername);
+
+    const canAccessHostingManagement =
+      user?.role === "super_admin" ||
+      user?.role === "god" ||
+      activeCompany?.role === "admin" ||
+      permissions.hosting === true;
+
+    if (!canAccessMyHosting) {
+      if (canAccessHostingManagement) {
+        throw redirect({ to: "/hosting/hostingManagement" });
+      }
+
+      throw redirect({ to: "/hosting/securityPrivacy" });
+    }
+  },
+
+  component: MyHostingPage,
 });

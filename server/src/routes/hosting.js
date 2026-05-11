@@ -1,54 +1,359 @@
+/**
+ * 
+ * Responsibilities:
+ * - MyHosting:
+ *   The logged-in portal user can fetch their own connected hosting account.
+ *   The connection is based on portal_users.hosting_username.
+ *
+ * - Hosting Management:
+ *   Admins / users with hosting permission can list, create, update, delete,
+ *   reset passwords, toggle MFA, and link hosting accounts to portal users.
+ *
+ * Important:
+ * - password_hash must never be returned to the frontend.
+ * - Duo users/devices are handled separately in duo.js.
+ */
+
 const express = require("express");
+const bcrypt = require("bcryptjs");
 const { randomBytes } = require("crypto");
 const pool = require("../db");
+const { signOutHostingAccount } = require("../services/hostingProvider");
+const { createDuoUser } = require("../services/duoClient");
 
 const router = express.Router();
 
 const ELEVATED_ROLES = ["super_admin", "god"];
+const BCRYPT_ROUNDS = 10;
 
 function requireAuth(req, res, next) {
-  if (!req.user) return res.status(401).json({ message: "Ekki innskráður" });
+  if (!req.user) {
+    return res.status(401).json({ message: "Ekki innskráður" });
+  }
+
   next();
 }
 
-async function requireHostingPermission(req, res, next) {
-  if (!req.user) return res.status(401).json({ message: "Ekki innskráður" });
-  if (ELEVATED_ROLES.includes(req.user.role)) return next();
-  try {
-    const { rows } = await pool.query(
-      "SELECT role, hosting FROM user_companies WHERE user_id = $1 AND company_id = $2",
-      [req.user.id, getCompanyId(req)],
-    );
-    if (rows[0]?.role === "admin" || rows[0]?.hosting === true) return next();
-  } catch { /* fall through */ }
-  return res.status(403).json({ message: "Ekki heimilt" });
-}
-
 function getCompanyId(req) {
-  return req.user.active_company_id ?? req.user.company_id;
+  return req.user.active_company_id ?? req.user.company_id ?? null;
 }
 
-function mapAccount(r) {
+function mapAccount(row) {
   return {
-    id: r.id,
-    username: r.username,
-    displayName: r.display_name,
-    email: r.email ?? null,
-    hasMfa: r.has_mfa,
-    lastRestart: r.last_restart ?? null,
-    createdAt: r.created_at,
+    id: row.id,
+    username: row.username,
+    displayName: row.display_name,
+    duoDisplayName: row.duo_display_name ?? null,
+    hasMfa: row.has_mfa,
+    hasPendingActivation: row.has_pending_activation ?? false,
+    status: row.status ?? null,
+    isLoggedIn: row.latest_event_type != null
+      ? row.latest_event_type === 'login'
+      : null,
+    linkedPortalUser: row.linked_user_name
+      ? { name: row.linked_user_name, username: row.linked_user_username }
+      : null,
   };
 }
 
-// GET /hosting/accounts
-router.get("/accounts", requireHostingPermission, async (req, res) => {
+function mapLoginHistory(row) {
+  return {
+    id: row.id,
+    type: row.event_type,
+    ip: row.ip_address ?? null,
+    device: row.device ?? null,
+    userAgent: row.user_agent ?? null,
+    createdAt: row.created_at,
+  };
+}
+
+async function canManageHosting(req) {
+  const companyId = getCompanyId(req);
+
+  if (!companyId) return false;
+
+  const { rows: licRows } = await pool.query(
+    `SELECT hosting FROM company_licences WHERE company_id = $1`,
+    [companyId],
+  );
+  if (!licRows[0]?.hosting) return false;
+
+  if (ELEVATED_ROLES.includes(req.user.role)) {
+    return true;
+  }
+
+  const { rows } = await pool.query(
+    `SELECT
+       uc.role,
+       COALESCE(uc.hosting, false) AS company_hosting,
+       COALESCE(up.hosting, false) AS global_hosting
+     FROM portal_users u
+     LEFT JOIN user_companies uc
+       ON uc.user_id = u.id
+      AND uc.company_id = $2
+     LEFT JOIN user_permissions up
+       ON up.user_id = u.id
+     WHERE u.id = $1
+     LIMIT 1`,
+    [req.user.id, companyId],
+  );
+
+  const access = rows[0];
+
+  if (!access) return false;
+
+  return (
+    access.role === "admin" ||
+    access.role === "owner" ||
+    access.company_hosting === true ||
+    access.global_hosting === true
+  );
+}
+
+async function requireHostingManagement(req, res, next) {
   try {
+    const allowed = await canManageHosting(req);
+
+    if (!allowed) {
+      return res.status(403).json({
+        message: "Notandi hefur ekki heimild til að stjórna hýsingu",
+      });
+    }
+
+    next();
+  } catch (err) {
+    console.error("Hosting permission check:", err);
+    res.status(500).json({ message: "Villa á þjóni" });
+  }
+}
+
+async function getHostingAccountById(db, accountId, companyId) {
+  const { rows } = await db.query(
+    `SELECT id, username, display_name, has_mfa, status
+     FROM hosting_accounts
+     WHERE id = $1
+       AND company_id = $2
+       AND deleted_at IS NULL
+     LIMIT 1`,
+    [accountId, companyId],
+  );
+
+  return rows[0] ?? null;
+}
+
+async function ensurePortalUserBelongsToCompany(db, userId, companyId) {
+  const { rows } = await db.query(
+    `SELECT u.id
+     FROM portal_users u
+     WHERE u.id = $1
+       AND (
+         u.company_id = $2
+         OR EXISTS (
+           SELECT 1
+           FROM user_companies uc
+           WHERE uc.user_id = u.id
+             AND uc.company_id = $2
+         )
+       )
+     LIMIT 1`,
+    [userId, companyId],
+  );
+
+  return rows[0] ?? null;
+}
+
+async function ensureHostingAccountIsNotLinkedToAnotherUser(db, username, userId) {
+  const { rows } = await db.query(
+    `SELECT id
+     FROM portal_users
+     WHERE hosting_username = $1
+       AND id <> $2
+     LIMIT 1`,
+    [username, userId],
+  );
+
+  return rows.length === 0;
+}
+
+async function getCurrentHostingAccount(userId, companyId) {
+  if (!companyId) return null;
+
+  const { rows } = await pool.query(
+    `SELECT
+       ha.id,
+       ha.username,
+       ha.display_name,
+       ha.has_mfa,
+       ha.status
+     FROM portal_users pu
+     JOIN hosting_accounts ha
+       ON ha.username = pu.hosting_username
+      AND ha.company_id = $2
+     WHERE pu.id = $1
+       AND pu.hosting_username IS NOT NULL
+       AND ha.deleted_at IS NULL
+     LIMIT 1`,
+    [userId, companyId],
+  );
+
+  return rows[0] ?? null;
+}
+
+/**
+ * GET /hosting/me
+ *
+ * Returns the hosting account connected to the currently logged-in portal user.
+ * This is used by MyHosting.
+ */
+router.get("/me", requireAuth, async (req, res) => {
+  try {
+    const companyId = getCompanyId(req);
+    const account = await getCurrentHostingAccount(req.user.id, companyId);
+
+    if (!account) {
+      return res.status(404).json({
+        message: "Enginn hýsingarreikningur tengdur þessum notanda",
+      });
+    }
+
+    res.json(mapAccount(account));
+  } catch (err) {
+    console.error("Current hosting account:", err);
+    res.status(500).json({ message: "Villa á þjóni" });
+  }
+});
+
+/**
+ * GET /hosting/me/log
+ *
+ * Returns login history for the logged-in user's connected hosting account.
+ */
+router.get("/me/log", requireAuth, async (req, res) => {
+  try {
+    const companyId = getCompanyId(req);
+    const account = await getCurrentHostingAccount(req.user.id, companyId);
+
+    if (!account) {
+      return res.status(404).json({
+        message: "Enginn hýsingarreikningur tengdur þessum notanda",
+      });
+    }
+
     const { rows } = await pool.query(
-      `SELECT id, username, display_name, email, has_mfa, last_restart, created_at
-       FROM hosting_accounts
-       WHERE company_id = $1
-       ORDER BY username ASC`,
-      [getCompanyId(req)]
+      `SELECT
+         id,
+         event_type,
+         ip_address::text AS ip_address,
+         device,
+         user_agent,
+         created_at
+       FROM hosting_login_history
+       WHERE hosting_account_id = $1
+         AND company_id = $2
+       ORDER BY created_at DESC
+       LIMIT 50`,
+      [account.id, companyId],
+    );
+
+    res.json(rows.map(mapLoginHistory));
+  } catch (err) {
+    console.error("Hosting login history:", err);
+    res.status(500).json({ message: "Villa á þjóni" });
+  }
+});
+
+/**
+ * PUT /hosting/me/password
+ *
+ * Updates the password for the logged-in user's own connected hosting account.
+ */
+router.put("/me/password", requireAuth, async (req, res) => {
+  const { password } = req.body;
+
+  if (!password || typeof password !== "string" || password.length < 8) {
+    return res.status(400).json({
+      message: "Lykilorð verður að vera að minnsta kosti 8 stafir",
+    });
+  }
+
+  try {
+    const companyId = getCompanyId(req);
+    const account = await getCurrentHostingAccount(req.user.id, companyId);
+
+    if (!account) {
+      return res.status(404).json({
+        message: "Enginn hýsingarreikningur tengdur þessum notanda",
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+
+    await pool.query(
+      `UPDATE hosting_accounts
+       SET password_hash = $1
+       WHERE id = $2
+         AND company_id = $3
+         AND deleted_at IS NULL`,
+      [passwordHash, account.id, companyId],
+    );
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Update own hosting password:", err);
+    res.status(500).json({ message: "Villa á þjóni" });
+  }
+});
+
+/**
+ * GET /hosting/accounts
+ *
+ * Returns all hosting accounts for the active company.
+ * This is used by Hosting Management.
+ */
+router.get("/accounts", requireAuth, requireHostingManagement, async (req, res) => {
+  try {
+    const companyId = getCompanyId(req);
+
+    const { rows } = await pool.query(
+      `SELECT
+         ha.id,
+         ha.username,
+         ha.display_name,
+         EXISTS(
+           SELECT 1
+           FROM hosting_duo_devices hdd
+           JOIN hosting_duo_users hdu2 ON hdu2.duo_user_id = hdd.duo_user_id
+           WHERE hdu2.hosting_account_id = ha.id
+             AND hdd.status = 'active'
+         ) AS has_mfa,
+         ha.status,
+         pu.name AS linked_user_name,
+         pu.username AS linked_user_username,
+         hdu.duo_display_name,
+         (
+           SELECT event_type
+           FROM hosting_login_history
+           WHERE hosting_account_id = ha.id
+           ORDER BY created_at DESC
+           LIMIT 1
+         ) AS latest_event_type,
+         EXISTS(
+           SELECT 1
+           FROM hosting_duo_devices hdd
+           JOIN hosting_duo_users hdu2 ON hdu2.duo_user_id = hdd.duo_user_id
+           WHERE hdu2.hosting_account_id = ha.id
+             AND hdd.status = 'pending_activation'
+             AND hdd.activation_expires_at > NOW()
+         ) AS has_pending_activation
+       FROM hosting_accounts ha
+       LEFT JOIN portal_users pu
+         ON pu.hosting_username = ha.username
+       LEFT JOIN hosting_duo_users hdu
+         ON hdu.hosting_account_id = ha.id
+       WHERE ha.company_id = $1
+         AND ha.deleted_at IS NULL
+       ORDER BY ha.username ASC`,
+      [companyId],
     );
 
     res.json(rows.map(mapAccount));
@@ -58,9 +363,17 @@ router.get("/accounts", requireHostingPermission, async (req, res) => {
   }
 });
 
-// POST /hosting/accounts
-router.post("/accounts", requireHostingPermission, async (req, res) => {
-  const { username, displayName, email } = req.body;
+/**
+ * POST /hosting/accounts
+ *
+ * Creates a new hosting account for the active company.
+ *
+ * Optional:
+ * - portalUserId can be provided to connect the new hosting account
+ *   to a portal user immediately.
+ */
+router.post("/accounts", requireAuth, requireHostingManagement, async (req, res) => {
+  const { username, displayName, portalUserId } = req.body;
 
   if (!username || !displayName) {
     return res.status(400).json({
@@ -68,23 +381,122 @@ router.post("/accounts", requireHostingPermission, async (req, res) => {
     });
   }
 
+  const companyId = getCompanyId(req);
+
+  if (!companyId) {
+    return res.status(400).json({
+      message: "Ekkert virkt fyrirtæki valið",
+    });
+  }
+
   const id = `ha-${randomBytes(4).toString("hex")}`;
-  const tempPassword = randomBytes(5).toString("hex");
+  const tempPassword = randomBytes(8).toString("hex");
+  const passwordHash = await bcrypt.hash(tempPassword, BCRYPT_ROUNDS);
+
+  const client = await pool.connect();
 
   try {
-    const { rows } = await pool.query(
+    await client.query("BEGIN");
+
+    const { rows } = await client.query(
       `INSERT INTO hosting_accounts
-       (id, company_id, username, display_name, email, has_mfa)
-       VALUES ($1, $2, $3, $4, $5, false)
-       RETURNING id, username, display_name, email, has_mfa, last_restart, created_at`,
-      [id, getCompanyId(req), username, displayName, email ?? null]
+       (
+         id,
+         company_id,
+         username,
+         display_name,
+         password_hash,
+         has_mfa,
+         status
+       )
+       VALUES ($1, $2, $3, $4, $5, false, 'active')
+       RETURNING
+         id,
+         username,
+         display_name,
+         has_mfa,
+         status`,
+      [id, companyId, username, displayName, passwordHash],
     );
 
+    const account = rows[0];
+
+    if (portalUserId) {
+      const portalUser = await ensurePortalUserBelongsToCompany(
+        client,
+        portalUserId,
+        companyId,
+      );
+
+      if (!portalUser) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({
+          message: "Portal notandi tilheyrir ekki þessu fyrirtæki",
+        });
+      }
+
+      const isAvailable = await ensureHostingAccountIsNotLinkedToAnotherUser(
+        client,
+        username,
+        portalUserId,
+      );
+
+      if (!isAvailable) {
+        await client.query("ROLLBACK");
+        return res.status(409).json({
+          message: "Þessi hýsingaraðgangur er nú þegar tengdur öðrum portal notanda",
+        });
+      }
+
+      await client.query(
+        `UPDATE portal_users
+         SET hosting_username = $1
+         WHERE id = $2`,
+        [username, portalUserId],
+      );
+    }
+
+    await client.query("COMMIT");
+
+    // Provision Duo user after committing the hosting account.
+    // Failure here is logged but does not fail the response — the GET endpoint
+    // will auto-sync from Duo on first access if this step is skipped.
+    try {
+      const duoUser = await createDuoUser({
+        username: account.username,
+        displayName: displayName,
+        status: "active",
+      });
+
+      await pool.query(
+        `INSERT INTO hosting_duo_users
+         (duo_user_id, hosting_account_id, duo_username, duo_display_name, status)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT DO NOTHING`,
+        [
+          duoUser.user_id,
+          account.id,
+          duoUser.username,
+          duoUser.realname ?? displayName,
+          duoUser.status ?? "active",
+        ],
+      );
+    } catch (duoErr) {
+      console.warn("Duo provisioning failed for new hosting account (will auto-sync on first access):", {
+        accountId: account.id,
+        username: account.username,
+        error: duoErr?.message,
+      });
+    }
+
     res.status(201).json({
-      account: mapAccount(rows[0]),
+      account: mapAccount(account),
       tempPassword,
+      linkedPortalUserId: portalUserId ?? null,
     });
   } catch (err) {
+    await client.query("ROLLBACK");
+
     console.error("Create hosting account:", err);
 
     if (err.code === "23505") {
@@ -94,20 +506,258 @@ router.post("/accounts", requireHostingPermission, async (req, res) => {
     }
 
     res.status(500).json({ message: "Villa á þjóni" });
+  } finally {
+    client.release();
   }
 });
 
-// DELETE /hosting/accounts/:id
-router.delete("/accounts/:id", requireHostingPermission, async (req, res) => {
+/**
+ * GET /hosting/accounts/:id/log
+ *
+ * Returns login history for a specific hosting account (admin view).
+ * Requires hosting management permission and validates the account belongs
+ * to the active company.
+ */
+router.get("/accounts/:id/log", requireAuth, requireHostingManagement, async (req, res) => {
   try {
+    const companyId = getCompanyId(req);
+    const account = await getHostingAccountById(pool, req.params.id, companyId);
+
+    if (!account) {
+      return res.status(404).json({ message: "Hýsingaraðgangur ekki fundinn" });
+    }
+
+    const { rows } = await pool.query(
+      `SELECT
+         id,
+         event_type,
+         ip_address::text AS ip_address,
+         device,
+         user_agent,
+         created_at
+       FROM hosting_login_history
+       WHERE hosting_account_id = $1
+         AND company_id = $2
+       ORDER BY created_at DESC
+       LIMIT 50`,
+      [account.id, companyId],
+    );
+
+    res.json(rows.map(mapLoginHistory));
+  } catch (err) {
+    console.error("Hosting account login history:", err);
+    res.status(500).json({ message: "Villa á þjóni" });
+  }
+});
+
+/**
+ * PATCH /hosting/accounts/:id
+ *
+ * Updates basic hosting account fields.
+ */
+router.patch("/accounts/:id", requireAuth, requireHostingManagement, async (req, res) => {
+  const { displayName, status } = req.body;
+
+  if (displayName === undefined && status === undefined) {
+    return res.status(400).json({
+      message: "Engar breytingar sendar",
+    });
+  }
+
+  try {
+    const companyId = getCompanyId(req);
+
+    const { rows } = await pool.query(
+      `UPDATE hosting_accounts
+       SET
+         display_name = COALESCE($1, display_name),
+         status = COALESCE($2, status)
+       WHERE id = $3
+         AND company_id = $4
+         AND deleted_at IS NULL
+       RETURNING
+         id,
+         username,
+         display_name,
+         has_mfa,
+         status`,
+      [
+        displayName ?? null,
+        status ?? null,
+        req.params.id,
+        companyId,
+      ],
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Hýsingaraðgangur ekki fundinn" });
+    }
+
+    res.json(mapAccount(rows[0]));
+  } catch (err) {
+    console.error("Update hosting account:", err);
+    res.status(500).json({ message: "Villa á þjóni" });
+  }
+});
+
+/**
+ * POST /hosting/accounts/:id/link-user
+ *
+ * Connects an existing hosting account to a portal user.
+ * The connection is stored on portal_users.hosting_username.
+ */
+router.post(
+  "/accounts/:id/link-user",
+  requireAuth,
+  requireHostingManagement,
+  async (req, res) => {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({
+        message: "Vantar userId",
+      });
+    }
+
+    const companyId = getCompanyId(req);
+
+    const client = await pool.connect();
+
+    try {
+      await client.query("BEGIN");
+
+      const account = await getHostingAccountById(client, req.params.id, companyId);
+
+      if (!account) {
+        await client.query("ROLLBACK");
+        return res.status(404).json({
+          message: "Hýsingaraðgangur ekki fundinn",
+        });
+      }
+
+      const portalUser = await ensurePortalUserBelongsToCompany(
+        client,
+        userId,
+        companyId,
+      );
+
+      if (!portalUser) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({
+          message: "Portal notandi tilheyrir ekki þessu fyrirtæki",
+        });
+      }
+
+      const isAvailable = await ensureHostingAccountIsNotLinkedToAnotherUser(
+        client,
+        account.username,
+        userId,
+      );
+
+      if (!isAvailable) {
+        await client.query("ROLLBACK");
+        return res.status(409).json({
+          message: "Þessi hýsingaraðgangur er nú þegar tengdur öðrum portal notanda",
+        });
+      }
+
+      await client.query(
+        `UPDATE portal_users
+         SET hosting_username = $1
+         WHERE id = $2`,
+        [account.username, userId],
+      );
+
+      await client.query("COMMIT");
+
+      res.json({
+        account: mapAccount(account),
+        linkedPortalUserId: userId,
+      });
+    } catch (err) {
+      await client.query("ROLLBACK");
+
+      console.error("Link hosting account to portal user:", err);
+      res.status(500).json({ message: "Villa á þjóni" });
+    } finally {
+      client.release();
+    }
+  },
+);
+
+/**
+ * POST /hosting/accounts/:id/unlink-user
+ *
+ * Removes the connection between a hosting account and a portal user.
+ */
+router.post(
+  "/accounts/:id/unlink-user",
+  requireAuth,
+  requireHostingManagement,
+  async (req, res) => {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({
+        message: "Vantar userId",
+      });
+    }
+
+    try {
+      const companyId = getCompanyId(req);
+      const account = await getHostingAccountById(pool, req.params.id, companyId);
+
+      if (!account) {
+        return res.status(404).json({
+          message: "Hýsingaraðgangur ekki fundinn",
+        });
+      }
+
+      const { rowCount } = await pool.query(
+        `UPDATE portal_users
+         SET hosting_username = NULL
+         WHERE id = $1
+           AND hosting_username = $2`,
+        [userId, account.username],
+      );
+
+      if (rowCount === 0) {
+        return res.status(404).json({
+          message: "Tenging milli portal notanda og hýsingaraðgangs fannst ekki",
+        });
+      }
+
+      res.json({ ok: true });
+    } catch (err) {
+      console.error("Unlink hosting account from portal user:", err);
+      res.status(500).json({ message: "Villa á þjóni" });
+    }
+  },
+);
+
+/**
+ * DELETE /hosting/accounts/:id
+ *
+ * Soft deletes a hosting account from the active company.
+ */
+router.delete("/accounts/:id", requireAuth, requireHostingManagement, async (req, res) => {
+  try {
+    const companyId = getCompanyId(req);
+
     const { rowCount } = await pool.query(
-      `DELETE FROM hosting_accounts
-       WHERE id = $1 AND company_id = $2`,
-      [req.params.id, getCompanyId(req)]
+      `UPDATE hosting_accounts
+       SET deleted_at = NOW(),
+           status = 'deleted'
+       WHERE id = $1
+         AND company_id = $2
+         AND deleted_at IS NULL`,
+      [req.params.id, companyId],
     );
 
     if (rowCount === 0) {
-      return res.status(404).json({ message: "Notandi ekki fundinn" });
+      return res.status(404).json({
+        message: "Hýsingaraðgangur ekki fundinn",
+      });
     }
 
     res.json({ ok: true });
@@ -117,55 +767,55 @@ router.delete("/accounts/:id", requireHostingPermission, async (req, res) => {
   }
 });
 
-// POST /hosting/accounts/:id/reset-password
-router.post("/accounts/:id/reset-password", requireHostingPermission, async (req, res) => {
-  try {
-    const { rows } = await pool.query(
-      `SELECT id
-       FROM hosting_accounts
-       WHERE id = $1 AND company_id = $2
-       LIMIT 1`,
-      [req.params.id, getCompanyId(req)]
-    );
+/**
+ * POST /hosting/accounts/:id/reset-password
+ *
+ * Resets a hosting account password and returns a temporary password once.
+ */
+router.post(
+  "/accounts/:id/reset-password",
+  requireAuth,
+  requireHostingManagement,
+  async (req, res) => {
+    const tempPassword = randomBytes(8).toString("hex");
+    const passwordHash = await bcrypt.hash(tempPassword, BCRYPT_ROUNDS);
 
-    if (rows.length === 0) {
-      return res.status(404).json({ message: "Notandi ekki fundinn" });
+    try {
+      const companyId = getCompanyId(req);
+
+      const { rowCount } = await pool.query(
+        `UPDATE hosting_accounts
+         SET password_hash = $1
+         WHERE id = $2
+           AND company_id = $3
+           AND deleted_at IS NULL`,
+        [passwordHash, req.params.id, companyId],
+      );
+
+      if (rowCount === 0) {
+        return res.status(404).json({
+          message: "Hýsingaraðgangur ekki fundinn",
+        });
+      }
+
+      res.json({ tempPassword });
+    } catch (err) {
+      console.error("Reset hosting password:", err);
+      res.status(500).json({ message: "Villa á þjóni" });
     }
+  },
+);
 
-    const tempPassword = randomBytes(5).toString("hex");
-    res.json({ tempPassword });
-  } catch (err) {
-    console.error("Reset hosting password:", err);
-    res.status(500).json({ message: "Villa á þjóni" });
-  }
-});
-
-// POST /hosting/accounts/:id/restart
-router.post("/accounts/:id/restart", requireHostingPermission, async (req, res) => {
-  try {
-    const { rowCount } = await pool.query(
-      `UPDATE hosting_accounts
-       SET last_restart = NOW()
-       WHERE id = $1 AND company_id = $2`,
-      [req.params.id, getCompanyId(req)]
-    );
-
-    if (rowCount === 0) {
-      return res.status(404).json({ message: "Notandi ekki fundinn" });
-    }
-
-    res.json({
-      ok: true,
-      restarted: new Date().toISOString(),
-    });
-  } catch (err) {
-    console.error("Restart hosting account:", err);
-    res.status(500).json({ message: "Villa á þjóni" });
-  }
-});
-
-// PUT /hosting/accounts/:id/mfa
-router.put("/accounts/:id/mfa", requireHostingPermission, async (req, res) => {
+/**
+ * PUT /hosting/accounts/:id/mfa
+ *
+ * Enables or disables MFA for a hosting account.
+ *
+ * Note:
+ * This only updates hosting_accounts.has_mfa.
+ * Actual Duo user/device management belongs in duo.js.
+ */
+router.put("/accounts/:id/mfa", requireAuth, requireHostingManagement, async (req, res) => {
   const { enabled } = req.body;
 
   if (typeof enabled !== "boolean") {
@@ -175,129 +825,126 @@ router.put("/accounts/:id/mfa", requireHostingPermission, async (req, res) => {
   }
 
   try {
-    const { rowCount } = await pool.query(
+    const companyId = getCompanyId(req);
+
+    const { rows } = await pool.query(
       `UPDATE hosting_accounts
        SET has_mfa = $1
-       WHERE id = $2 AND company_id = $3`,
-      [enabled, req.params.id, getCompanyId(req)]
+       WHERE id = $2
+         AND company_id = $3
+         AND deleted_at IS NULL
+       RETURNING
+         id,
+         username,
+         display_name,
+         has_mfa,
+         status`,
+      [enabled, req.params.id, companyId],
     );
 
-    if (rowCount === 0) {
-      return res.status(404).json({ message: "Notandi ekki fundinn" });
+    if (rows.length === 0) {
+      return res.status(404).json({
+        message: "Hýsingaraðgangur ekki fundinn",
+      });
     }
 
-    res.json({
-      ok: true,
-      hasMfa: enabled,
-    });
+    res.json(mapAccount(rows[0]));
   } catch (err) {
     console.error("Update hosting MFA:", err);
     res.status(500).json({ message: "Villa á þjóni" });
   }
 });
 
-// GET /hosting/me — current user's connected hosting account
-router.get("/me", requireAuth, async (req, res) => {
+/**
+ * POST /hosting/accounts/:id/sign-out
+ *
+ * Admin: signs out another user's hosting account.
+ */
+router.post("/accounts/:id/sign-out", requireAuth, requireHostingManagement, async (req, res) => {
   try {
-    const { rows } = await pool.query(
-      `SELECT ha.id, ha.username, ha.display_name, ha.email, ha.has_mfa, ha.last_restart, ha.created_at
-       FROM portal_users pu
-       JOIN hosting_accounts ha ON ha.username = pu.hosting_username
-       WHERE pu.id = $1
-       LIMIT 1`,
-      [req.user.id]
+    const companyId = getCompanyId(req);
+    const account = await getHostingAccountById(pool, req.params.id, companyId);
+
+    if (!account) {
+      return res.status(404).json({ message: "Hýsingaraðgangur ekki fundinn" });
+    }
+
+    const result = await signOutHostingAccount(account);
+
+    await pool.query(
+      `INSERT INTO hosting_login_history
+         (id, hosting_account_id, company_id, event_type, device, user_agent)
+       VALUES ($1, $2, $3, 'logout', $4, $5)`,
+      [
+        `hlh-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        account.id,
+        companyId,
+        "portal-admin",
+        req.get("user-agent") ?? null,
+      ],
     );
 
-    if (rows.length === 0) {
+    res.json({ ok: true, signedOutAt: result.signedOutAt });
+  } catch (err) {
+    console.error("Admin sign out hosting account:", err);
+    res.status(500).json({ message: "Tókst ekki að skrá út úr hýsingu" });
+  }
+});
+
+/**
+ * POST /hosting/me/sign-out
+ *
+ * Signs the logged-in portal user out of their connected hosting account.
+ *
+ * Current implementation:
+ * - Calls hostingProvider.signOutHostingAccount()
+ * - Writes a logout event to hosting_login_history
+ *
+ * Later:
+ * - hostingProvider can be replaced with a real hosted environment integration.
+ */
+router.post("/me/sign-out", requireAuth, async (req, res) => {
+  try {
+    const companyId = getCompanyId(req);
+    const account = await getCurrentHostingAccount(req.user.id, companyId);
+
+    if (!account) {
       return res.status(404).json({
         message: "Enginn hýsingarreikningur tengdur þessum notanda",
       });
     }
 
-    res.json(mapAccount(rows[0]));
+    const result = await signOutHostingAccount(account);
+
+    await pool.query(
+      `INSERT INTO hosting_login_history
+       (
+         id,
+         hosting_account_id,
+         company_id,
+         event_type,
+         device,
+         user_agent
+       )
+       VALUES ($1, $2, $3, 'logout', $4, $5)`,
+      [
+        `hlh-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        account.id,
+        companyId,
+        "portal",
+        req.get("user-agent") ?? null,
+      ],
+    );
+
+    res.json({
+      ok: true,
+      signedOutAt: result.signedOutAt,
+    });
   } catch (err) {
-    console.error("Current hosting account:", err);
-    res.status(500).json({ message: "Villa á þjóni" });
+    console.error("Sign out hosting account:", err);
+    res.status(500).json({ message: "Tókst ekki að skrá út úr hýsingu" });
   }
 });
 
-// GET /hosting/me/log
-router.get("/me/log", requireAuth, (_req, res) => {
-  const now = Date.now();
-  const h = 3600 * 1000;
-  const d = 86400 * 1000;
 
-  res.json([
-    {
-      id: 1,
-      type: "login",
-      when: new Date(now - 2 * h).toISOString(),
-      ip: "85.220.46.12",
-      agent: "Chrome 134 · macOS",
-      status: "ok",
-    },
-    {
-      id: 2,
-      type: "logout",
-      when: new Date(now - d - 2 * h).toISOString(),
-      ip: "85.220.46.12",
-      agent: "Chrome 134 · macOS",
-      status: "ok",
-    },
-    {
-      id: 3,
-      type: "login",
-      when: new Date(now - d - 8 * h).toISOString(),
-      ip: "85.220.46.12",
-      agent: "Chrome 134 · macOS",
-      status: "ok",
-    },
-    {
-      id: 4,
-      type: "login",
-      when: new Date(now - 3 * d).toISOString(),
-      ip: "172.18.4.22",
-      agent: "Safari · iPhone",
-      status: "ok",
-    },
-    {
-      id: 5,
-      type: "failed",
-      when: new Date(now - 4 * d + h).toISOString(),
-      ip: "188.40.91.7",
-      agent: "Unknown",
-      status: "failed",
-    },
-    {
-      id: 6,
-      type: "logout",
-      when: new Date(now - 4 * d - h).toISOString(),
-      ip: "85.220.46.12",
-      agent: "Chrome 134 · macOS",
-      status: "ok",
-    },
-    {
-      id: 7,
-      type: "login",
-      when: new Date(now - 4 * d - 8 * h).toISOString(),
-      ip: "85.220.46.12",
-      agent: "Chrome 134 · macOS",
-      status: "ok",
-    },
-    {
-      id: 8,
-      type: "login",
-      when: new Date(now - 5 * d).toISOString(),
-      ip: "85.220.46.12",
-      agent: "Chrome 134 · macOS",
-      status: "ok",
-    },
-  ]);
-});
-
-// PUT /hosting/me/password
-router.put("/me/password", requireAuth, (_req, res) => {
-  res.json({ ok: true });
-});
-
-module.exports = router;
+module.exports = { router, requireHostingManagement };

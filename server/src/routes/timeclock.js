@@ -3,8 +3,10 @@ const pool = require("../db");
 
 const router = express.Router();
 
+const { randomUUID } = require("crypto");
+
 function generateId() {
-  return Math.random().toString(36).slice(2, 10);
+  return randomUUID();
 }
 
 const ELEVATED_ROLES = ["super_admin", "god"];
