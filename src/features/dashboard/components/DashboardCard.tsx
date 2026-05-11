@@ -3,6 +3,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/shared/utils/cn";
 import type { CardDef } from "../store/dashboard.store";
+import { useDashboardLayout } from "../store/dashboard.store";
 import { CardPreview } from "./CardPreviews";
 
 export function SortableDashboardCard({
@@ -21,6 +22,9 @@ export function SortableDashboardCard({
     isDragging,
   } = useSortable({ id: card.id });
 
+  const compactIds = useDashboardLayout((s) => s.compactIds);
+  const compact = compactIds.includes(card.id);
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -32,7 +36,7 @@ export function SortableDashboardCard({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group relative flex h-full flex-col rounded-2xl border border-(--color-border) bg-(--color-surface)",
+        "group relative flex h-full flex-col overflow-hidden rounded-2xl border border-(--color-border) bg-(--color-surface)",
         "shadow-(--shadow-sm) transition-shadow hover:shadow-(--shadow-md)",
         isDragging && "ring-2 ring-primary/30",
       )}
@@ -55,11 +59,11 @@ export function SortableDashboardCard({
       </div>
 
       {/* Body */}
-      <div className="flex flex-1 flex-col gap-3 overflow-hidden p-4">
+      <div className="flex min-h-0 flex-1 flex-col gap-3 p-4">
         <p className="text-xs font-semibold uppercase tracking-widest text-(--color-text-muted)">
           {card.title}
         </p>
-        <div className="flex-1 overflow-hidden">
+        <div className="min-h-0 flex-1 overflow-hidden">
           {isLocked ? (
             <div className="flex items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0 text-(--color-text-muted)" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -70,20 +74,21 @@ export function SortableDashboardCard({
           ) : (
             <CardPreview
               id={card.id}
+              compact={compact}
               fallback={<p className="text-sm text-(--color-text-secondary)">{card.description}</p>}
             />
           )}
         </div>
       </div>
 
-      {/* Footer link */}
+      {/* Footer */}
       {card.to && (
         <Link
           to={card.to}
-          className="flex items-center justify-between rounded-b-2xl border-t border-(--color-border) px-4 py-2.5 text-xs font-medium text-(--color-text-muted) transition-colors hover:bg-(--color-surface-hover) hover:text-(--color-primary)"
+          className="flex items-center justify-between border-t border-(--color-border) px-4 pt-3 pb-4 text-sm font-medium text-(--color-text-muted) transition-colors hover:bg-(--color-surface-hover) hover:text-(--color-primary)"
         >
-          <span>Opna {card.title}</span>
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+          <span>{card.footerLabel ?? `Opna ${card.title}`}</span>
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>
         </Link>
