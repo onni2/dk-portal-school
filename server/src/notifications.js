@@ -1,7 +1,9 @@
 const pool = require("./db");
 
+const { randomUUID } = require("crypto");
+
 function generateId() {
-  return Math.random().toString(36).slice(2, 10);
+  return randomUUID();
 }
 
 async function createNotification({ userId, companyId, title, message }) {
