@@ -29,7 +29,10 @@ export function TicketsPage() {
 
   function handleDepartmentChange(id: string | undefined) {
     setDepartmentId(id);
-    setSelectedId(null); // reset selected ticket when department changes
+    if (selectedId) {
+      const stillVisible = tickets.some((t) => t.id === selectedId && (!id || t.department?.id === id));
+      if (!stillVisible) setSelectedId(null);
+    }
   }
 
   return (
