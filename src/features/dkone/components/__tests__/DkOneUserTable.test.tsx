@@ -6,13 +6,29 @@ import { DkOneUserTable } from "../DkOneUserTable";
 import type { DkOneUser } from "../../types/dkone.types";
 
 const activeUser: DkOneUser = {
-  id: "1", fullName: "Jón Jónsson", email: "jon@dk.is",
-  username: "jon", role: "admin", status: "active",
+  id: "1",
+  companyId: "comp-1",
+  fullName: "Jón Jónsson",
+  email: "jon@dk.is",
+  username: "jon",
+  employeeNumber: null,
+  role: "admin",
+  status: "active",
+  createdAt: "2026-01-01T00:00:00Z",
+  addedByName: null,
 };
 
 const invitedUser: DkOneUser = {
-  id: "2", fullName: "Anna Sigurðardóttir", email: "anna@dk.is",
-  username: "anna", role: "user", status: "invited",
+  id: "2",
+  companyId: "comp-1",
+  fullName: "Anna Sigurðardóttir",
+  email: "anna@dk.is",
+  username: "anna",
+  employeeNumber: null,
+  role: "user",
+  status: "invited",
+  createdAt: "2026-01-02T00:00:00Z",
+  addedByName: null,
 };
 
 vi.mock("../../api/dkone.queries", () => ({
@@ -22,7 +38,12 @@ vi.mock("../../api/dkone.queries", () => ({
 }));
 
 vi.mock("../../api/dkone.api", () => ({
-  setDkOneAccess: vi.fn(),
+  removeDkOneUser: vi.fn(() => Promise.resolve()),
+  activateDkOneUser: vi.fn(() => Promise.resolve()),
+}));
+
+vi.mock("../ChangeRoleModal", () => ({
+  ChangeRoleModal: () => <div data-testid="change-role-modal" />,
 }));
 
 function renderWithQuery(ui: React.ReactElement) {
@@ -36,24 +57,25 @@ describe("DkOneUserTable", () => {
     expect(screen.getByText("Jón Jónsson")).toBeInTheDocument();
   });
 
-  it("shows Meðlimir tab by default", () => {
+  it("shows active user's role label", () => {
     renderWithQuery(<DkOneUserTable />);
-    expect(screen.getByText(/Meðlimir/)).toBeInTheDocument();
+    expect(screen.getByText("Stjórnandi")).toBeInTheDocument();
   });
 
-  it("shows Boðið tab", () => {
+  it("shows invited user when switching to Boðið tab", async () => {
     renderWithQuery(<DkOneUserTable />);
-    expect(screen.getByText(/Boðið/)).toBeInTheDocument();
+    await userEvent.click(screen.getByText(/Boðið/));
+    expect(screen.getByText("anna@dk.is")).toBeInTheDocument();
   });
 
-  it("shows remove button for active user", () => {
+  it("shows remove button for each visible user", () => {
     renderWithQuery(<DkOneUserTable />);
-    expect(screen.getByTitle("Fjarlægja")).toBeInTheDocument();
+    expect(screen.getAllByTitle("Fjarlægja")).toHaveLength(1);
   });
 
-  it("shows confirm dialog when remove clicked", async () => {
+  it("shows confirm dialog when remove button is clicked", async () => {
     renderWithQuery(<DkOneUserTable />);
-    await userEvent.click(screen.getByTitle("Fjarlægja"));
+    await userEvent.click(screen.getAllByTitle("Fjarlægja")[0]!);
     expect(screen.getByText("Ertu viss?")).toBeInTheDocument();
   });
 
@@ -61,6 +83,7 @@ describe("DkOneUserTable", () => {
     vi.doMock("../../api/dkone.queries", () => ({
       useDkOneUsers: () => ({ data: [] }),
       dkOneUsersQueryOptions: { queryKey: ["dkone-users"] },
+      dkUsersQueryOptions: { queryKey: ["dk-users"] },
     }));
   });
 });

@@ -28,8 +28,10 @@ export interface User {
   role: AuthRole;
   kennitala?: string;
   phone?: string;
+  hostingUsername?: string;
   mustResetPassword?: boolean;
   companyId?: string;
+  companyRole?: CompanyRole;
 }
 
 export interface LoginCredentials {

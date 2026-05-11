@@ -16,7 +16,7 @@ const usersRouter = require("./routes/users");
 const timeclockRouter = require("./routes/timeclock");
 const companiesRouter = require("./routes/companies");
 const notificationsRouter = require("./routes/notifications");
-const hostingRouter = require("./routes/hosting");
+const { router: hostingRouter } = require("./routes/hosting");
 const ticketsRouter = require("./routes/tickets");
 const licenceRouter = require("./routes/licence");
 const posRouter = require("./routes/pos");
@@ -24,6 +24,7 @@ const dkoneRouter = require("./routes/dkone");
 const dkplusRouter = require("./routes/dkplus");
 const duoRouter = require("./routes/duo");
 const knowledgeBaseRouter = require("./routes/knowledgeBase");
+const maintenanceRouter = require("./routes/maintenance");
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -75,6 +76,7 @@ app.use("/dkone", dkoneRouter);
 app.use("/dkplus", dkplusRouter);
 app.use("/duo", duoRouter);
 app.use("/knowledge-base", knowledgeBaseRouter);
+app.use("/maintenance", maintenanceRouter);
 
 app.get("/health", (_req, res) => {
   res.json({ ok: true });

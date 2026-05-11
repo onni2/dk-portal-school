@@ -19,6 +19,8 @@ import { licenceQueryOptions } from "@/features/licence/api/licence.queries";
 import { kbDataQueryOptions } from "@/features/knowledgeBase/api/knowledgeBase.queries";
 import { youtubeVideosQueryOptions } from "@/features/knowledgeBase/api/youtube.queries";
 import { useAuthStore } from "@/features/auth/store/auth.store";
+import { maintenanceQueryOptions, useMaintenanceLocks } from "@/features/maintenance/api/maintenance.queries";
+import { MaintenanceOverlay } from "@/features/maintenance/components/MaintenanceOverlay";
 
 export interface RouterContext {
   queryClient: QueryClient;
@@ -42,6 +44,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     // browses other pages so Hjálparmiðstöð loads instantly when visited.
     void queryClient.prefetchQuery(kbDataQueryOptions);
     void queryClient.prefetchQuery(youtubeVideosQueryOptions);
+    void queryClient.prefetchQuery(maintenanceQueryOptions);
 
     try {
       return await queryClient.ensureQueryData(licenceQueryOptions);
@@ -80,8 +83,24 @@ function RootComponent() {
 
   return (
     <Layout>
-      <Outlet />
+      <MaintenanceGate />
       <TanStackRouterDevtools position="bottom-right" />
     </Layout>
   );
+}
+
+function MaintenanceGate() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { data: locks } = useMaintenanceLocks();
+  const user = useAuthStore((s) => s.user);
+
+  const activeLock = locks.find(
+    (lock) => pathname === lock.route || pathname.startsWith(lock.route + "/"),
+  );
+
+  if (activeLock && user?.role !== "god") {
+    return <MaintenanceOverlay message={activeLock.message} />;
+  }
+
+  return <Outlet />;
 }
