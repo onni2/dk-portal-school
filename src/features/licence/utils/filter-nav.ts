@@ -37,6 +37,8 @@ function canShowNavItem(
   }
 
   if (item.access.type === "hostingManagement") {
+    const hasLicence = licence ? isModuleEnabled(licence, "Hosting") : false;
+    if (!hasLicence) return false;
     return (
       canBypassPermissions(role, user) ||
       user?.companyRole === "admin" ||
