@@ -5,6 +5,7 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/shared/utils/cn";
+import { useLangStore } from "@/shared/store/lang.store";
 import type { User } from "../types/auth.types";
 
 interface ProfileDropdownProps {
@@ -17,7 +18,7 @@ interface ProfileDropdownProps {
  */
 export function ProfileDropdown({ user, onLogout }: ProfileDropdownProps) {
   const [open, setOpen] = useState(false);
-  const [lang, setLang] = useState<"IS" | "EN">("IS");
+  const { lang, fontSize, setFontSize, highContrast, toggleHighContrast } = useLangStore();
   const ref = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -79,7 +80,7 @@ export function ProfileDropdown({ user, onLogout }: ProfileDropdownProps) {
 
       {/* Dropdown panel */}
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-[var(--radius-lg)] border border-(--color-border) bg-(--color-surface) shadow-lg">
+        <div style={{ fontSize: "16px" }} className="absolute right-0 top-full z-50 mt-2 w-72 rounded-[var(--radius-lg)] border border-(--color-border) bg-(--color-surface) shadow-lg">
           <div className="p-4">
             {/* Avatar + name + kennitala */}
             <div className="mb-4 flex items-center gap-3">
@@ -98,35 +99,48 @@ export function ProfileDropdown({ user, onLogout }: ProfileDropdownProps) {
               </div>
             </div>
 
-            {/* Language selector */}
+            {/* Accessibility */}
             <div className="mb-4">
               <p className="mb-2 text-xs text-(--color-text-secondary)">
-                Velja annað tungumál
+                {lang === "EN" ? "Accessibility" : "Aðgengileiki"}
               </p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setLang("IS")}
-                  className={cn(
-                    "rounded-[var(--radius-md)] border px-3 py-1 text-sm font-medium transition-colors",
-                    lang === "IS"
-                      ? "border-(--color-primary) bg-(--color-primary) text-white"
-                      : "border-(--color-border) text-(--color-text-secondary) hover:bg-(--color-surface-hover)",
-                  )}
-                >
-                  IS
-                </button>
-                <button
-                  onClick={() => setLang("EN")}
-                  className={cn(
-                    "rounded-[var(--radius-md)] border px-3 py-1 text-sm font-medium transition-colors",
-                    lang === "EN"
-                      ? "border-(--color-primary) bg-(--color-primary) text-white"
-                      : "border-(--color-border) text-(--color-text-secondary) hover:bg-(--color-surface-hover)",
-                  )}
-                >
-                  EN
-                </button>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm text-(--color-text-secondary)">{lang === "EN" ? "Text size" : "Stærð texta"}</span>
+                <span className="text-xs font-medium text-(--color-primary)">{fontSize}%</span>
               </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setFontSize(Math.max(100, fontSize - 10))}
+                  disabled={fontSize <= 100}
+                  className="icon-btn border border-(--color-border) text-(--color-text-secondary) font-bold disabled:opacity-30"
+                >−</button>
+                <input
+                  type="range"
+                  min={100}
+                  max={150}
+                  step={10}
+                  value={fontSize}
+                  onChange={(e) => setFontSize(Number(e.target.value))}
+                  className="flex-1 accent-[var(--color-primary)]"
+                />
+                <button
+                  onClick={() => setFontSize(Math.min(150, fontSize + 10))}
+                  disabled={fontSize >= 150}
+                  className="icon-btn border border-(--color-border) text-(--color-text-secondary) font-bold disabled:opacity-30"
+                >+</button>
+              </div>
+              <button
+                onClick={toggleHighContrast}
+                className={cn(
+                  "mt-2 flex w-full items-center justify-between rounded-[var(--radius-md)] border px-3 py-2 text-sm font-medium transition-colors",
+                  highContrast
+                    ? "border-(--color-primary) bg-(--color-primary) text-white"
+                    : "border-(--color-border) text-(--color-text-secondary) hover:bg-(--color-surface-hover)",
+                )}
+              >
+                <span>{lang === "EN" ? "High contrast" : "Há skerpa"}</span>
+                <span className="text-xs">{highContrast ? (lang === "EN" ? "On" : "Virkt") : (lang === "EN" ? "Off" : "Óvirkt")}</span>
+              </button>
             </div>
 
             {/* Logout */}
@@ -137,7 +151,7 @@ export function ProfileDropdown({ user, onLogout }: ProfileDropdownProps) {
               }}
               className="w-full rounded-[var(--radius-md)] bg-(--color-primary) py-2 text-sm font-medium text-white transition-colors hover:bg-(--color-primary-hover)"
             >
-              Útskrá
+              {lang === "EN" ? "Log out" : "Útskrá"}
             </button>
           </div>
         </div>

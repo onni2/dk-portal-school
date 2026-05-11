@@ -16,6 +16,7 @@ const kbSearch = z.object({
   selectedFolderId: z.string().optional(),
   articleId: z.string().optional(),
   videoId: z.string().optional(),
+  query: z.string().optional(),
 });
 
 export const Route = createFileRoute("/knowledge-base/")({
