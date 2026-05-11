@@ -9,6 +9,7 @@ import type { UserPermissions } from "@/features/users/types/user-permissions.ty
 
 export interface NavItem {
   label: string;
+  labelEn?: string;
   to: string;
   access:
     | { type: "alwaysVisible" }
@@ -25,8 +26,7 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: NavItem[] = [
-  // Always visible to all logged-in users
-  { label: "Yfirlit", to: "/", access: { type: "alwaysVisible" } },
+  { label: "Yfirlit", labelEn: "Overview", to: "/", access: { type: "alwaysVisible" } },
 
   // Accountant-only items
   {
@@ -36,42 +36,45 @@ export const NAV_ITEMS: NavItem[] = [
     children: [
       { label: "Fyrirtækin mín", to: "/accountant/companies", access: { type: "accountantOnly" } },
       { label: "Skilastaða", to: "/accountant/submissions", access: { type: "accountantOnly" } },
+      { label: "Færslur", to: "/accountant/transactions", access: { type: "accountantOnly" } },
+      { label: "Skjöl", to: "/accountant/documents", access: { type: "accountantOnly" } },
     ],
   },
 
   // Permission-based items — visible if the admin has granted the user access
-  { label: "Reikningsyfirlit", to: "/invoices", access: { type: "requiredPermission", permission: "invoices" } },
-
+  { label: "Reikningsyfirlit", labelEn: "Invoices", to: "/invoices", access: { type: "requiredPermission", permission: "invoices" } },
   {
     label: "Áskrift",
+    labelEn: "Subscription",
     to: "/askrift",
     access: { type: "licencedModule", module: "dkPlus", permission: "subscription" },
     children: [
-      { label: "Yfirlit áskriftar", to: "/askrift/yfirlit", access: { type: "licencedModule", module: "dkPlus", permission: "subscription" } },
-      { label: "Vörur dk", to: "/askrift/vorur", access: { type: "licencedModule", module: "dkPlus", permission: "subscription" } },
+      { label: "Yfirlit áskriftar", labelEn: "Subscription Overview", to: "/askrift/yfirlit", access: { type: "licencedModule", module: "dkPlus", permission: "subscription" } },
+      { label: "Vörur dk", labelEn: "DK Products", to: "/askrift/vorur", access: { type: "licencedModule", module: "dkPlus", permission: "subscription" } },
     ],
   },
 
   {
     label: "Hýsing",
+    labelEn: "Hosting",
     to: "/hosting",
     access: { type: "requiredModules", modules: ["Hosting"] },
     children: [
-      { label: "Hýsingarstjórnun", to: "/hosting/hostingManagement", access: { type: "hostingManagement" } },
-      { label: "Hýsingin mín", to: "/hosting/myHosting", access: { type: "hostingConnected" } },
-      { label: "Öryggi og persónuvernd", to: "/hosting/securityPrivacy", access: { type: "hostingSecurityPrivacy" } },
+      { label: "Hýsingarstjórnun", labelEn: "Hosting Management", to: "/hosting/hostingManagement", access: { type: "hostingManagement" } },
+      { label: "Hýsingin mín", labelEn: "My Hosting", to: "/hosting/myHosting", access: { type: "hostingConnected" } },
+      { label: "Öryggi og persónuvernd", labelEn: "Security & Privacy", to: "/hosting/securityPrivacy", access: { type: "hostingSecurityPrivacy" } },
     ],
   },
 
-  { label: "dkPOS", to: "/pos", access: { type: "requiredPermission", permission: "pos" } },
-  { label: "dkOne", to: "/dkone", access: { type: "requiredPermission", permission: "dkOne" } },
-  { label: "dk vefþjónustur", to: "/dkplus", access: { type: "requiredPermission", permission: "dkPlus" } },
-  { label: "Stimpilklukka", to: "/timeclock", access: { type: "requiredPermission", permission: "timeclock" } },
+  { label: "dkPOS", labelEn: "dkPOS", to: "/pos", access: { type: "licencedModule", module: "POS", permission: "pos" } },
+  { label: "dkOne", labelEn: "dkOne", to: "/dkone", access: { type: "licencedModule", module: "dkOne", permission: "dkOne" } },
+  { label: "dk vefþjónustur", labelEn: "DK Web Services", to: "/dkplus", access: { type: "licencedModule", module: "dkPlus", permission: "dkPlus" } },
+  { label: "Stimpilklukka", labelEn: "Timeclock", to: "/timeclock", access: { type: "licencedModule", module: "TimeClock", permission: "timeclock" } },
 
   // Always visible to all logged-in users
-  { label: "Zoho beiðnir", to: "/zoho", access: { type: "alwaysVisible" } },
-  { label: "Hjálparmiðstöð", to: "/knowledge-base", access: { type: "alwaysVisible" } },
-  { label: "Notendur", to: "/notendur", access: { type: "requiredPermission", permission: "users" } },
-  { label: "Stillingar", to: "/portalUserSettings", access: { type: "alwaysVisible" } },
-  { label: "Kerfisstjórn", to: "/god", access: { type: "godOnly" } },
+  { label: "Zoho beiðnir", labelEn: "Support Tickets", to: "/zoho", access: { type: "alwaysVisible" } },
+  { label: "Hjálparmiðstöð", labelEn: "Help Center", to: "/knowledge-base", access: { type: "alwaysVisible" } },
+  { label: "Notendur", labelEn: "Users", to: "/notendur", access: { type: "requiredPermission", permission: "users" } },
+  { label: "Stillingar", labelEn: "Settings", to: "/portalUserSettings", access: { type: "alwaysVisible" } },
+  { label: "Kerfisstjórn", labelEn: "System Admin", to: "/god", access: { type: "godOnly" } },
 ];
