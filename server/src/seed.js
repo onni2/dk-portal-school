@@ -23,7 +23,7 @@ const SEED_USERS = [
     id: "2",
     username: "jon",
     password: "admin321",
-    email: "admin2@example.is",
+    email: "jonsarinn30@gmail.com",
     name: "Jón Ágústsson",
     role: "super_admin",
     status: "active",
@@ -198,11 +198,11 @@ const SEED_POS_LOGS = [
 ];
 
 const SEED_HOSTING_ACCOUNTS = [
-  { id: "ha-1", company_id: "hr", username: "dk.agusta",  display_name: "dk.agusta",   email: "agusta@fyrirtaeki.is",  has_mfa: true  },
-  { id: "ha-2", company_id: "hr", username: "fyr.bjorn",   display_name: "Björn G.",    email: "bjorn@fyrirtaeki.is",   has_mfa: false },
-  { id: "ha-3", company_id: "hr", username: "fyr.gudrun",  display_name: "Guðrún S.",   email: "gudrun@fyrirtaeki.is",  has_mfa: false },
-  { id: "ha-4", company_id: "hr", username: "fyr.halldor", display_name: "Halldór Þ.",  email: "halldor@fyrirtaeki.is", has_mfa: true  },
-  { id: "ha-5", company_id: "hr", username: "fyr.sigrid",  display_name: "Sigrið M.",   email: "sigrid@fyrirtaeki.is",  has_mfa: false },
+  { id: "ha-1", company_id: "hr", username: "fyr.agusta", display_name: "fyr.agusta", has_mfa: true, status: "active" },
+  { id: "ha-2", company_id: "hr", username: "fyr.bjorn", display_name: "Björn G.", has_mfa: false, status: "active" },
+  { id: "ha-3", company_id: "hr", username: "fyr.gudrun", display_name: "Guðrún S.", has_mfa: false, status: "active" },
+  { id: "ha-4", company_id: "hr", username: "fyr.halldor", display_name: "Halldór Þ.", has_mfa: true, status: "active" },
+  { id: "ha-5", company_id: "hr", username: "fyr.sigrid", display_name: "Sigrið M.", has_mfa: false, status: "active" },
 ];
 
 const SEED_IP_WHITELIST = [
@@ -242,14 +242,14 @@ const TEAM_MEMBERS = [
     email: "agusta@dk.is",
     name: "Ágústa Björk Schweitz Bergsveinsdóttir",
     must_reset_password: true,
-    hosting_username: "dk.agusta",
+    hosting_username: "fyr.agusta",
     kennitala: "2810003920",
   },
   {
     id: "tm-jon",
     username: "jon",
     password: "admin321",
-    email: "admin2@example.is",
+    email: "jonsarinn30@gmail.com",
     name: "Jón Ágústsson",
     must_reset_password: false,
     hosting_username: null,
@@ -406,6 +406,7 @@ async function migrate() {
     )
   `);
 
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS hosting_accounts (
       id           TEXT PRIMARY KEY,
@@ -522,12 +523,30 @@ async function migrate() {
     );
   }
 
+
   // Seed hosting accounts (idempotent)
+  const seededHostingPasswordHash = await bcrypt.hash("Temp1234!", 10);
+
   for (const acc of SEED_HOSTING_ACCOUNTS) {
     await pool.query(
-      `INSERT INTO hosting_accounts (id, company_id, username, display_name, email, has_mfa)
-       VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT DO NOTHING`,
-      [acc.id, acc.company_id, acc.username, acc.display_name, acc.email, acc.has_mfa],
+      `INSERT INTO hosting_accounts
+        (id, company_id, username, display_name, password_hash, has_mfa, status)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      ON CONFLICT (id) DO UPDATE SET
+        username      = EXCLUDED.username,
+        display_name  = EXCLUDED.display_name,
+        has_mfa       = EXCLUDED.has_mfa,
+        status        = COALESCE(hosting_accounts.status, EXCLUDED.status),
+        password_hash = COALESCE(hosting_accounts.password_hash, EXCLUDED.password_hash)`,
+      [
+        acc.id,
+        acc.company_id,
+        acc.username,
+        acc.display_name,
+        seededHostingPasswordHash,
+        acc.has_mfa,
+        acc.status ?? "active",
+      ],
     );
   }
 
@@ -613,6 +632,7 @@ async function migrate() {
   );
 
   await pool.query(`UPDATE portal_users SET kennitala = '0909032330' WHERE username = 'jon'`);
+  await pool.query(`UPDATE portal_users SET email = 'jonsarinn30@gmail.com' WHERE username = 'jon'`);
 
   await pool.query(`
     INSERT INTO user_permissions
@@ -827,6 +847,24 @@ async function migrate() {
       [l.id, l.token_id, l.company_id, l.description, l.executed_by, l.created_at],
     );
   }
+
+  // Password reset tokens — one-time tokens for the forgot-password flow
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS password_reset_tokens (
+      token      TEXT PRIMARY KEY,
+      user_id    TEXT NOT NULL REFERENCES portal_users(id) ON DELETE CASCADE,
+      expires_at TIMESTAMPTZ NOT NULL,
+      used       BOOLEAN NOT NULL DEFAULT false
+    )
+  `);
+
+  // Maintenance locks — god can disable routes and show a message to users
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS maintenance_locks (
+      route   TEXT PRIMARY KEY,
+      message TEXT NOT NULL DEFAULT 'Þjónusta er tímabundið ekki tiltæk.'
+    )
+  `);
 
   // Zoho tickets tables
   await pool.query(`
@@ -1211,13 +1249,7 @@ async function seed() {
     );
   }
 
-  for (const acc of SEED_HOSTING_ACCOUNTS) {
-    await pool.query(
-      `INSERT INTO hosting_accounts (id, company_id, username, display_name, email, has_mfa)
-       VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT DO NOTHING`,
-      [acc.id, acc.company_id, acc.username, acc.display_name, acc.email, acc.has_mfa],
-    );
-  }
+
 
   for (const entry of SEED_IP_WHITELIST) {
     await pool.query(

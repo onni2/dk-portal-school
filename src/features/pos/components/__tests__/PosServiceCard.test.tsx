@@ -4,6 +4,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PosServiceCard } from "../PosServiceCard";
 import type { PosService } from "../../types/pos.types";
 
+function wrap(ui: React.ReactElement) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);
+}
+
 vi.mock("../../api/pos.queries", () => ({
   useRestartPosService: () => ({ mutate: vi.fn(), isPending: false }),
   useRestartPosRestService: () => ({ mutate: vi.fn(), isPending: false }),

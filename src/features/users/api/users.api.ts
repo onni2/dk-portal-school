@@ -9,7 +9,6 @@ import type { InviteUserInput, PortalUser } from "../types/users.types";
 
 interface InviteResponse {
   user: PortalUser;
-  generatedPassword: string;
 }
 
 export async function fetchUsers(): Promise<PortalUser[]> {
@@ -18,7 +17,7 @@ export async function fetchUsers(): Promise<PortalUser[]> {
 
 export async function inviteUser(
   input: InviteUserInput,
-): Promise<{ user: PortalUser; generatedPassword: string }> {
+): Promise<{ user: PortalUser }> {
   return mockClient.post<InviteResponse>("/users/invite", input);
 }
 

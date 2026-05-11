@@ -5,7 +5,7 @@
  *       @/shared/components/Button, ./CreateHostingUserModal
  * Exports: HostingPage
  */
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { PageTemplate } from "@/shared/components/PageTemplate";
 import { Button } from "@/shared/components/Button";
 import { useHostingAccounts, useInvalidateHostingAccounts } from "../api/hosting.queries";
@@ -37,10 +37,14 @@ export function HostingPage() {
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [resetResult, setResetResult] = useState<{ name: string; password: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const errorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => { if (errorTimer.current) clearTimeout(errorTimer.current); }, []);
 
   function showError(msg: string) {
+    if (errorTimer.current) clearTimeout(errorTimer.current);
     setError(msg);
-    setTimeout(() => setError(null), 4000);
+    errorTimer.current = setTimeout(() => setError(null), 4000);
   }
 
   async function handleDelete(acc: HostingAccount) {
