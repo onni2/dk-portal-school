@@ -10,7 +10,7 @@ import { useAuthStore } from "@/features/auth/store/auth.store";
 
 export function AccountantTransactions() {
   const companies = useAuthStore((s) => s.companies);
-  const accountantCompanies = companies.filter((c) => c.role === "accountant");
+  const accountantCompanies = companies.filter((c) => c.role === "accountant" || c.role === "admin");
 
   const [filterCompany, setFilterCompany] = useState("");
   const [filterType, setFilterType] = useState("");
