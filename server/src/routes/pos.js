@@ -7,12 +7,22 @@ function generateId() {
   return Math.random().toString(36).slice(2, 10);
 }
 
-function requireAuth(req, res, next) {
+const ELEVATED_ROLES = ["super_admin", "god"];
+
+async function requirePosPermission(req, res, next) {
   if (!req.user) return res.status(401).json({ message: "Ekki innskráður" });
   const companyId = req.user.company_id ?? req.user.active_company_id;
   if (!companyId) return res.status(403).json({ message: "Notandi tengdur engum fyrirtæki" });
   req.companyId = companyId;
-  next();
+  if (ELEVATED_ROLES.includes(req.user.role)) return next();
+  try {
+    const { rows } = await pool.query(
+      "SELECT role, pos FROM user_companies WHERE user_id = $1 AND company_id = $2",
+      [req.user.id, companyId],
+    );
+    if (rows[0]?.role === "admin" || rows[0]?.pos === true) return next();
+  } catch { /* fall through */ }
+  return res.status(403).json({ message: "Ekki heimilt" });
 }
 
 async function getUserName(userId) {
@@ -30,7 +40,7 @@ function mapLog(r) {
 
 // --- dkPOS Services ---
 
-router.get("/services", requireAuth, async (req, res) => {
+router.get("/services", requirePosPermission, async (req, res) => {
   try {
     const { rows } = await pool.query(
       "SELECT id, name, display, server, state, mode, path FROM pos_services WHERE company_id = $1 ORDER BY name ASC",
@@ -43,7 +53,7 @@ router.get("/services", requireAuth, async (req, res) => {
   }
 });
 
-router.post("/services/:id/restart", requireAuth, async (req, res) => {
+router.post("/services/:id/restart", requirePosPermission, async (req, res) => {
   const { id } = req.params;
   const companyId = req.companyId;
   try {
@@ -83,7 +93,7 @@ router.post("/services/:id/restart", requireAuth, async (req, res) => {
   }
 });
 
-router.get("/services/:id/logs", requireAuth, async (req, res) => {
+router.get("/services/:id/logs", requirePosPermission, async (req, res) => {
   try {
     const { rows } = await pool.query(
       "SELECT id, service_id, description, executed_by, created_at FROM pos_logs WHERE service_id = $1 AND company_id = $2 AND service_type = 'dkpos' ORDER BY seq DESC",
@@ -98,7 +108,7 @@ router.get("/services/:id/logs", requireAuth, async (req, res) => {
 
 // --- REST POS Services ---
 
-router.get("/rest", requireAuth, async (req, res) => {
+router.get("/rest", requirePosPermission, async (req, res) => {
   try {
     const { rows } = await pool.query(
       "SELECT id, name, display, server, state, mode, path FROM pos_rest WHERE company_id = $1 ORDER BY name ASC",
@@ -111,7 +121,7 @@ router.get("/rest", requireAuth, async (req, res) => {
   }
 });
 
-router.post("/rest/:id/restart", requireAuth, async (req, res) => {
+router.post("/rest/:id/restart", requirePosPermission, async (req, res) => {
   const { id } = req.params;
   const companyId = req.companyId;
   try {
@@ -151,7 +161,7 @@ router.post("/rest/:id/restart", requireAuth, async (req, res) => {
   }
 });
 
-router.get("/rest/:id/logs", requireAuth, async (req, res) => {
+router.get("/rest/:id/logs", requirePosPermission, async (req, res) => {
   try {
     const { rows } = await pool.query(
       "SELECT id, service_id, description, executed_by, created_at FROM pos_logs WHERE service_id = $1 AND company_id = $2 AND service_type = 'rest' ORDER BY seq DESC",

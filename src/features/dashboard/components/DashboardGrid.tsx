@@ -43,24 +43,24 @@ function AddCardTile() {
   });
 
   return (
-    <div className="flex flex-col rounded-lg border-2 border-dashed border-(--color-border) bg-(--color-surface) transition-colors hover:border-primary/40">
+    <div className="flex flex-col rounded-2xl border-2 border-dashed border-(--color-border) bg-(--color-surface) transition-colors hover:border-primary/40">
       {!open ? (
         <button
           onClick={() => setOpen(true)}
-          className="flex min-h-32 w-full flex-col items-center justify-center gap-2 text-(--color-text-muted) transition-colors hover:text-(--color-primary)"
+          className="flex min-h-36 w-full flex-col items-center justify-center gap-2 text-(--color-text-muted) transition-colors hover:text-(--color-primary)"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
           </svg>
-          <span className="text-sm font-medium">Bæta við spjaldi</span>
+          <span className="text-xs font-semibold uppercase tracking-widest">Bæta við</span>
         </button>
       ) : (
         <div className="p-4">
           <div className="mb-3 flex items-center justify-between">
-            <p className="text-sm font-semibold text-(--color-text)">Veldu spjöld</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-(--color-text-muted)">Veldu spjöld</p>
             <button
               onClick={() => setOpen(false)}
-              className="text-sm text-(--color-text-muted) transition-colors hover:text-(--color-text)"
+              className="text-xs text-(--color-text-muted) transition-colors hover:text-(--color-text)"
             >
               Loka
             </button>
@@ -73,7 +73,7 @@ function AddCardTile() {
                   key={card.id}
                   onClick={() => isAdded ? removeCard(card.id) : addCard(card.id)}
                   className={cn(
-                    "flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
+                    "flex items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition-colors",
                     isAdded
                       ? "bg-(--color-primary-light) text-(--color-primary)"
                       : "text-(--color-text-secondary) hover:bg-(--color-surface-hover)",
@@ -121,6 +121,7 @@ export function DashboardGrid() {
 
   return (
     <div className="space-y-6">
+      {/* Page header */}
       <div>
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-bold text-(--color-text)">Yfirlit</h1>
@@ -136,7 +137,7 @@ export function DashboardGrid() {
               <circle cx="12" cy="12" r="10" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-4m0-4h.01" />
             </svg>
-            <span className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 w-72 -translate-x-1/2 rounded-md border border-(--color-border) bg-(--color-surface) px-3 py-2 text-xs text-(--color-text-secondary) opacity-0 shadow-md transition-opacity group-hover:opacity-100">
+            <span className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 w-72 -translate-x-1/2 rounded-xl border border-(--color-border) bg-(--color-surface) px-3 py-2 text-xs text-(--color-text-secondary) opacity-0 shadow-md transition-opacity group-hover:opacity-100">
               Persónulegt yfirlit þitt. Bættu við spjöldum til að sjá lykiltölur á einum stað og dragðu til að setja þau í þína röð.
             </span>
           </span>
@@ -152,7 +153,7 @@ export function DashboardGrid() {
         onDragEnd={handleDragEnd}
       >
         <SortableContext items={cardIds} strategy={rectSortingStrategy}>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
             {visibleCards.map((card) => (
               <SortableDashboardCard key={card.id} card={card} />
             ))}
