@@ -1,30 +1,47 @@
-/**
- * Zustand store for authentication state. Persists the logged-in user and token to localStorage.
- * Uses: ../types/auth.types
- * Exports: useAuthStore
- */
 import { create } from "zustand";
-import type { User, CompanyMembership } from "../types/auth.types";
+import type { User, CompanyMembership, UserPermissions, CompanyRole } from "../types/auth.types";
 
 const STORAGE_KEY_USER = "dk-auth-user";
 const STORAGE_KEY_TOKEN = "dk-auth-token";
 const STORAGE_KEY_COMPANIES = "dk-auth-companies";
+const STORAGE_KEY_PERMISSIONS = "dk-auth-permissions";
 
-/**
- *
- */
-function loadFromStorage(): { user: User | null; token: string | null; companies: CompanyMembership[] } {
+const EMPTY_PERMISSIONS: UserPermissions = {
+  invoices: false, subscription: false, hosting: false, pos: false,
+  dkOne: false, dkPlus: false, timeclock: false, users: false,
+};
+
+function derivePermissions(companies: CompanyMembership[], companyId: string | undefined): UserPermissions {
+  const match = companies.find((c) => c.id === companyId);
+  return match?.permissions ?? EMPTY_PERMISSIONS;
+}
+
+function deriveCompanyRole(
+  companies: CompanyMembership[],
+  companyId: string | undefined,
+): CompanyRole | undefined {
+  return companies.find((c) => c.id === companyId)?.role;
+}
+
+function loadFromStorage(): {
+  user: User | null;
+  token: string | null;
+  companies: CompanyMembership[];
+  permissions: UserPermissions;
+} {
   try {
     const userJson = localStorage.getItem(STORAGE_KEY_USER);
     const token = localStorage.getItem(STORAGE_KEY_TOKEN);
     const companiesJson = localStorage.getItem(STORAGE_KEY_COMPANIES);
-    return {
-      user: userJson ? (JSON.parse(userJson) as User) : null,
-      token,
-      companies: companiesJson ? (JSON.parse(companiesJson) as CompanyMembership[]) : [],
-    };
+    const permissionsJson = localStorage.getItem(STORAGE_KEY_PERMISSIONS);
+    const user = userJson ? (JSON.parse(userJson) as User) : null;
+    const companies = companiesJson ? (JSON.parse(companiesJson) as CompanyMembership[]) : [];
+    const permissions = permissionsJson
+      ? (JSON.parse(permissionsJson) as UserPermissions)
+      : derivePermissions(companies, user?.companyId);
+    return { user, token, companies, permissions };
   } catch {
-    return { user: null, token: null, companies: [] };
+    return { user: null, token: null, companies: [], permissions: EMPTY_PERMISSIONS };
   }
 }
 
@@ -32,11 +49,13 @@ interface AuthState {
   user: User | null;
   token: string | null;
   companies: CompanyMembership[];
+  permissions: UserPermissions;
   isAuthenticated: boolean;
   isLoading: boolean;
   setAuth: (user: User, token: string, companies: CompanyMembership[]) => void;
   setToken: (token: string) => void;
-  setActiveCompany: (companyId: string) => void;
+  setActiveCompany: (companyId: string, permissions?: UserPermissions) => void;
+  setPermissions: (permissions: UserPermissions) => void;
   clearAuth: () => void;
   setLoading: (loading: boolean) => void;
 }
@@ -47,38 +66,52 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: persisted.user,
   token: persisted.token,
   companies: persisted.companies,
+  permissions: persisted.permissions,
   isAuthenticated: !!persisted.user && !!persisted.token,
   isLoading: false,
 
   setAuth: (user, token, companies) => {
-    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
+    const permissions = derivePermissions(companies, user.companyId);
+    const updatedUser = { ...user, companyRole: deriveCompanyRole(companies, user.companyId) };
+    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(updatedUser));
     localStorage.setItem(STORAGE_KEY_TOKEN, token);
     localStorage.setItem(STORAGE_KEY_COMPANIES, JSON.stringify(companies));
-    set({ user, token, companies, isAuthenticated: true });
+    localStorage.setItem(STORAGE_KEY_PERMISSIONS, JSON.stringify(permissions));
+    set({ user: updatedUser, token, companies, permissions, isAuthenticated: true });
   },
 
-  // called after switch-company — just updates the token
   setToken: (token) => {
     localStorage.setItem(STORAGE_KEY_TOKEN, token);
     set({ token });
   },
 
-  // updates which company is active on the user object
-  setActiveCompany: (companyId) => {
+  setActiveCompany: (companyId, permissions) => {
     set((state) => {
       if (!state.user) return {};
-      const updated = { ...state.user, companyId };
-      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(updated));
-      return { user: updated };
+      const updatedUser = {
+        ...state.user,
+        companyId,
+        companyRole: deriveCompanyRole(state.companies, companyId),
+      };
+      const updatedPermissions = permissions ?? derivePermissions(state.companies, companyId);
+      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(updatedUser));
+      localStorage.setItem(STORAGE_KEY_PERMISSIONS, JSON.stringify(updatedPermissions));
+      return { user: updatedUser, permissions: updatedPermissions };
     });
+  },
+
+  setPermissions: (permissions) => {
+    localStorage.setItem(STORAGE_KEY_PERMISSIONS, JSON.stringify(permissions));
+    set({ permissions });
   },
 
   clearAuth: () => {
     localStorage.removeItem(STORAGE_KEY_USER);
     localStorage.removeItem(STORAGE_KEY_TOKEN);
     localStorage.removeItem(STORAGE_KEY_COMPANIES);
+    localStorage.removeItem(STORAGE_KEY_PERMISSIONS);
     localStorage.removeItem("dk-company-token");
-    set({ user: null, token: null, companies: [], isAuthenticated: false });
+    set({ user: null, token: null, companies: [], permissions: EMPTY_PERMISSIONS, isAuthenticated: false });
   },
 
   setLoading: (isLoading) => set({ isLoading }),

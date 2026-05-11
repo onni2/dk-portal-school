@@ -5,17 +5,22 @@ const cors = require("cors");
 const jwt = require("jsonwebtoken");
 
 const seed = require("./seed");
+const { startPoller } = require("./poller");
 
 const authRouter = require("./routes/auth");
 const usersRouter = require("./routes/users");
 const timeclockRouter = require("./routes/timeclock");
 const companiesRouter = require("./routes/companies");
 const notificationsRouter = require("./routes/notifications");
-const hostingRouter = require("./routes/hosting");
+const { router: hostingRouter } = require("./routes/hosting");
 const ticketsRouter = require("./routes/tickets");
+const licenceRouter = require("./routes/licence");
 const posRouter = require("./routes/pos");
 const dkoneRouter = require("./routes/dkone");
 const accountantRouter = require("./routes/accountant");
+const dkplusRouter = require("./routes/dkplus");
+const duoRouter = require("./routes/duo");
+const maintenanceRouter = require("./routes/maintenance");
 
 const app = express();
 
@@ -44,9 +49,14 @@ app.use("/companies", companiesRouter);
 app.use("/notifications", notificationsRouter);
 app.use("/hosting", hostingRouter);
 app.use("/tickets", ticketsRouter);
+app.use("/licence", licenceRouter);
 app.use("/pos", posRouter);
 app.use("/dkone", dkoneRouter);
 app.use("/accountant", accountantRouter);
+app.use("/dkplus", dkplusRouter);
+app.use("/duo", duoRouter);
+app.use("/maintenance", maintenanceRouter);
+
 app.get("/health", (_req, res) => {
   res.json({ ok: true });
 });
@@ -57,6 +67,7 @@ seed()
   .then(() => {
     app.listen(PORT, () => {
       console.log(`API listening on port ${PORT}`);
+      startPoller();
     });
   })
   .catch((err) => {

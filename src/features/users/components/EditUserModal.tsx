@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/shared/components/Button";
 import { Input } from "@/shared/components/Input";
 import { updateUser } from "../api/users.api";
@@ -13,27 +14,17 @@ interface Props {
 export function EditUserModal({ user, onClose, onSaved }: Props) {
   const [kennitala, setKennitala] = useState(user.kennitala ?? "");
   const [phone, setPhone] = useState(user.phone ?? "");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-    try {
-      await updateUser(user.id, {
-        kennitala: kennitala || undefined,
-        phone: phone || undefined,
-      });
+  const saveMutation = useMutation({
+    mutationFn: () => updateUser(user.id, {
+      kennitala: kennitala || undefined,
+      phone: phone || undefined,
+    }),
+    onSuccess: () => {
       onSaved(kennitala || undefined, phone || undefined);
       onClose();
-    } catch (err: unknown) {
-      const apiErr = err as { message?: string };
-      setError(apiErr?.message ?? "Villa kom upp");
-    } finally {
-      setLoading(false);
-    }
-  }
+    },
+  });
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -45,7 +36,10 @@ export function EditUserModal({ user, onClose, onSaved }: Props) {
           Stilltu kennitölu og símanúmer fyrir þennan notanda.
         </p>
 
-        <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-4">
+        <form
+          onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(); }}
+          className="mt-5 flex flex-col gap-4"
+        >
           <Input
             label="Kennitala"
             type="text"
@@ -60,14 +54,18 @@ export function EditUserModal({ user, onClose, onSaved }: Props) {
             onChange={(e) => setPhone(e.target.value)}
             placeholder="5551234"
           />
-          {error && <p className="text-sm text-(--color-error)">{error}</p>}
+          {saveMutation.isError && (
+            <p className="text-sm text-(--color-error)">
+              {(saveMutation.error as { message?: string })?.message ?? "Villa kom upp"}
+            </p>
+          )}
 
           <div className="mt-2 flex gap-3">
-            <Button type="button" variant="secondary" className="flex-1" onClick={onClose} disabled={loading}>
+            <Button type="button" variant="secondary" className="flex-1" onClick={onClose} disabled={saveMutation.isPending}>
               Hætta við
             </Button>
-            <Button type="submit" className="flex-1" disabled={loading}>
-              {loading ? "Vista..." : "Vista"}
+            <Button type="submit" className="flex-1" disabled={saveMutation.isPending}>
+              {saveMutation.isPending ? "Vista..." : "Vista"}
             </Button>
           </div>
         </form>
