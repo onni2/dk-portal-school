@@ -33,7 +33,7 @@ async function getZohoToken() {
       client_secret: ZOHO_CLIENT_SECRET,
       refresh_token: ZOHO_REFRESH_TOKEN,
     });
-    const res = await fetchWithTimeout("https://accounts.zoho.eu/oauth/v2/token", {
+    const res = await fetchWithTimeout("https://accounts.zoho.com/oauth/v2/token", {
       method: "POST",
       body: params,
     });
@@ -50,7 +50,7 @@ async function getZohoToken() {
 async function zohoGet(path) {
   const token = await getZohoToken();
   const sep = path.includes("?") ? "&" : "?";
-  const res = await fetchWithTimeout(`https://desk.zoho.eu/api/v1${path}${sep}orgId=${ZOHO_ORG_ID}`, {
+  const res = await fetchWithTimeout(`https://desk.zoho.com/api/v1${path}${sep}orgId=${ZOHO_ORG_ID}`, {
     headers: { Authorization: `Zoho-oauthtoken ${token}` },
   });
   if (!res.ok) throw new Error(`Zoho API error ${res.status} for ${path}`);
