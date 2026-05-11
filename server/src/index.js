@@ -56,7 +56,9 @@ app.use((req, res, next) => {
 });
 
 // Public routes — no auth required
-app.use("/auth", authLimiter, authRouter);
+// Rate limit only the login endpoint, not switch-company or password reset
+app.use("/auth/login", authLimiter);
+app.use("/auth", authRouter);
 
 // Require valid JWT for everything below
 app.use((req, res, next) => {
