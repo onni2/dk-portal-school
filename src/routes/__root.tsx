@@ -31,7 +31,9 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     const isPublicPage =
       location.pathname === "/login" ||
       location.pathname === "/callback" ||
-      location.pathname === "/select-company";
+      location.pathname === "/select-company" ||
+      location.pathname === "/forgot-password" ||
+      location.pathname === "/reset-password-token";
     const isAuthenticated = useAuthStore.getState().isAuthenticated;
 
     if (!isAuthenticated && !isPublicPage) {
@@ -70,7 +72,8 @@ function RootComponent() {
     pathname === "/login" ||
     pathname === "/callback" ||
     pathname === "/select-company" ||
-    pathname.startsWith("/reset-password");
+    pathname.startsWith("/reset-password") ||
+    pathname === "/forgot-password";
 
   if (isLoginPage) {
     return (
