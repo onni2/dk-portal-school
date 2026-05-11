@@ -4,9 +4,24 @@ const pool = require("../db");
 
 const router = express.Router();
 
+const ELEVATED_ROLES = ["super_admin", "god"];
+
 function requireAuth(req, res, next) {
   if (!req.user) return res.status(401).json({ message: "Ekki innskráður" });
   next();
+}
+
+async function requireHostingPermission(req, res, next) {
+  if (!req.user) return res.status(401).json({ message: "Ekki innskráður" });
+  if (ELEVATED_ROLES.includes(req.user.role)) return next();
+  try {
+    const { rows } = await pool.query(
+      "SELECT role, hosting FROM user_companies WHERE user_id = $1 AND company_id = $2",
+      [req.user.id, getCompanyId(req)],
+    );
+    if (rows[0]?.role === "admin" || rows[0]?.hosting === true) return next();
+  } catch { /* fall through */ }
+  return res.status(403).json({ message: "Ekki heimilt" });
 }
 
 function getCompanyId(req) {
@@ -26,7 +41,7 @@ function mapAccount(r) {
 }
 
 // GET /hosting/accounts
-router.get("/accounts", requireAuth, async (req, res) => {
+router.get("/accounts", requireHostingPermission, async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT id, username, display_name, email, has_mfa, last_restart, created_at
@@ -44,7 +59,7 @@ router.get("/accounts", requireAuth, async (req, res) => {
 });
 
 // POST /hosting/accounts
-router.post("/accounts", requireAuth, async (req, res) => {
+router.post("/accounts", requireHostingPermission, async (req, res) => {
   const { username, displayName, email } = req.body;
 
   if (!username || !displayName) {
@@ -83,7 +98,7 @@ router.post("/accounts", requireAuth, async (req, res) => {
 });
 
 // DELETE /hosting/accounts/:id
-router.delete("/accounts/:id", requireAuth, async (req, res) => {
+router.delete("/accounts/:id", requireHostingPermission, async (req, res) => {
   try {
     const { rowCount } = await pool.query(
       `DELETE FROM hosting_accounts
@@ -103,7 +118,7 @@ router.delete("/accounts/:id", requireAuth, async (req, res) => {
 });
 
 // POST /hosting/accounts/:id/reset-password
-router.post("/accounts/:id/reset-password", requireAuth, async (req, res) => {
+router.post("/accounts/:id/reset-password", requireHostingPermission, async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT id
@@ -126,7 +141,7 @@ router.post("/accounts/:id/reset-password", requireAuth, async (req, res) => {
 });
 
 // POST /hosting/accounts/:id/restart
-router.post("/accounts/:id/restart", requireAuth, async (req, res) => {
+router.post("/accounts/:id/restart", requireHostingPermission, async (req, res) => {
   try {
     const { rowCount } = await pool.query(
       `UPDATE hosting_accounts
@@ -150,7 +165,7 @@ router.post("/accounts/:id/restart", requireAuth, async (req, res) => {
 });
 
 // PUT /hosting/accounts/:id/mfa
-router.put("/accounts/:id/mfa", requireAuth, async (req, res) => {
+router.put("/accounts/:id/mfa", requireHostingPermission, async (req, res) => {
   const { enabled } = req.body;
 
   if (typeof enabled !== "boolean") {

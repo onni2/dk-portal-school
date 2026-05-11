@@ -5,7 +5,13 @@ import { cn } from "@/shared/utils/cn";
 import type { CardDef } from "../store/dashboard.store";
 import { CardPreview } from "./CardPreviews";
 
-export function SortableDashboardCard({ card }: { card: CardDef }) {
+export function SortableDashboardCard({
+  card,
+  isLocked = false,
+}: {
+  card: CardDef;
+  isLocked?: boolean;
+}) {
   const {
     attributes,
     listeners,
@@ -26,48 +32,62 @@ export function SortableDashboardCard({ card }: { card: CardDef }) {
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group flex flex-col rounded-lg border border-(--color-border) bg-(--color-surface) shadow-(--shadow-sm) transition-shadow hover:shadow-(--shadow-md)",
+        "group relative flex h-full flex-col rounded-2xl border border-(--color-border) bg-(--color-surface)",
+        "shadow-(--shadow-sm) transition-shadow hover:shadow-(--shadow-md)",
         isDragging && "ring-2 ring-primary/30",
       )}
     >
-      {/* Card header */}
-      <div className="flex items-start justify-between gap-2 px-5 pt-4 pb-3">
-        <h3 className="text-base font-semibold text-(--color-text)">{card.title}</h3>
+      {/* Drag handle */}
+      <div
+        {...attributes}
+        {...listeners}
+        className="absolute right-3 top-3 z-10 cursor-grab touch-none select-none text-(--color-text-muted) opacity-0 transition-opacity group-hover:opacity-60 active:cursor-grabbing active:opacity-100"
+        title="Draga til að endurraða"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="9" cy="5" r="1.5" />
+          <circle cx="15" cy="5" r="1.5" />
+          <circle cx="9" cy="12" r="1.5" />
+          <circle cx="15" cy="12" r="1.5" />
+          <circle cx="9" cy="19" r="1.5" />
+          <circle cx="15" cy="19" r="1.5" />
+        </svg>
+      </div>
 
-        {/* Drag handle */}
-        <div
-          {...attributes}
-          {...listeners}
-          className="cursor-grab touch-none select-none text-(--color-text-muted) opacity-0 transition-opacity group-hover:opacity-100 active:cursor-grabbing"
-          title="Draga til að endurraða"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-            <circle cx="9" cy="5" r="1.5" />
-            <circle cx="15" cy="5" r="1.5" />
-            <circle cx="9" cy="12" r="1.5" />
-            <circle cx="15" cy="12" r="1.5" />
-            <circle cx="9" cy="19" r="1.5" />
-            <circle cx="15" cy="19" r="1.5" />
-          </svg>
+      {/* Body */}
+      <div className="flex flex-1 flex-col gap-3 overflow-hidden p-4">
+        <p className="text-xs font-semibold uppercase tracking-widest text-(--color-text-muted)">
+          {card.title}
+        </p>
+        <div className="flex-1 overflow-hidden">
+          {isLocked ? (
+            <div className="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0 text-(--color-text-muted)" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              <p className="text-sm text-(--color-text-muted)">Í viðhaldi</p>
+            </div>
+          ) : (
+            <CardPreview
+              id={card.id}
+              fallback={<p className="text-sm text-(--color-text-secondary)">{card.description}</p>}
+            />
+          )}
         </div>
       </div>
 
-      {/* Live preview area */}
-      <div className="min-h-12 flex-1 px-5 pb-3">
-        <CardPreview id={card.id} fallback={
-          <p className="text-sm text-(--color-text-muted)">{card.description}</p>
-        } />
-      </div>
-
       {/* Footer link */}
-      <div className="border-t border-(--color-border) px-5 py-3">
+      {card.to && (
         <Link
           to={card.to}
-          className="text-sm font-medium text-(--color-primary) transition-colors hover:text-(--color-primary-hover)"
+          className="flex items-center justify-between rounded-b-2xl border-t border-(--color-border) px-4 py-2.5 text-xs font-medium text-(--color-text-muted) transition-colors hover:bg-(--color-surface-hover) hover:text-(--color-primary)"
         >
-          Skoða →
+          <span>Opna {card.title}</span>
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
         </Link>
-      </div>
+      )}
     </div>
   );
 }

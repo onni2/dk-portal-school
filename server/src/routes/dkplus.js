@@ -4,9 +4,19 @@ const pool = require("../db");
 
 const router = express.Router();
 
-function requireAuth(req, res, next) {
+const ELEVATED_ROLES = ["super_admin", "god"];
+
+async function requireDkPlusPermission(req, res, next) {
   if (!req.user) return res.status(401).json({ message: "Ekki innskráður" });
-  next();
+  if (ELEVATED_ROLES.includes(req.user.role)) return next();
+  try {
+    const { rows } = await pool.query(
+      "SELECT 1 FROM user_companies WHERE user_id = $1 AND (role = 'admin' OR dk_plus = true) LIMIT 1",
+      [req.user.id],
+    );
+    if (rows.length > 0) return next();
+  } catch { /* fall through */ }
+  return res.status(403).json({ message: "Ekki heimilt" });
 }
 
 function generateId() {
@@ -44,7 +54,7 @@ function mapLog(r) {
 }
 
 // GET /dkplus/tokens — tokens for companies the user belongs to
-router.get("/tokens", requireAuth, async (req, res) => {
+router.get("/tokens", requireDkPlusPermission, async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT at.id, at.description, at.token, at.created_at, at.company_id, c.name AS company_name
@@ -65,7 +75,7 @@ router.get("/tokens", requireAuth, async (req, res) => {
 });
 
 // POST /dkplus/tokens — create token for a given company
-router.post("/tokens", requireAuth, async (req, res) => {
+router.post("/tokens", requireDkPlusPermission, async (req, res) => {
   const { description, companyId } = req.body;
   if (!description?.trim()) return res.status(400).json({ message: "Vantar lýsingu" });
   if (!companyId) return res.status(400).json({ message: "Vantar fyrirtæki" });
@@ -104,7 +114,7 @@ router.post("/tokens", requireAuth, async (req, res) => {
 });
 
 // DELETE /dkplus/tokens/:id
-router.delete("/tokens/:id", requireAuth, async (req, res) => {
+router.delete("/tokens/:id", requireDkPlusPermission, async (req, res) => {
   const { id } = req.params;
   try {
     const executedBy = await getUserName(req.user.id);
@@ -136,7 +146,7 @@ router.delete("/tokens/:id", requireAuth, async (req, res) => {
 });
 
 // GET /dkplus/tokens/:id/api-logs
-router.get("/tokens/:id/api-logs", requireAuth, async (req, res) => {
+router.get("/tokens/:id/api-logs", requireDkPlusPermission, async (req, res) => {
   try {
     const { rows: access } = await pool.query(
       `SELECT 1 FROM auth_tokens
