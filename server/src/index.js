@@ -2,7 +2,11 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
 const jwt = require("jsonwebtoken");
+
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS ?? "http://localhost:3000").split(",");
 
 const seed = require("./seed");
 const { startPoller } = require("./poller");
@@ -19,11 +23,21 @@ const posRouter = require("./routes/pos");
 const dkoneRouter = require("./routes/dkone");
 const dkplusRouter = require("./routes/dkplus");
 const duoRouter = require("./routes/duo");
+const knowledgeBaseRouter = require("./routes/knowledgeBase");
 const maintenanceRouter = require("./routes/maintenance");
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: { message: "Of margar tilraunir, reyndu aftur eftir 15 mínútur" },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 const app = express();
 
-app.use(cors());
+app.use(helmet());
+app.use(cors({ origin: ALLOWED_ORIGINS, credentials: true }));
 app.use(express.json());
 
 // JWT auth middleware — attaches req.user if token is valid
@@ -41,7 +55,15 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use("/auth", authRouter);
+// Public routes — no auth required
+app.use("/auth", authLimiter, authRouter);
+
+// Require valid JWT for everything below
+app.use((req, res, next) => {
+  if (!req.user) return res.status(401).json({ message: "Ekki innskráður" });
+  next();
+});
+
 app.use("/users", usersRouter);
 app.use("/timeclock", timeclockRouter);
 app.use("/companies", companiesRouter);
@@ -53,6 +75,7 @@ app.use("/pos", posRouter);
 app.use("/dkone", dkoneRouter);
 app.use("/dkplus", dkplusRouter);
 app.use("/duo", duoRouter);
+app.use("/knowledge-base", knowledgeBaseRouter);
 app.use("/maintenance", maintenanceRouter);
 
 app.get("/health", (_req, res) => {
