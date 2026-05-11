@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { cn } from "@/shared/utils/cn";
 import type { CardDef } from "../store/dashboard.store";
 import { useDashboardLayout } from "../store/dashboard.store";
+import { useLangStore } from "@/shared/store/lang.store";
 import { CardPreview } from "./CardPreviews";
 
 export function SortableDashboardCard({
@@ -24,6 +25,11 @@ export function SortableDashboardCard({
 
   const compactIds = useDashboardLayout((s) => s.compactIds);
   const compact = compactIds.includes(card.id);
+  const lang = useLangStore((s) => s.lang);
+  const title = lang === "EN" ? card.titleEn : card.title;
+  const footerLabel = lang === "EN"
+    ? (card.footerLabelEn ?? `Open ${card.titleEn}`)
+    : (card.footerLabel ?? `Opna ${card.title}`);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -61,7 +67,7 @@ export function SortableDashboardCard({
       {/* Body */}
       <div className="flex min-h-0 flex-1 flex-col gap-3 p-4">
         <p className="text-xs font-semibold uppercase tracking-widest text-(--color-text-muted)">
-          {card.title}
+          {title}
         </p>
         <div className="min-h-0 flex-1 overflow-hidden">
           {isLocked ? (
@@ -69,13 +75,15 @@ export function SortableDashboardCard({
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0 text-(--color-text-muted)" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
-              <p className="text-sm text-(--color-text-muted)">Í viðhaldi</p>
+              <p className="text-sm text-(--color-text-muted)">
+                {lang === "EN" ? "Under maintenance" : "Í viðhaldi"}
+              </p>
             </div>
           ) : (
             <CardPreview
               id={card.id}
               compact={compact}
-              fallback={<p className="text-sm text-(--color-text-secondary)">{card.description}</p>}
+              fallback={<p className="text-sm text-(--color-text-secondary)">{lang === "EN" ? card.descriptionEn : card.description}</p>}
             />
           )}
         </div>
@@ -87,7 +95,7 @@ export function SortableDashboardCard({
           to={card.to}
           className="flex items-center justify-between border-t border-(--color-border) px-4 pt-3 pb-4 text-sm font-medium text-(--color-text-muted) transition-colors hover:bg-(--color-surface-hover) hover:text-(--color-primary)"
         >
-          <span>{card.footerLabel ?? `Opna ${card.title}`}</span>
+          <span>{footerLabel}</span>
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>
