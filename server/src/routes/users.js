@@ -1,15 +1,13 @@
 // server/src/routes/users.js
 const express = require("express");
 const bcrypt = require("bcryptjs");
-const { randomBytes } = require("crypto");
+const crypto = require("crypto");
 const pool = require("../db");
 const { sendInviteEmail } = require("../email");
 
 const router = express.Router();
 
 const ELEVATED_ROLES = ["super_admin", "god"];
-
-const crypto = require("crypto");
 
 function generateId() {
   return crypto.randomUUID();
@@ -28,12 +26,17 @@ function generatePassword() {
     digits[crypto.randomInt(digits.length)],
     special[crypto.randomInt(special.length)],
   ];
-  const rest = Array.from({ length: 8 }, () => all[crypto.randomInt(all.length)]);
+
+  const rest = Array.from(
+    { length: 8 },
+    () => all[crypto.randomInt(all.length)],
+  );
+
   return [...required, ...rest].sort(() => crypto.randomInt(3) - 1).join("");
 }
 
 function getCompanyId(req) {
-  return req.user.active_company_id ?? req.user.company_id;
+  return req.user?.active_company_id ?? req.user?.company_id ?? null;
 }
 
 function normalizeKennitala(value) {
@@ -44,27 +47,40 @@ function isValidCompanyRole(value) {
   return value === "user" || value === "admin";
 }
 
-// Middleware — super_admin/god or company admin in the active company
 async function requireAdmin(req, res, next) {
   if (ELEVATED_ROLES.includes(req.user?.role)) return next();
 
+  const companyId = getCompanyId(req);
+
+  if (!companyId) {
+    return res.status(400).json({ message: "Ekkert virkt fyrirtæki valið" });
+  }
+
   try {
     const { rows } = await pool.query(
-      "SELECT role FROM user_companies WHERE user_id = $1 AND company_id = $2",
-      [req.user?.id, getCompanyId(req)],
+      `SELECT role
+       FROM user_companies
+       WHERE user_id = $1
+         AND company_id = $2`,
+      [req.user?.id, companyId],
     );
 
     if (rows[0]?.role === "admin") return next();
   } catch {
-    // fall through
+    /* fall through */
   }
 
   return res.status(403).json({ message: "Aðeins stjórnendur hafa aðgang" });
 }
 
-// Middleware — super_admin/god, company admin, or has users permission
 async function requireAdminOrUsersPermission(req, res, next) {
   if (ELEVATED_ROLES.includes(req.user?.role)) return next();
+
+  const companyId = getCompanyId(req);
+
+  if (!companyId) {
+    return res.status(400).json({ message: "Ekkert virkt fyrirtæki valið" });
+  }
 
   try {
     const { rows } = await pool.query(
@@ -72,7 +88,7 @@ async function requireAdminOrUsersPermission(req, res, next) {
        FROM user_companies
        WHERE user_id = $1
          AND company_id = $2`,
-      [req.user?.id, getCompanyId(req)],
+      [req.user?.id, companyId],
     );
 
     const access = rows[0];
@@ -81,13 +97,13 @@ async function requireAdminOrUsersPermission(req, res, next) {
       return next();
     }
   } catch {
-    // fall through
+    /* fall through */
   }
 
   return res.status(403).json({ message: "Aðeins stjórnendur hafa aðgang" });
 }
 
-// GET /users — all members of the active company
+// GET /users — all users connected to the active company
 router.get("/", requireAdminOrUsersPermission, async (req, res) => {
   const companyId = getCompanyId(req);
 
@@ -156,20 +172,22 @@ router.get("/", requireAdminOrUsersPermission, async (req, res) => {
   }
 });
 
-// POST /users/invite — creates portal user and adds them to the active company
+// POST /users/invite — creates standard portal user and connects them to active company
 router.post("/invite", requireAdminOrUsersPermission, async (req, res) => {
-  const {
-    username,
-    email,
-    name,
-    companyRole,
-    kennitala,
-    permissions,
-  } = req.body;
+  const { username, email, name, companyRole, kennitala, permissions } = req.body;
 
+  const normalizedUsername = String(username ?? "").trim().toLowerCase();
+  const normalizedEmail = String(email ?? "").trim().toLowerCase();
+  const trimmedName = String(name ?? "").trim();
   const normalizedKennitala = normalizeKennitala(kennitala);
 
-  if (!username || !email || !name || !companyRole || !normalizedKennitala) {
+  if (
+    !normalizedUsername ||
+    !normalizedEmail ||
+    !trimmedName ||
+    !companyRole ||
+    !normalizedKennitala
+  ) {
     return res.status(400).json({
       message: "Nafn, netfang, kennitala og hlutverk eru nauðsynleg",
     });
@@ -189,13 +207,23 @@ router.post("/invite", requireAdminOrUsersPermission, async (req, res) => {
 
   const companyId = getCompanyId(req);
 
+  if (!companyId) {
+    return res.status(400).json({ message: "Ekkert virkt fyrirtæki valið" });
+  }
+
+  const client = await pool.connect();
+
   try {
-    const existing = await pool.query(
+    await client.query("BEGIN");
+
+    const existing = await client.query(
       "SELECT id FROM portal_users WHERE username = $1",
-      [username],
+      [normalizedUsername],
     );
 
     if (existing.rows.length > 0) {
+      await client.query("ROLLBACK");
+
       return res.status(409).json({
         message: "Notendanafn er þegar í notkun",
       });
@@ -208,7 +236,7 @@ router.post("/invite", requireAdminOrUsersPermission, async (req, res) => {
     const memberRole = companyRole === "admin" ? "admin" : "user";
     const isAdmin = memberRole === "admin";
 
-    const { rows: licRows } = await pool.query(
+    const { rows: licRows } = await client.query(
       `SELECT hosting, pos, dk_one, dk_plus, timeclock
        FROM company_licences
        WHERE company_id = $1`,
@@ -218,7 +246,18 @@ router.post("/invite", requireAdminOrUsersPermission, async (req, res) => {
     const lic = licRows[0] ?? {};
     const p = permissions ?? {};
 
-    await pool.query(
+    const savedPermissions = {
+      invoices: isAdmin || (p.invoices ?? false),
+      subscription: isAdmin || (p.subscription ?? false),
+      hosting: lic.hosting ? isAdmin || (p.hosting ?? false) : false,
+      pos: lic.pos ? isAdmin || (p.pos ?? false) : false,
+      dkOne: lic.dk_one ? isAdmin || (p.dkOne ?? false) : false,
+      dkPlus: lic.dk_plus ? isAdmin || (p.dkPlus ?? false) : false,
+      timeclock: lic.timeclock ? isAdmin || (p.timeclock ?? false) : false,
+      users: isAdmin || (p.users ?? false),
+    };
+
+    await client.query(
       `INSERT INTO portal_users
        (
          id,
@@ -226,25 +265,24 @@ router.post("/invite", requireAdminOrUsersPermission, async (req, res) => {
          password,
          email,
          name,
-         role,
          status,
          must_reset_password,
          kennitala,
          company_id
        )
-       VALUES ($1, $2, $3, $4, $5, 'user', 'pending', true, $6, $7)`,
+       VALUES ($1, $2, $3, $4, $5, 'pending', true, $6, $7)`,
       [
         id,
-        username,
+        normalizedUsername,
         hashed,
-        email,
-        name,
+        normalizedEmail,
+        trimmedName,
         normalizedKennitala,
         companyId,
       ],
     );
 
-    await pool.query(
+    await client.query(
       `INSERT INTO user_companies
        (
          user_id,
@@ -264,47 +302,48 @@ router.post("/invite", requireAdminOrUsersPermission, async (req, res) => {
         id,
         companyId,
         memberRole,
-        isAdmin || (p.invoices ?? false),
-        isAdmin || (p.subscription ?? false),
-        lic.hosting ? isAdmin || (p.hosting ?? false) : false,
-        lic.pos ? isAdmin || (p.pos ?? false) : false,
-        lic.dk_one ? isAdmin || (p.dkOne ?? false) : false,
-        lic.dk_plus ? isAdmin || (p.dkPlus ?? false) : false,
-        lic.timeclock ? isAdmin || (p.timeclock ?? false) : false,
-        isAdmin || (p.users ?? false),
+        savedPermissions.invoices,
+        savedPermissions.subscription,
+        savedPermissions.hosting,
+        savedPermissions.pos,
+        savedPermissions.dkOne,
+        savedPermissions.dkPlus,
+        savedPermissions.timeclock,
+        savedPermissions.users,
       ],
     );
 
-    await sendInviteEmail(email, name, username, generatedPassword).catch(
-      (err) => console.error("[Email] Failed to send invite email:", err),
+    await client.query("COMMIT");
+
+    await sendInviteEmail(
+      normalizedEmail,
+      trimmedName,
+      normalizedUsername,
+      generatedPassword,
+    ).catch((err) =>
+      console.error("[Email] Failed to send invite email:", err),
     );
 
     res.status(201).json({
       user: {
         id,
-        username,
-        email,
-        name,
-        role: "user",
+        username: normalizedUsername,
+        email: normalizedEmail,
+        name: trimmedName,
+        role: "standard",
         companyRole: memberRole,
         status: "pending",
         mustResetPassword: true,
         companyId,
         kennitala: normalizedKennitala,
         hostingUsername: null,
-        permissions: {
-          invoices: isAdmin || (p.invoices ?? false),
-          subscription: isAdmin || (p.subscription ?? false),
-          hosting: lic.hosting ? isAdmin || (p.hosting ?? false) : false,
-          pos: lic.pos ? isAdmin || (p.pos ?? false) : false,
-          dkOne: lic.dk_one ? isAdmin || (p.dkOne ?? false) : false,
-          dkPlus: lic.dk_plus ? isAdmin || (p.dkPlus ?? false) : false,
-          timeclock: lic.timeclock ? isAdmin || (p.timeclock ?? false) : false,
-          users: isAdmin || (p.users ?? false),
-        },
+        permissions: savedPermissions,
       },
+      generatedPassword,
     });
   } catch (err) {
+    await client.query("ROLLBACK");
+
     console.error(err);
 
     if (err.code === "23505") {
@@ -314,6 +353,8 @@ router.post("/invite", requireAdminOrUsersPermission, async (req, res) => {
     }
 
     res.status(500).json({ message: "Villa á þjóni" });
+  } finally {
+    client.release();
   }
 });
 
@@ -324,6 +365,7 @@ router.patch("/:id", async (req, res) => {
   }
 
   const { kennitala, phone } = req.body;
+
   const normalizedKennitala =
     kennitala === undefined ? undefined : normalizeKennitala(kennitala);
 
@@ -343,11 +385,7 @@ router.patch("/:id", async (req, res) => {
        SET kennitala = CASE WHEN $1::text IS NOT NULL THEN $1::text ELSE kennitala END,
            phone     = CASE WHEN $2::text IS NOT NULL THEN $2::text ELSE phone END
        WHERE id = $3`,
-      [
-        normalizedKennitala ?? null,
-        phone ?? null,
-        req.params.id,
-      ],
+      [normalizedKennitala ?? null, phone ?? null, req.params.id],
     );
 
     res.status(204).send();
@@ -357,30 +395,33 @@ router.patch("/:id", async (req, res) => {
   }
 });
 
-// GET /users/:id/permissions — reads from user_companies for the active company
+// GET /users/:id/permissions
 router.get("/:id/permissions", async (req, res) => {
+  const companyId = getCompanyId(req);
   const isSelf = req.user?.id === req.params.id;
   const isElevated = ELEVATED_ROLES.includes(req.user?.role);
 
+  if (!companyId) {
+    return res.status(400).json({ message: "Ekkert virkt fyrirtæki valið" });
+  }
+
   if (!isSelf && !isElevated) {
-    const { rows: adminRows } = await pool.query(
+    const { rows: accessRows } = await pool.query(
       `SELECT role, users
        FROM user_companies
        WHERE user_id = $1
          AND company_id = $2`,
-      [req.user?.id, getCompanyId(req)],
+      [req.user?.id, companyId],
     );
 
-    const row = adminRows[0];
+    const access = accessRows[0];
 
-    if (row?.role !== "admin" && row?.users !== true) {
+    if (access?.role !== "admin" && access?.users !== true) {
       return res.status(403).json({ message: "Ekki heimilt" });
     }
   }
 
   try {
-    const companyId = getCompanyId(req);
-
     const { rows } = await pool.query(
       `SELECT *
        FROM user_companies
@@ -420,7 +461,7 @@ router.get("/:id/permissions", async (req, res) => {
   }
 });
 
-// PUT /users/:id/permissions — admin or users permission, writes to user_companies
+// PUT /users/:id/permissions
 router.put("/:id/permissions", requireAdminOrUsersPermission, async (req, res) => {
   const {
     invoices,
@@ -484,7 +525,7 @@ router.put("/:id/permissions", requireAdminOrUsersPermission, async (req, res) =
   }
 });
 
-// DELETE /users/:id
+// DELETE /users/:id — removes user from active company
 router.delete("/:id", requireAdminOrUsersPermission, async (req, res) => {
   if (req.params.id === req.user.id) {
     return res.status(400).json({
@@ -493,10 +534,13 @@ router.delete("/:id", requireAdminOrUsersPermission, async (req, res) => {
   }
 
   const companyId = getCompanyId(req);
+  const client = await pool.connect();
 
   try {
-    const { rows } = await pool.query(
-      `SELECT u.role
+    await client.query("BEGIN");
+
+    const { rows } = await client.query(
+      `SELECT u.id, u.role
        FROM portal_users u
        JOIN user_companies uc
          ON uc.user_id = u.id
@@ -506,26 +550,57 @@ router.delete("/:id", requireAdminOrUsersPermission, async (req, res) => {
       [req.params.id, companyId],
     );
 
-    if (!rows[0]) {
+    const targetUser = rows[0];
+
+    if (!targetUser) {
+      await client.query("ROLLBACK");
+
       return res.status(404).json({
-        message: "Notandi ekki fundinn",
+        message: "Notandi ekki fundinn í þessu fyrirtæki",
       });
     }
 
-    if (ELEVATED_ROLES.includes(rows[0].role)) {
+    if (ELEVATED_ROLES.includes(targetUser.role)) {
+      await client.query("ROLLBACK");
+
       return res.status(403).json({
         message: "Ekki hægt að eyða þessum notanda",
       });
     }
 
-    await pool.query("DELETE FROM portal_users WHERE id = $1", [
-      req.params.id,
-    ]);
+    await client.query(
+      `DELETE FROM user_companies
+       WHERE user_id = $1
+         AND company_id = $2`,
+      [req.params.id, companyId],
+    );
+
+    const { rows: remainingMemberships } = await client.query(
+      `SELECT 1
+       FROM user_companies
+       WHERE user_id = $1
+       LIMIT 1`,
+      [req.params.id],
+    );
+
+    if (remainingMemberships.length === 0) {
+      await client.query(
+        `DELETE FROM portal_users
+         WHERE id = $1`,
+        [req.params.id],
+      );
+    }
+
+    await client.query("COMMIT");
 
     res.status(204).send();
   } catch (err) {
+    await client.query("ROLLBACK");
+
     console.error(err);
     res.status(500).json({ message: "Villa á þjóni" });
+  } finally {
+    client.release();
   }
 });
 

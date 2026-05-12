@@ -18,6 +18,13 @@ import type { InviteUserInput, PortalUser } from "../types/users.types";
 
 interface InviteResponse {
   user: PortalUser;
+  generatedPassword: string;
+}
+
+function requireId(id: string, label: string): void {
+  if (!id) {
+    throw new Error(`${label} is required`);
+  }
 }
 
 export async function fetchUsers(): Promise<PortalUser[]> {
@@ -27,15 +34,17 @@ export async function fetchUsers(): Promise<PortalUser[]> {
 /**
  * Invite a new portal user into the active company.
  *
- * input.permissions is saved by the backend to user_companies,
- * constrained by company_licences.
+ * Backend:
+ * - creates a standard portal user in portal_users
+ * - creates company membership in user_companies
+ * - stores initial module permissions on user_companies
  *
- * input.hostingUsername may be used by the backend during invite
- * if Hosting is enabled for the company.
+ * Hosting account linking is not handled here.
+ * Hosting linking belongs to the Hosting module.
  */
 export async function inviteUser(
   input: InviteUserInput,
-): Promise<{ user: PortalUser }> {
+): Promise<InviteResponse> {
   return mockClient.post<InviteResponse>("/users/invite", input);
 }
 
@@ -54,7 +63,7 @@ export async function updateUser(
 }
 
 /**
- * Remove a portal user.
+ * Remove a portal user from the active company.
  *
  * Backend prevents removing yourself and elevated users.
  */
