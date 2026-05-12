@@ -21,18 +21,6 @@ CREATE TABLE IF NOT EXISTS portal_users (
   created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS user_permissions (
-  user_id      TEXT PRIMARY KEY REFERENCES portal_users(id) ON DELETE CASCADE,
-  invoices     BOOLEAN NOT NULL DEFAULT false,
-  subscription BOOLEAN NOT NULL DEFAULT false,
-  hosting      BOOLEAN NOT NULL DEFAULT false,
-  pos          BOOLEAN NOT NULL DEFAULT false,
-  dk_one       BOOLEAN NOT NULL DEFAULT false,
-  dk_plus      BOOLEAN NOT NULL DEFAULT false,
-  timeclock    BOOLEAN NOT NULL DEFAULT false,
-  users        BOOLEAN NOT NULL DEFAULT false
-);
-
 CREATE TABLE IF NOT EXISTS user_companies (
   user_id      TEXT NOT NULL REFERENCES portal_users(id) ON DELETE CASCADE,
   company_id   TEXT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
@@ -70,7 +58,6 @@ CREATE TABLE IF NOT EXISTS hosting_login_history (
   user_agent            TEXT,
   created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
 
 CREATE TABLE IF NOT EXISTS hosting_duo_users (
   duo_user_id        TEXT PRIMARY KEY,                   
