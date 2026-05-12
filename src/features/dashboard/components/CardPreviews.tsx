@@ -11,7 +11,7 @@ import { fetchSubscriptionOverview, buildOverview } from "@/features/subscriptio
 import { fetchAuthTokens } from "@/features/dkplus/api/dkplus.api";
 import { fetchTimeclockConfig, fetchIpWhitelist, fetchEmployeePhones } from "@/features/timeclock/api/timeclock.api";
 import { fetchSubCompanies } from "@/features/dkone/api/dkone.api";
-import { fetchDashboardSummary } from "@/features/dashboard/api/dashboard.api";
+import { dashboardQueryOptions } from "@/features/dashboard/api/dashboard.queries";
 import { fetchMaintenanceLocks } from "@/features/maintenance/api/maintenance.api";
 
 type Lang = "IS" | "EN";
@@ -42,10 +42,7 @@ function fmtDate(iso: string, lang: Lang) {
 // ─── Previews ─────────────────────────────────────────────────────────────────
 
 function CompanyPreview({ compact, lang }: { compact?: boolean; lang: Lang }) {
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["dashboard-summary"],
-    queryFn: fetchDashboardSummary,
-  });
+  const { data, isLoading, isError } = useQuery(dashboardQueryOptions);
 
   if (isLoading) return <Loading />;
   if (isError || !data) return <Err lang={lang} />;

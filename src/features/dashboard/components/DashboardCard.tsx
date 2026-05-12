@@ -10,9 +10,11 @@ import { CardPreview } from "./CardPreviews";
 export function SortableDashboardCard({
   card,
   isLocked = false,
+  isCustomizing = false,
 }: {
   card: CardDef;
   isLocked?: boolean;
+  isCustomizing?: boolean;
 }) {
   const {
     attributes,
@@ -51,10 +53,15 @@ export function SortableDashboardCard({
       <div
         {...attributes}
         {...listeners}
-        className="absolute right-3 top-3 z-10 cursor-grab touch-none select-none text-(--color-text-muted) opacity-0 transition-opacity group-hover:opacity-60 active:cursor-grabbing active:opacity-100"
-        title="Draga til að endurraða"
+        className={cn(
+          "absolute left-0 top-0 z-10 flex h-full w-7 cursor-grab touch-none select-none flex-col items-center justify-center gap-0.5 rounded-l-2xl transition-colors active:cursor-grabbing",
+          isCustomizing
+            ? "bg-primary/5 text-(--color-primary) hover:bg-primary/10"
+            : "text-(--color-text-muted) opacity-40 hover:bg-(--color-surface-hover) hover:opacity-100",
+        )}
+        title={lang === "EN" ? "Drag to reorder" : "Draga til að endurraða"}
       >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
           <circle cx="9" cy="5" r="1.5" />
           <circle cx="15" cy="5" r="1.5" />
           <circle cx="9" cy="12" r="1.5" />
@@ -65,7 +72,7 @@ export function SortableDashboardCard({
       </div>
 
       {/* Body */}
-      <div className="flex min-h-0 flex-1 flex-col gap-3 p-4">
+      <div className="flex min-h-0 flex-1 flex-col gap-3 pl-9 pr-4 pt-4 pb-4">
         <p className="text-xs font-semibold uppercase tracking-widest text-(--color-text-muted)">
           {title}
         </p>
@@ -93,7 +100,7 @@ export function SortableDashboardCard({
       {card.to && (
         <Link
           to={card.to}
-          className="flex items-center justify-between border-t border-(--color-border) px-4 pt-3 pb-4 text-sm font-medium text-(--color-text-muted) transition-colors hover:bg-(--color-surface-hover) hover:text-(--color-primary)"
+          className="flex items-center justify-between border-t border-(--color-border) pl-9 pr-4 pt-3 pb-4 text-sm font-medium text-(--color-text-muted) transition-colors hover:bg-(--color-surface-hover) hover:text-(--color-primary)"
         >
           <span>{footerLabel}</span>
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
