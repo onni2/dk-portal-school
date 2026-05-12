@@ -1,4 +1,4 @@
-import { queryOptions, useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchMaintenanceLocks } from "./maintenance.api";
 
 export const maintenanceQueryOptions = queryOptions({
@@ -8,7 +8,7 @@ export const maintenanceQueryOptions = queryOptions({
 });
 
 export function useMaintenanceLocks() {
-  return useSuspenseQuery(maintenanceQueryOptions);
+  return useQuery({ ...maintenanceQueryOptions, throwOnError: false });
 }
 
 export function useInvalidateMaintenance() {

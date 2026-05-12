@@ -31,7 +31,9 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     const isPublicPage =
       location.pathname === "/login" ||
       location.pathname === "/callback" ||
-      location.pathname === "/select-company";
+      location.pathname === "/select-company" ||
+      location.pathname === "/forgot-password" ||
+      location.pathname === "/reset-password-token";
     const isAuthenticated = useAuthStore.getState().isAuthenticated;
 
     if (!isAuthenticated && !isPublicPage) {
@@ -53,7 +55,9 @@ export const Route = createRootRouteWithContext<RouterContext>()({
         useAuthStore.getState().clearAuth();
         throw redirect({ to: "/login" });
       }
-      throw err;
+      // Non-auth errors (network down, DB issues, etc.) — log and continue
+      // so the rest of the app still renders in degraded mode
+      console.warn("[root loader] licence fetch failed:", err);
     }
   },
   component: RootComponent,
@@ -70,7 +74,8 @@ function RootComponent() {
     pathname === "/login" ||
     pathname === "/callback" ||
     pathname === "/select-company" ||
-    pathname.startsWith("/reset-password");
+    pathname.startsWith("/reset-password") ||
+    pathname === "/forgot-password";
 
   if (isLoginPage) {
     return (
@@ -91,7 +96,7 @@ function RootComponent() {
 
 function MaintenanceGate() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { data: locks } = useMaintenanceLocks();
+  const { data: locks = [] } = useMaintenanceLocks();
   const user = useAuthStore((s) => s.user);
 
   const activeLock = locks.find(

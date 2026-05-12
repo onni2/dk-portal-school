@@ -9,7 +9,7 @@ export function useVisibleNavItems() {
   const role = useRoleStore((s) => s.role);
   const user = useAuthStore((s) => s.user);
   const permissions = useAuthStore((s) => s.permissions);
-
+  const companies = useAuthStore((s) => s.companies);
 
   if (role === "cop") {
     // god sees everything; super_admin sees cop items but not godOnly
@@ -17,10 +17,9 @@ export function useVisibleNavItems() {
     return NAV_ITEMS.filter((item) => item.access.type !== "godOnly");
   }
 
-
   if (isLoading || !licence) {
     return NAV_ITEMS.filter((item) => item.access.type === "alwaysVisible");
   }
 
-  return filterNavItems(NAV_ITEMS, role, licence, permissions, user);
+  return filterNavItems(NAV_ITEMS, role, licence, permissions, user, companies);
 }

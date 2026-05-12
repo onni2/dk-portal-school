@@ -3,15 +3,26 @@ const pool = require("../db");
 
 const router = express.Router();
 
+const { randomUUID } = require("crypto");
+
 function generateId() {
-  return Math.random().toString(36).slice(2, 10);
+  return randomUUID();
 }
 
-function requireAuth(req, res, next) {
+const ELEVATED_ROLES = ["super_admin", "god"];
+
+async function requireTimeclockPermission(req, res, next) {
   if (!req.user) return res.status(401).json({ message: "Ekki innskráður" });
-  if (!getCompanyId(req))
-    return res.status(403).json({ message: "Notandi tengdur engum fyrirtæki" });
-  next();
+  if (!getCompanyId(req)) return res.status(403).json({ message: "Notandi tengdur engum fyrirtæki" });
+  if (ELEVATED_ROLES.includes(req.user.role)) return next();
+  try {
+    const { rows } = await pool.query(
+      "SELECT role, timeclock FROM user_companies WHERE user_id = $1 AND company_id = $2",
+      [req.user.id, getCompanyId(req)],
+    );
+    if (rows[0]?.role === "admin" || rows[0]?.timeclock === true) return next();
+  } catch { /* fall through */ }
+  return res.status(403).json({ message: "Ekki heimilt" });
 }
 
 function getCompanyId(req) {
@@ -19,7 +30,7 @@ function getCompanyId(req) {
 }
 
 // GET /timeclock/config — company name and timeclock site URL
-router.get("/config", requireAuth, async (req, res) => {
+router.get("/config", requireTimeclockPermission, async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT name, timeclock_url FROM companies WHERE id = $1`,
@@ -38,7 +49,7 @@ router.get("/config", requireAuth, async (req, res) => {
 });
 
 // GET /timeclock/ips
-router.get("/ips", requireAuth, async (req, res) => {
+router.get("/ips", requireTimeclockPermission, async (req, res) => {
   try {
     const { rows } = await pool.query(
       "SELECT id, ip, label, created_at FROM timeclock_ip_whitelist WHERE company_id = $1 ORDER BY created_at ASC",
@@ -52,7 +63,7 @@ router.get("/ips", requireAuth, async (req, res) => {
 });
 
 // POST /timeclock/ips
-router.post("/ips", requireAuth, async (req, res) => {
+router.post("/ips", requireTimeclockPermission, async (req, res) => {
   const { ip, label = "" } = req.body;
   if (!ip) return res.status(400).json({ message: "Vantar ip" });
   try {
@@ -69,7 +80,7 @@ router.post("/ips", requireAuth, async (req, res) => {
 });
 
 // DELETE /timeclock/ips/:id
-router.delete("/ips/:id", requireAuth, async (req, res) => {
+router.delete("/ips/:id", requireTimeclockPermission, async (req, res) => {
   try {
     await pool.query(
       "DELETE FROM timeclock_ip_whitelist WHERE id = $1 AND company_id = $2",
@@ -83,7 +94,7 @@ router.delete("/ips/:id", requireAuth, async (req, res) => {
 });
 
 // GET /timeclock/phones
-router.get("/phones", requireAuth, async (req, res) => {
+router.get("/phones", requireTimeclockPermission, async (req, res) => {
   try {
     const { rows } = await pool.query(
       "SELECT id, kennitala, employee_name, phone FROM timeclock_employee_phones WHERE company_id = $1 ORDER BY created_at ASC",
@@ -104,7 +115,7 @@ router.get("/phones", requireAuth, async (req, res) => {
 });
 
 // POST /timeclock/phones
-router.post("/phones", requireAuth, async (req, res) => {
+router.post("/phones", requireTimeclockPermission, async (req, res) => {
   const { kennitala, employeeName = "", phone } = req.body;
   if (!kennitala || !phone) {
     return res.status(400).json({ message: "Vantar kennitölu og símanúmer" });
@@ -123,7 +134,7 @@ router.post("/phones", requireAuth, async (req, res) => {
 });
 
 // DELETE /timeclock/phones/:id
-router.delete("/phones/:id", requireAuth, async (req, res) => {
+router.delete("/phones/:id", requireTimeclockPermission, async (req, res) => {
   try {
     await pool.query(
       "DELETE FROM timeclock_employee_phones WHERE id = $1 AND company_id = $2",
