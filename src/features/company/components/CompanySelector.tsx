@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { cn } from "@/shared/utils/cn";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { switchCompany } from "../api/company.api";
+import { useDashboardLayout } from "@/features/dashboard/store/dashboard.store";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 
@@ -63,6 +64,7 @@ export function CompanySelector() {
         localStorage.removeItem("dk-company-token");
       }
       setActiveCompany(companyId, permissions ?? undefined);
+      useDashboardLayout.getState().loadForCompany(companyId);
       setOpen(false);
       await queryClient.invalidateQueries();
       await router.invalidate();

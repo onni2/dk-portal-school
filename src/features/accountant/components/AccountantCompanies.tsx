@@ -6,6 +6,7 @@
 import { cn } from "@/shared/utils/cn";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { switchCompany } from "@/features/company/api/company.api";
+import { useDashboardLayout } from "@/features/dashboard/store/dashboard.store";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useSubmissions } from "../api/accountant.queries";
@@ -17,20 +18,29 @@ export function AccountantCompanies() {
   const setActiveCompany = useAuthStore((s) => s.setActiveCompany);
   const queryClient = useQueryClient();
   const [switching, setSwitching] = useState<string | null>(null);
+  const [switchError, setSwitchError] = useState("");
   const { data: submissions = [] } = useSubmissions();
 
   // Only show companies where user has accountant role
   const accountantCompanies = companies.filter((c) => c.role === "accountant" || c.role === "admin");
 
   async function handleSwitch(companyId: string) {
+    if (companyId === user?.companyId) return;
     setSwitching(companyId);
+    setSwitchError("");
     try {
-      const { token } = await switchCompany(companyId);
+      const { token, companyDkToken, permissions } = await switchCompany(companyId);
       setToken(token);
-      setActiveCompany(companyId);
+      if (companyDkToken) {
+        localStorage.setItem("dk-company-token", companyDkToken);
+      } else {
+        localStorage.removeItem("dk-company-token");
+      }
+      setActiveCompany(companyId, permissions);
+      useDashboardLayout.getState().loadForCompany(companyId);
       queryClient.invalidateQueries();
     } catch (err) {
-      console.error("Failed to switch company", err);
+      setSwitchError((err as { message?: string })?.message ?? "Ekki tókst að skipta um fyrirtæki");
     } finally {
       setSwitching(null);
     }
@@ -45,6 +55,11 @@ export function AccountantCompanies() {
         </p>
       </div>
 
+      {switchError && (
+        <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-600">
+          {switchError}
+        </p>
+      )}
       {accountantCompanies.length === 0 ? (
         <div className="flex items-center justify-center rounded-xl border border-[var(--color-border)] bg-white py-16">
           <p className="text-sm text-[var(--color-text-secondary)]">Engin fyrirtæki tengd við þinn aðgang.</p>
