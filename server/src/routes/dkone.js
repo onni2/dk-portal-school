@@ -59,19 +59,41 @@ router.get("/sub-companies", requireAdmin, async (req, res) => {
   }
 });
 
-// POST /dkone/sub-companies — create a new sub-company
-router.post("/sub-companies", requireAdmin, async (req, res) => {
-  const { name } = req.body;
-  if (!name?.trim()) return res.status(400).json({ message: "Nafn fyrirtækis vantar" });
+// GET /dkone/available-companies — companies that can be linked as sub-companies
+router.get("/available-companies", requireAdmin, async (req, res) => {
   const companyId = getCompanyId(req);
   try {
-    const id = generateId();
     const { rows } = await pool.query(
-      `INSERT INTO companies (id, name, parent_company_id)
-       VALUES ($1, $2, $3)
-       RETURNING id, name`,
-      [id, name.trim(), companyId],
+      `SELECT c.id, c.name
+       FROM companies c
+       WHERE c.parent_company_id IS NULL
+         AND c.id != $1
+       ORDER BY c.name ASC`,
+      [companyId],
     );
+    res.json(rows.map((c) => ({ id: c.id, name: c.name })));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Villa á þjóni" });
+  }
+});
+
+// POST /dkone/sub-companies — link an existing company as a sub-company
+router.post("/sub-companies", requireAdmin, async (req, res) => {
+  const { companyId: targetId } = req.body;
+  if (!targetId) return res.status(400).json({ message: "Auðkenni fyrirtækis vantar" });
+  const companyId = getCompanyId(req);
+  try {
+    const { rows, rowCount } = await pool.query(
+      `UPDATE companies
+       SET parent_company_id = $1
+       WHERE id = $2
+         AND parent_company_id IS NULL
+         AND id != $1
+       RETURNING id, name`,
+      [companyId, targetId],
+    );
+    if (rowCount === 0) return res.status(404).json({ message: "Fyrirtæki fannst ekki eða er þegar tengt" });
     res.status(201).json({ id: rows[0].id, name: rows[0].name });
   } catch (err) {
     console.error(err);
