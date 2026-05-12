@@ -25,11 +25,11 @@ export function HostingSignOutDialog({
         </h2>
 
         <p className="mt-2 text-sm text-(--color-text-secondary)">
-          Virkri hýsingarlotu fyrir{" "}
+          Viltu örugglega skrá{" "}
           <span className="font-mono font-medium text-(--color-text)">
             {username}
           </span>{" "}
-          verður lokað.
+          út úr hýsingunni?
         </p>
 
         <div className="mt-6 flex justify-end gap-2">

@@ -11,6 +11,12 @@
  * - HostingLogEntry
  */
 
+export interface LinkedPortalUser {
+  id: string;
+  name: string;
+  username: string;
+}
+
 export interface HostingAccount {
   id: string;
   username: string;
@@ -20,7 +26,33 @@ export interface HostingAccount {
   hasPendingActivation: boolean;
   status: string | null;
   isLoggedIn: boolean | null;
-  linkedPortalUser: { name: string; username: string } | null;
+
+  /**
+   * All Mínar síður users connected to this hosting account.
+   * Multiple portal users may share the same hosting account.
+   */
+  linkedPortalUsers: LinkedPortalUser[];
+
+  /**
+   * Backwards-compatible single user reference.
+   * Backend returns the first linked user here, or null.
+   */
+  linkedPortalUser: LinkedPortalUser | null;
+}
+
+export interface HostingPortalUser {
+  id: string;
+  username: string;
+  email: string | null;
+  name: string;
+  status: string | null;
+  companyRole: "admin" | "user" | string;
+  hasHostingPermission: boolean;
+  hostingUsername: string | null;
+  linkedHostingAccount: {
+    id: string;
+    username: string;
+  } | null;
 }
 
 export interface CreateHostingAccountPayload {
@@ -40,5 +72,4 @@ export interface HostingLogEntry {
   createdAt: string;
   ip: string | null;
   device: string | null;
-  userAgent: string | null;
 }
