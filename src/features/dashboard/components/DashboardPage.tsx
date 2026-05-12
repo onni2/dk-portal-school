@@ -171,9 +171,21 @@ function CustomizePanel({
 // ─── Info tooltip (matches PageTemplate pattern) ──────────────────────────────
 
 function DashboardInfoTooltip({ lang }: { lang: string }) {
-  const text = lang === "EN"
-    ? "Each card shows a live summary of a service you have access to. Use \"Customise\" to add, remove, or compact cards. Drag any card to reorder. Card layout is saved per company."
-    : "Hvert kort sýnir stöðu þjónustu sem þú hefur aðgang að. Notaðu hnappinn Sérsníða til að bæta við, fjarlægja eða þjappa kortum. Dragðu kort til að endurraða. Útlitið er vistað fyrir hvert fyrirtæki.";
+  const items = lang === "EN"
+    ? [
+        "Each card shows a live status overview of one of your active services.",
+        "Click the link at the bottom of any card to open that feature directly.",
+        "Use the Customise button (top right) to add or remove cards, or toggle compact mode for a condensed view.",
+        "Reorder cards by grabbing the drag handle (the six dots on the left edge) and dragging to the desired position.",
+        "Your card layout and order are saved separately for each company you switch between.",
+      ]
+    : [
+        "Hvert kort sýnir stöðuyfirlit einnar þjónustu sem þú hefur aðgang að.",
+        "Smelltu á hlekk neðst á korti til að opna viðkomandi þjónustu beint.",
+        "Notaðu Sérsníða hnappinn (efst til hægri) til að bæta við eða fjarlægja kort, eða kveikja á þjöppuðu ham.",
+        "Til að endurraða kortum sekaltu grípa í drag-merkið (sex punktar vinstra megin á korti) og draga það á réttan stað.",
+        "Kortaútlit og röðun er vistað sérstaklega fyrir hvert fyrirtæki sem þú skiptir á milli.",
+      ];
 
   return (
     <span className="group relative flex items-center">
@@ -188,8 +200,15 @@ function DashboardInfoTooltip({ lang }: { lang: string }) {
         <circle cx="12" cy="12" r="10" />
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-4m0-4h.01" />
       </svg>
-      <span className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 w-72 -translate-x-1/2 rounded-md border border-(--color-border) bg-(--color-surface) px-3 py-2 text-xs text-(--color-text-secondary) opacity-0 shadow-md transition-opacity group-hover:opacity-100">
-        {text}
+      <span className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 w-80 -translate-x-1/2 rounded-md border border-(--color-border) bg-(--color-surface) px-3 py-3 text-xs text-(--color-text-secondary) opacity-0 shadow-md transition-opacity group-hover:opacity-100">
+        <ul className="space-y-1.5">
+          {items.map((item, i) => (
+            <li key={i} className="flex items-start gap-1.5">
+              <span className="mt-0.5 shrink-0 text-(--color-primary)">▪</span>
+              {item}
+            </li>
+          ))}
+        </ul>
       </span>
     </span>
   );
@@ -217,7 +236,7 @@ export function DashboardPage() {
   const lang = useLangStore((s) => s.lang);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
