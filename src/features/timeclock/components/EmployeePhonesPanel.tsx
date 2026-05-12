@@ -32,86 +32,114 @@ export function EmployeePhonesPanel() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["timeclock-employee-phones"] }),
   });
 
-  return (
-    <Card>
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h2 className="text-base font-semibold text-(--color-text)">
-            Símanúmer starfsmanna
-          </h2>
-          <p className="mt-0.5 text-xs text-(--color-text-muted)">
-            Starfsmenn nota símanúmer sitt til að skrá sig inn á stimpilklukku.
-          </p>
-        </div>
-        <Button size="sm" variant="primary" onClick={() => setAddPhoneOpen(true)}>
-          + Bæta við
-        </Button>
-      </div>
+  function handleClose() {
+    setKennitala("");
+    setEmployeeName("");
+    setPhone("");
+    setAddPhoneOpen(false);
+  }
 
-      {entries.length === 0 ? (
-        <p className="py-4 text-center text-sm text-(--color-text-muted)">
-          Engir starfsmenn með skráð símanúmer.
-        </p>
-      ) : (
-        <ul className="divide-y divide-(--color-border)">
-          {entries.map((entry) => (
-            <li key={entry.id} className="flex items-center justify-between py-3">
-              <div>
-                <p className="text-sm font-medium text-(--color-text)">
-                  {entry.employeeName || entry.kennitala}
-                </p>
-                <p className="text-xs text-(--color-text-muted)">
-                  {entry.kennitala} · {entry.phone}
-                </p>
-              </div>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => removeMutation.mutate(entry.id)}
-                disabled={removeMutation.isPending && removeMutation.variables === entry.id}
-              >
-                {removeMutation.isPending && removeMutation.variables === entry.id ? "..." : "Fjarlægja"}
-              </Button>
-            </li>
-          ))}
-        </ul>
-      )}
+  return (
+    <>
+      <Card>
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-(--color-text)">Símanúmer starfsmanna</h2>
+            <p className="mt-0.5 text-xs text-(--color-text-muted)">
+              Starfsmenn nota símanúmer sitt til að skrá sig inn á stimpilklukku.
+            </p>
+          </div>
+          <Button size="sm" variant="primary" onClick={() => setAddPhoneOpen(true)}>
+            + Bæta við
+          </Button>
+        </div>
+
+        {entries.length === 0 ? (
+          <p className="py-4 text-center text-sm text-(--color-text-muted)">Engir starfsmenn með skráð símanúmer.</p>
+        ) : (
+          <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-white">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[var(--color-border)] bg-[#F6F8FC]">
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[#5C667A]">Nafn</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[#5C667A]">Kennitala</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[#5C667A]">Símanúmer</th>
+                  <th className="px-4 py-3" />
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map((entry) => (
+                  <tr key={entry.id} className="border-b border-[var(--color-border)] last:border-0 hover:bg-[#F6F8FC]">
+                    <td className="px-4 py-3 font-medium text-[#0B0F1A]">{entry.employeeName || "—"}</td>
+                    <td className="px-4 py-3 text-[#5C667A]">{entry.kennitala}</td>
+                    <td className="px-4 py-3 text-[#5C667A]">{entry.phone}</td>
+                    <td className="px-4 py-3 text-right">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => removeMutation.mutate(entry.id)}
+                        disabled={removeMutation.isPending && removeMutation.variables === entry.id}
+                      >
+                        {removeMutation.isPending && removeMutation.variables === entry.id ? "..." : "Fjarlægja"}
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
 
       {addPhoneOpen && (
-        <div className="mt-4 flex flex-col gap-3 border-t border-(--color-border) pt-4">
-          <Input
-            placeholder="Kennitala (10 tölustafir)"
-            value={kennitala}
-            onChange={(e) => setKennitala(e.target.value)}
-          />
-          <Input
-            placeholder="Nafn (valkvætt)"
-            value={employeeName}
-            onChange={(e) => setEmployeeName(e.target.value)}
-          />
-          <Input
-            placeholder="Símanúmer"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-          />
-          <div className="flex gap-2">
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => {
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={handleClose}>
+          <div className="w-full max-w-md rounded-lg border border-(--color-border) bg-(--color-surface) p-6 shadow-lg" onClick={(e) => e.stopPropagation()}>
+            <h2 className="mb-4 text-lg font-bold text-(--color-text)">Bæta við starfsmanni</h2>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
                 if (kennitala.trim() && phone.trim())
                   addMutation.mutate({ kennitala: kennitala.trim(), employeeName: employeeName.trim(), phone: phone.trim() });
               }}
-              disabled={addMutation.isPending || !kennitala.trim() || !phone.trim()}
+              className="flex flex-col gap-4"
             >
-              {addMutation.isPending ? "Vista..." : "Vista"}
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => setAddPhoneOpen(false)}>
-              Hætta við
-            </Button>
+              <Input
+                label="Nafn (valkvætt)"
+                placeholder="Jón Jónsson"
+                value={employeeName}
+                onChange={(e) => setEmployeeName(e.target.value)}
+              />
+              <Input
+                label="Kennitala"
+                placeholder="0000000000"
+                value={kennitala}
+                onChange={(e) => setKennitala(e.target.value)}
+                required
+              />
+              <Input
+                label="Símanúmer"
+                placeholder="8001234"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                required
+              />
+              {addMutation.isError && (
+                <p className="text-sm text-(--color-error)">
+                  {(addMutation.error as { message?: string })?.message ?? "Villa kom upp"}
+                </p>
+              )}
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="ghost" onClick={handleClose} disabled={addMutation.isPending}>
+                  Hætta við
+                </Button>
+                <Button type="submit" disabled={addMutation.isPending || !kennitala.trim() || !phone.trim()}>
+                  {addMutation.isPending ? "Vista..." : "Vista"}
+                </Button>
+              </div>
+            </form>
           </div>
         </div>
       )}
-    </Card>
+    </>
   );
 }
