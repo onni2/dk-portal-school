@@ -94,21 +94,58 @@ export function TransactionTable() {
       return sortDir === "asc" ? cmp : -cmp;
     });
 
+  const currencyGroups = filtered.reduce<Record<string, { debit: number; credit: number }>>((acc, tx) => {
+    const cur = tx.Currency || "ISK";
+    if (!acc[cur]) acc[cur] = { debit: 0, credit: 0 };
+    if (tx.Amount >= 0) acc[cur].debit += tx.Amount;
+    else acc[cur].credit += Math.abs(tx.Amount);
+    return acc;
+  }, {});
+  const currencyEntries = Object.entries(currencyGroups);
+
   // Clamp page so stale page state never produces an empty view after filters change
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
-  if (filtered.length === 0) {
-    return (
-      <p className="py-8 text-center text-sm text-(--color-text-secondary)">
-        Engar færslur fundust.
-      </p>
-    );
-  }
-
   return (
     <div className="space-y-3">
+      <div className="flex flex-wrap gap-3">
+        {currencyEntries.map(([currency, { debit, credit }]) => {
+          const net = debit - credit;
+          return (
+            <div key={currency} className="flex items-center gap-4 rounded-md border border-(--color-border) bg-(--color-surface) px-4 py-2 text-sm">
+              {currencyEntries.length > 1 && (
+                <span className="font-medium text-(--color-text-muted)">{currency}</span>
+              )}
+              <span className="flex items-center gap-1.5">
+                <span className="text-(--color-text-muted)">Debit</span>
+                <span className="font-semibold text-(--color-text)">{formatAmount(debit, currency)}</span>
+              </span>
+              <span className="text-(--color-border)">|</span>
+              <span className="flex items-center gap-1.5">
+                <span className="text-(--color-text-muted)">Kredit</span>
+                <span className="font-semibold text-(--color-text)">{formatAmount(credit, currency)}</span>
+              </span>
+              <span className="text-(--color-border)">|</span>
+              <span className="flex items-center gap-1.5">
+                <span className="text-(--color-text-muted)">Nettó</span>
+                <span className={cn("font-semibold", net >= 0 ? "text-(--color-text)" : "text-red-500")}>
+                  {net < 0 ? "−" : ""}{formatAmount(Math.abs(net), currency)}
+                </span>
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {filtered.length === 0 && (
+        <p className="py-8 text-center text-sm text-(--color-text-secondary)">
+          Engar færslur fundust.
+        </p>
+      )}
+      {filtered.length > 0 && (
+      <>
       <div className="overflow-x-auto rounded-md border border-(--color-border)">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-(--color-border) bg-(--color-surface)">
@@ -233,6 +270,8 @@ export function TransactionTable() {
           </button>
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 }
