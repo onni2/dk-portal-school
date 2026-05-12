@@ -1,3 +1,4 @@
+// server/src/routes/hosting.js
 /**
  * 
  * Responsibilities:
