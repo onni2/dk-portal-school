@@ -132,17 +132,17 @@ export function HostingAccountList({
         <div className="flex flex-col gap-1.5">
           <span className="flex items-center gap-2 text-xs text-(--color-text-secondary)">
             <DuoShieldIcon state="active" size={16} />
-            Duo virkt – hefur virkt tæki
+            Duo tengt við tæki
           </span>
 
           <span className="flex items-center gap-2 text-xs text-(--color-text-secondary)">
             <DuoShieldIcon state="pending" size={16} />
-            Þarfnast tækis – engin virk Duo tæki
+            Tæki ekki tengt eða í biðstöðu
           </span>
 
           <span className="flex items-center gap-2 text-xs text-(--color-text-secondary)">
             <DuoShieldIcon state="none" size={16} />
-            Ekki hafið – Duo uppsetning ekki byrjuð
+            Duo ekki sett upp
           </span>
         </div>
       </div>

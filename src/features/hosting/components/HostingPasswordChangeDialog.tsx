@@ -1,13 +1,12 @@
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { cn } from "@/shared/utils/cn";
-import { changeMyHostingPassword } from "../api/hosting.api";
-import { hostingQueryKeys } from "../api/hosting.queries";
 
 interface HostingPasswordChangeDialogProps {
   username: string;
   onClose: () => void;
   onSuccess: () => void;
+  onSubmitPassword: (password: string) => Promise<unknown>;
 }
 
 const PASSWORD_RULES = [
@@ -22,16 +21,14 @@ export function HostingPasswordChangeDialog({
   username,
   onClose,
   onSuccess,
+  onSubmitPassword,
 }: HostingPasswordChangeDialogProps) {
-  const qc = useQueryClient();
-
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
 
   const passwordMutation = useMutation({
-    mutationFn: changeMyHostingPassword,
-    onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: hostingQueryKeys.me });
+    mutationFn: onSubmitPassword,
+    onSuccess: () => {
       onSuccess();
       onClose();
     },
