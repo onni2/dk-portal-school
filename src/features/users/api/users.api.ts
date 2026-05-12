@@ -18,20 +18,8 @@ import type { InviteUserInput, PortalUser } from "../types/users.types";
 
 interface InviteResponse {
   user: PortalUser;
-  generatedPassword: string;
 }
 
-function requireId(id: string, label: string): void {
-  if (!id) {
-    throw new Error(`${label} is required`);
-  }
-}
-
-/**
- * Fetch portal users for the active company.
- *
- * Backend returns permissions on each user from user_companies.
- */
 export async function fetchUsers(): Promise<PortalUser[]> {
   return mockClient.get<PortalUser[]>("/users");
 }
@@ -47,7 +35,7 @@ export async function fetchUsers(): Promise<PortalUser[]> {
  */
 export async function inviteUser(
   input: InviteUserInput,
-): Promise<InviteResponse> {
+): Promise<{ user: PortalUser }> {
   return mockClient.post<InviteResponse>("/users/invite", input);
 }
 

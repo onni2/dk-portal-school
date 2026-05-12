@@ -119,7 +119,7 @@ export function InviteUserModal({ onClose, onInvited }: Props) {
   const [companyRole, setCompanyRole] = useState<"user" | "admin">("user");
   const [permissions, setPermissions] =
     useState<UserPermissions>(DEFAULT_PERMISSIONS);
-  const [generatedPassword, setGeneratedPassword] = useState("");
+  const [invited, setInvited] = useState(false);
 
   const displayedPermissions =
     companyRole === "admin"
@@ -145,8 +145,8 @@ export function InviteUserModal({ onClose, onInvited }: Props) {
         ),
       });
     },
-    onSuccess: ({ generatedPassword: pw }) => {
-      setGeneratedPassword(pw);
+    onSuccess: () => {
+      setInvited(true);
       onInvited();
     },
   });
@@ -165,7 +165,7 @@ export function InviteUserModal({ onClose, onInvited }: Props) {
     !companyRole ||
     !isValidKennitala(kennitala);
 
-  if (generatedPassword) {
+  if (invited) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
         <div className="w-full max-w-md rounded-lg border border-(--color-border) bg-(--color-surface) p-6 shadow-lg">
@@ -174,14 +174,8 @@ export function InviteUserModal({ onClose, onInvited }: Props) {
           </h2>
 
           <p className="mb-4 text-sm text-(--color-text-secondary)">
-            Geymdu þetta lykilorð og sendu það til notandans. Það mun ekki sjást
-            aftur.
+            Aðgangur hefur verið stofnaður og lykilorð sent á {email} í tölvupósti.
           </p>
-
-          <div className="mb-6 rounded-md bg-(--color-surface-hover) px-4 py-3 font-mono text-base text-(--color-text)">
-            {generatedPassword}
-          </div>
-
           <div className="flex justify-end">
             <Button onClick={onClose}>Loka</Button>
           </div>
