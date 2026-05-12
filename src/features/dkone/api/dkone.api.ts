@@ -5,8 +5,12 @@ export async function fetchSubCompanies(): Promise<SubCompany[]> {
   return mockClient.get<SubCompany[]>("/dkone/sub-companies");
 }
 
-export async function createSubCompany(name: string): Promise<SubCompany> {
-  return mockClient.post<SubCompany>("/dkone/sub-companies", { name });
+export async function fetchAvailableCompanies(): Promise<SubCompany[]> {
+  return mockClient.get<SubCompany[]>("/dkone/available-companies");
+}
+
+export async function linkSubCompany(companyId: string): Promise<SubCompany> {
+  return mockClient.post<SubCompany>("/dkone/sub-companies", { companyId });
 }
 
 export async function deleteSubCompany(id: string): Promise<void> {
