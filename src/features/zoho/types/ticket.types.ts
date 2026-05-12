@@ -1,16 +1,13 @@
 /**
- * Types for the Zoho ticket system.
- * Exports: TicketStatus, TicketMessage, Ticket
+ * Ticket types for the Zoho ticket system.
+ * Exports: TicketStatus, Ticket, Department
  */
 
 export type TicketStatus = "opið" | "lokað";
 
-export interface TicketMessage {
+export interface Department {
   id: string;
-  from: "customer" | "support";
-  senderName: string;
-  body: string;
-  sentAt: string;
+  name: string;
 }
 
 export interface Ticket {
@@ -21,5 +18,14 @@ export interface Ticket {
   status: TicketStatus;
   createdAt: string;
   updatedAt: string;
-  messages: TicketMessage[];
+  department: Department;
+  messages?: TicketMessage[];
+}
+
+export interface TicketMessage {
+  id: string;
+  from: "customer" | "support";
+  senderName: string;
+  body: string;
+  sentAt: string;
 }
