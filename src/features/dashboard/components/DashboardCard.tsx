@@ -43,26 +43,25 @@ export function SortableDashboardCard({
     <div
       ref={setNodeRef}
       style={style}
+      {...attributes}
+      {...listeners}
       className={cn(
         "group relative flex h-full flex-col overflow-hidden rounded-2xl border bg-(--color-surface)",
         "shadow-(--shadow-sm) transition-all hover:shadow-(--shadow-md)",
         isCustomizing
-          ? "border-primary/30 ring-1 ring-primary/10"
+          ? "cursor-grab border-primary/30 ring-1 ring-primary/10 active:cursor-grabbing"
           : "border-(--color-border)",
         isDragging && "ring-2 ring-primary/40 shadow-(--shadow-lg)",
       )}
     >
-      {/* Drag handle */}
+      {/* Drag handle — decorative indicator only, listeners are on the card */}
       <div
-        {...attributes}
-        {...listeners}
         className={cn(
-          "absolute right-3 top-3 z-10 cursor-grab touch-none select-none text-(--color-text-muted) transition-opacity active:cursor-grabbing",
+          "absolute right-3 top-3 z-10 select-none text-(--color-text-muted) transition-opacity",
           isCustomizing
-            ? "opacity-50 hover:opacity-100"
-            : "opacity-0 group-hover:opacity-60 active:opacity-100",
+            ? "opacity-40 group-hover:opacity-80"
+            : "opacity-0 group-hover:opacity-50",
         )}
-        title={lang === "EN" ? "Drag to reorder" : "Draga til að endurraða"}
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
           <circle cx="9" cy="5" r="1.5" />

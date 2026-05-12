@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import {
   DndContext,
   closestCenter,
@@ -168,74 +168,30 @@ function CustomizePanel({
   );
 }
 
-// ─── Info popover ─────────────────────────────────────────────────────────────
+// ─── Info tooltip (matches PageTemplate pattern) ──────────────────────────────
 
-function InfoPopover({ lang }: { lang: string }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    if (open) document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
+function DashboardInfoTooltip({ lang }: { lang: string }) {
+  const text = lang === "EN"
+    ? "Each card shows a live summary of a service you have access to. Use \"Customise\" to add, remove, or compact cards. Drag any card to reorder. Card layout is saved per company."
+    : "Hvert kort sýnir stöðu þjónustu sem þú hefur aðgang að. Notaðu hnappinn Sérsníða til að bæta við, fjarlægja eða þjappa kortum. Dragðu kort til að endurraða. Útlitið er vistað fyrir hvert fyrirtæki.";
 
   return (
-    <div ref={ref} className="relative flex items-center">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        aria-label={lang === "EN" ? "About this dashboard" : "Um þetta yfirlit"}
-        className={cn(
-          "flex h-5 w-5 items-center justify-center rounded-full border text-[11px] font-bold transition-colors",
-          open
-            ? "border-primary/50 bg-(--color-primary-light) text-(--color-primary)"
-            : "border-(--color-border) bg-(--color-surface) text-(--color-text-muted) hover:border-(--color-text-muted) hover:text-(--color-text)",
-        )}
+    <span className="group relative flex items-center">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-4 w-4 cursor-default text-(--color-text-muted) transition-colors group-hover:text-(--color-text-secondary)"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth={2}
       >
-        i
-      </button>
-
-      {open && (
-        <div className="absolute left-0 top-7 z-50 w-72 rounded-2xl border border-(--color-border) bg-(--color-surface) p-4 shadow-lg">
-          <p className="mb-2 text-sm font-semibold text-(--color-text)">
-            {lang === "EN" ? "About this dashboard" : "Um þetta yfirlit"}
-          </p>
-          <ul className="space-y-2 text-xs text-(--color-text-secondary)">
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 shrink-0 text-(--color-primary)">▪</span>
-              {lang === "EN"
-                ? "Each card shows a live summary of a feature you have access to."
-                : "Hvert kort sýnir stöðu einnar þjónustu sem þú hefur aðgang að."}
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 shrink-0 text-(--color-primary)">▪</span>
-              {lang === "EN"
-                ? 'Use the "Customise" button to add or remove cards and toggle compact mode.'
-                : 'Notaðu „Sérsníða" hnappinn til að bæta við eða fjarlægja kort og kveikja á þjöppuðu ham.'}
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 shrink-0 text-(--color-primary)">▪</span>
-              {lang === "EN"
-                ? "Drag any card by its handle (⠿ top-right) to reorder them."
-                : "Dragðu hvaða kort sem er í þjöppunarmerki (⠿ efst til hægri) til að raða þeim upp á nýtt."}
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 shrink-0 text-(--color-primary)">▪</span>
-              {lang === "EN"
-                ? "Click the footer link on a card to navigate to that feature."
-                : "Smelltu á hlekk neðst á korti til að fara á viðkomandi þjónustu."}
-            </li>
-          </ul>
-          <p className="mt-3 text-[11px] text-(--color-text-muted)">
-            {lang === "EN"
-              ? "Layout is saved per company."
-              : "Útlit er vistað fyrir hvert fyrirtæki sérstaklega."}
-          </p>
-        </div>
-      )}
-    </div>
+        <circle cx="12" cy="12" r="10" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-4m0-4h.01" />
+      </svg>
+      <span className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 w-72 -translate-x-1/2 rounded-md border border-(--color-border) bg-(--color-surface) px-3 py-2 text-xs text-(--color-text-secondary) opacity-0 shadow-md transition-opacity group-hover:opacity-100">
+        {text}
+      </span>
+    </span>
   );
 }
 
@@ -261,7 +217,7 @@ export function DashboardPage() {
   const lang = useLangStore((s) => s.lang);
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
@@ -318,7 +274,7 @@ export function DashboardPage() {
             <h1 className="text-2xl font-bold text-(--color-text)">
               {greeting}{firstName ? `, ${firstName}` : ""}.
             </h1>
-            <InfoPopover lang={lang} />
+            <DashboardInfoTooltip lang={lang} />
             {user?.role === "god" && (
               <span className="rounded-full bg-(--color-error-bg) px-2.5 py-0.5 text-xs font-semibold text-(--color-error)">
                 {lang === "EN" ? "System Admin" : "Kerfisstjóri"}
