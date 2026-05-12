@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   DndContext,
   closestCenter,
@@ -168,6 +168,77 @@ function CustomizePanel({
   );
 }
 
+// ─── Info popover ─────────────────────────────────────────────────────────────
+
+function InfoPopover({ lang }: { lang: string }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    if (open) document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative flex items-center">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        aria-label={lang === "EN" ? "About this dashboard" : "Um þetta yfirlit"}
+        className={cn(
+          "flex h-5 w-5 items-center justify-center rounded-full border text-[11px] font-bold transition-colors",
+          open
+            ? "border-primary/50 bg-(--color-primary-light) text-(--color-primary)"
+            : "border-(--color-border) bg-(--color-surface) text-(--color-text-muted) hover:border-(--color-text-muted) hover:text-(--color-text)",
+        )}
+      >
+        i
+      </button>
+
+      {open && (
+        <div className="absolute left-0 top-7 z-50 w-72 rounded-2xl border border-(--color-border) bg-(--color-surface) p-4 shadow-lg">
+          <p className="mb-2 text-sm font-semibold text-(--color-text)">
+            {lang === "EN" ? "About this dashboard" : "Um þetta yfirlit"}
+          </p>
+          <ul className="space-y-2 text-xs text-(--color-text-secondary)">
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 shrink-0 text-(--color-primary)">▪</span>
+              {lang === "EN"
+                ? "Each card shows a live summary of a feature you have access to."
+                : "Hvert kort sýnir stöðu einnar þjónustu sem þú hefur aðgang að."}
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 shrink-0 text-(--color-primary)">▪</span>
+              {lang === "EN"
+                ? 'Use the "Customise" button to add or remove cards and toggle compact mode.'
+                : 'Notaðu „Sérsníða" hnappinn til að bæta við eða fjarlægja kort og kveikja á þjöppuðu ham.'}
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 shrink-0 text-(--color-primary)">▪</span>
+              {lang === "EN"
+                ? "Drag any card by its handle (⠿ top-right) to reorder them."
+                : "Dragðu hvaða kort sem er í þjöppunarmerki (⠿ efst til hægri) til að raða þeim upp á nýtt."}
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 shrink-0 text-(--color-primary)">▪</span>
+              {lang === "EN"
+                ? "Click the footer link on a card to navigate to that feature."
+                : "Smelltu á hlekk neðst á korti til að fara á viðkomandi þjónustu."}
+            </li>
+          </ul>
+          <p className="mt-3 text-[11px] text-(--color-text-muted)">
+            {lang === "EN"
+              ? "Layout is saved per company."
+              : "Útlit er vistað fyrir hvert fyrirtæki sérstaklega."}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 const FULL_PERMISSIONS: UserPermissions = {
@@ -247,6 +318,7 @@ export function DashboardPage() {
             <h1 className="text-2xl font-bold text-(--color-text)">
               {greeting}{firstName ? `, ${firstName}` : ""}.
             </h1>
+            <InfoPopover lang={lang} />
             {user?.role === "god" && (
               <span className="rounded-full bg-(--color-error-bg) px-2.5 py-0.5 text-xs font-semibold text-(--color-error)">
                 {lang === "EN" ? "System Admin" : "Kerfisstjóri"}
@@ -317,12 +389,22 @@ export function DashboardPage() {
           onDragEnd={handleDragEnd}
         >
           <SortableContext items={cardIds} strategy={rectSortingStrategy}>
+            {customizing && (
+              <div className="flex items-center gap-1.5 text-xs text-(--color-text-muted)">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="9" cy="5" r="1.5" /><circle cx="15" cy="5" r="1.5" />
+                  <circle cx="9" cy="12" r="1.5" /><circle cx="15" cy="12" r="1.5" />
+                  <circle cx="9" cy="19" r="1.5" /><circle cx="15" cy="19" r="1.5" />
+                </svg>
+                {lang === "EN" ? "Drag cards to reorder" : "Dragðu kort til að endurraða"}
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 auto-rows-[16rem]">
               {visibleCards.map((card) => {
                 const isLocked = !!card.to && maintenanceLocks.some(
                   (l) => card.to!.startsWith(l.route),
                 );
-                return <SortableDashboardCard key={card.id} card={card} isLocked={isLocked} />;
+                return <SortableDashboardCard key={card.id} card={card} isLocked={isLocked} isCustomizing={customizing} />;
               })}
             </div>
           </SortableContext>

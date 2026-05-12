@@ -10,9 +10,11 @@ import { CardPreview } from "./CardPreviews";
 export function SortableDashboardCard({
   card,
   isLocked = false,
+  isCustomizing = false,
 }: {
   card: CardDef;
   isLocked?: boolean;
+  isCustomizing?: boolean;
 }) {
   const {
     attributes,
@@ -42,17 +44,25 @@ export function SortableDashboardCard({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group relative flex h-full flex-col overflow-hidden rounded-2xl border border-(--color-border) bg-(--color-surface)",
-        "shadow-(--shadow-sm) transition-shadow hover:shadow-(--shadow-md)",
-        isDragging && "ring-2 ring-primary/30",
+        "group relative flex h-full flex-col overflow-hidden rounded-2xl border bg-(--color-surface)",
+        "shadow-(--shadow-sm) transition-all hover:shadow-(--shadow-md)",
+        isCustomizing
+          ? "border-primary/30 ring-1 ring-primary/10"
+          : "border-(--color-border)",
+        isDragging && "ring-2 ring-primary/40 shadow-(--shadow-lg)",
       )}
     >
       {/* Drag handle */}
       <div
         {...attributes}
         {...listeners}
-        className="absolute right-3 top-3 z-10 cursor-grab touch-none select-none text-(--color-text-muted) opacity-0 transition-opacity group-hover:opacity-60 active:cursor-grabbing active:opacity-100"
-        title="Draga til að endurraða"
+        className={cn(
+          "absolute right-3 top-3 z-10 cursor-grab touch-none select-none text-(--color-text-muted) transition-opacity active:cursor-grabbing",
+          isCustomizing
+            ? "opacity-50 hover:opacity-100"
+            : "opacity-0 group-hover:opacity-60 active:opacity-100",
+        )}
+        title={lang === "EN" ? "Drag to reorder" : "Draga til að endurraða"}
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
           <circle cx="9" cy="5" r="1.5" />
