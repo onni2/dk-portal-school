@@ -1,105 +1,252 @@
 /**
- * Table of portal users — shows name, email, and permission checkmarks.
- * Clicking a row opens the UserPanel modal for editing.
- * Uses: @/shared/components/Table, @/shared/components/Button,
- *       ../api/users.queries, ../api/permissions.api
- * Exports: UsersTable
+ * UsersTable.tsx
+ *
+ * Displays the portal users for the currently active company.
+ *
+ * This table is only responsible for showing:
+ * - basic user information
+ * - company role
+ * - email
+ * - permission checkmarks
+ * - a "Breyta" button that opens UserPanel
+ *
  */
-import { useQueries } from "@tanstack/react-query";
+
 import { Table, type Column } from "@/shared/components/Table";
 import { Button } from "@/shared/components/Button";
-import { usePortalUsers, permissionsQueryOptions } from "../api/users.queries";
-import { DEFAULT_PERMISSIONS } from "../api/permissions.api";
+import { usePortalUsers } from "../api/users.queries";
 import { useLicence } from "@/features/licence/api/licence.queries";
 import type { LicenceResponse } from "@/features/licence/types/licence.types";
 import type { UserPermissions } from "../types/user-permissions.types";
 import type { PortalUser } from "../types/users.types";
 
-const PERMISSION_KEYS: { key: keyof UserPermissions; label: string; licenceModule?: keyof LicenceResponse }[] = [
-  { key: "invoices", label: "Reikningsyfirlit" },
-  { key: "subscription", label: "Áskrift", licenceModule: "dkPlus" },
-  { key: "hosting", label: "Hýsing", licenceModule: "Hosting" },
+/**
+ * Defines which permission columns can be shown in the table.
+ *
+ * `key` maps to the permission property returned from the backend.
+ * `label` is the column title shown in the UI.
+ * `licenceModule` means the column is only shown when that module is enabled
+ * in the company's licence.
+ */
+const PERMISSION_KEYS: {
+  key: keyof UserPermissions;
+  label: string;
+  licenceModule?: keyof LicenceResponse;
+}[] = [
+  { key: "invoices", label: "Reikningar" },
+  { key: "subscription", label: "Áskrift" },
+  { key: "hosting", label: "Hýsingarstjórnun", licenceModule: "Hosting" },
   { key: "pos", label: "POS", licenceModule: "POS" },
   { key: "dkOne", label: "dkOne", licenceModule: "dkOne" },
   { key: "dkPlus", label: "dkPlus", licenceModule: "dkPlus" },
-  { key: "timeclock", label: "Stimpilklukka", licenceModule: "TimeClock" },
+  { key: "timeclock", label: "Stimpilkl.", licenceModule: "TimeClock" },
   { key: "users", label: "Notendur" },
 ];
 
-function Checkmark({ checked }: { checked: boolean }) {
-  if (checked) {
-    return (
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-(--color-primary)" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-      </svg>
-    );
-  }
-  return <span className="text-(--color-border)">—</span>;
+/**
+ * Checks whether a licensed module is enabled for the active company.
+ *
+ * The licence response uses module objects with an `Enabled` property.
+ * If the module is missing or disabled, the related permission column is hidden.
+ */
+function isModuleEnabled(
+  licence: LicenceResponse | undefined,
+  module: keyof LicenceResponse,
+): boolean {
+  const entry = licence?.[module];
+
+  return Boolean(
+    entry &&
+      typeof entry === "object" &&
+      "Enabled" in entry &&
+      entry.Enabled,
+  );
 }
 
+/**
+ * Converts the company role stored on the user into a readable Icelandic label.
+ *
+ * `companyRole` comes from user_companies.role.
+ */
+function getCompanyRoleLabel(user: PortalUser): string {
+  if (user.companyRole === "admin") return "Stjórnandi";
+
+  return "Notandi";
+}
+
+/**
+ * Renders a centered permission indicator.
+ *
+ * Shows:
+ * - a checkmark when the permission is true
+ * - a dash when the permission is false
+ *
+ * This is used for every permission column in the table.
+ */
+function Checkmark({ checked }: { checked: boolean }) {
+  return (
+    <div className="flex justify-center">
+      {checked ? (
+        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-(--color-surface-hover)">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-4 w-4 text-(--color-primary)"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2.5}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M5 13l4 4L19 7"
+            />
+          </svg>
+        </span>
+      ) : (
+        <span className="inline-flex h-6 w-6 items-center justify-center text-(--color-border)">
+          —
+        </span>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Props for UsersTable.
+ *
+ * `onSelectUser` is called when a user row or the Breyta button is clicked.
+ * The parent page uses this to open UserPanel for the selected user.
+ */
 interface Props {
   onSelectUser: (user: PortalUser) => void;
 }
 
+/**
+ * Displays all portal users for the active company.
+ *
+ * Data sources:
+ * - `usePortalUsers()` loads users from GET /users
+ * - `useLicence()` loads company licence information
+ *
+ * The table dynamically hides permission columns for modules that are not
+ * enabled in the company's licence.
+ */
 export function UsersTable({ onSelectUser }: Props) {
-  const { data: users = [], isLoading } = usePortalUsers();
+  const { data: users = [], isLoading, error } = usePortalUsers();
   const { data: licence } = useLicence();
 
+  /**
+   * Only show permission columns that are allowed by the company's licence.
+   *
+   * Permissions without `licenceModule` are always visible.
+   * Permissions with `licenceModule` are only visible when that module is enabled.
+   */
   const visiblePermissions = PERMISSION_KEYS.filter(({ licenceModule }) => {
     if (!licenceModule) return true;
-    const entry = licence?.[licenceModule];
-    return entry && typeof entry === "object" && "Enabled" in entry && entry.Enabled;
+
+    return isModuleEnabled(licence, licenceModule);
   });
 
-  const permissionResults = useQueries({
-    queries: users.map((u) => permissionsQueryOptions(u.id)),
-  });
-
-  const permissionsMap = Object.fromEntries(
-    users.map((u, i) => [u.id, permissionResults[i]?.data ?? DEFAULT_PERMISSIONS]),
-  );
-
+  /**
+   * Column configuration for the shared Table component.
+   *
+   * Each column defines:
+   * - `header`: column title
+   * - `accessor`: how the cell is rendered
+   * - `hideBelow`: optional responsive hiding rule
+   */
   const columns: Column<PortalUser>[] = [
     {
-      header: "Nafn",
-      accessor: (u) => <p className="font-mono text-sm text-(--color-text-secondary)">{u.username}</p>,
+      header: "Notandi",
+      headerClassName: "pl-5",
+      className: "pl-5",
+      accessor: (u) => (
+        <span  className="text-sm text-(--color-text-secondary)">
+          {u.name}
+        </span>
+      ),
     },
     {
-      header: "Netfang",
-      accessor: (u) =>
-        u.email
-          ? <span className="text-(--color-text-secondary)">{u.email}</span>
-          : <span className="text-(--color-text-muted)">—</span>,
+      header: "Hlutverk",
+      accessor: (u) => (
+        <span  className="text-sm text-(--color-text-secondary)">
+          {getCompanyRoleLabel(u)}
+        </span>
+      ),
       hideBelow: "md",
     },
     {
-      header: "Hýsingaraðgangur",
+      header: "Netfang",
+      headerClassName: "pl-15",
+      className: "pl-15",
       accessor: (u) =>
-        u.hostingUsername
-          ? <span className="font-mono text-xs text-(--color-text-secondary)">{u.hostingUsername}</span>
-          : <span className="text-(--color-text-muted)">—</span>,
-      hideBelow: "lg",
+        u.email ? (
+          <span className="text-sm text-(--color-text-secondary)">
+            {u.email}
+          </span>
+        ) : (
+          <span className="text-sm text-(--color-text-muted)">—</span>
+        ),
+      hideBelow: "md",
     },
+
+    /**
+     * Creates one table column per visible permission.
+     *
+     * Example:
+     * - invoices -> Reikningar
+     * - hosting -> Hýsing
+     * - users -> Notendur
+     */
     ...visiblePermissions.map(({ key, label }) => ({
       header: label,
-      accessor: (u: PortalUser) => <Checkmark checked={permissionsMap[u.id]?.[key] ?? false} />,
+      headerClassName: "text-center",
+      className: "text-center",
+      accessor: (u: PortalUser) => (
+        <Checkmark checked={u.permissions?.[key] ?? false} />
+      ),
       hideBelow: "lg" as const,
     })),
+
     {
       header: "",
       accessor: (u) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={(e) => { e.stopPropagation(); onSelectUser(u); }}
-        >
-          Breyta
-        </Button>
+        <div className="flex">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              /**
+               * Prevents the row click and button click from both firing.
+               *
+               * Without this, clicking the button could trigger duplicate
+               * open actions.
+               */
+              e.stopPropagation();
+              onSelectUser(u);
+            }}
+          >
+            Breyta
+          </Button>
+        </div>
       ),
     },
   ];
 
-  if (isLoading) return <p className="text-sm text-(--color-text-muted)">Hleður notendum...</p>;
+  if (isLoading) {
+    return (
+      <p className="text-sm text-(--color-text-muted)">Hleður notendum...</p>
+    );
+  }
+
+  if (error) {
+    return (
+      <p className="text-sm text-(--color-error)">
+        Villa við að sækja notendur.
+      </p>
+    );
+  }
 
   return (
     <Table

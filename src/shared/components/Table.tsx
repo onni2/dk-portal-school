@@ -1,5 +1,19 @@
 /**
- * Generic data table component. Accepts typed column definitions and a row array, and handles empty state, responsive column hiding, and an optional footer.
+ * Generic data table component.
+ *
+ * Accepts typed column definitions and a row array.
+ *
+ * Handles:
+ * - table rendering
+ * - empty state
+ * - responsive column hiding
+ * - optional footer
+ * - row click handling
+ *
+ * Styling:
+ * - `className` applies to body cells: <td>
+ * - `headerClassName` applies to header cells: <th>
+ *
  * Uses: @/shared/utils/cn
  * Exports: Column, TableProps, Table
  */
@@ -7,10 +21,45 @@ import type { ReactNode } from "react";
 import { cn } from "@/shared/utils/cn";
 
 export interface Column<T> {
+  /**
+   * Text shown in the table header.
+   *
+   * Example:
+   * header: "Reikningar"
+   */
   header: string;
+
+  /**
+   * Function that renders the cell content for each row.
+   *
+   * Example:
+   * accessor: (user) => user.email
+   */
   accessor: (row: T) => ReactNode;
+
+  /**
+   * Optional responsive hiding.
+   *
+   * md = hidden until medium screens
+   * lg = hidden until large screens
+   */
   hideBelow?: "md" | "lg";
+
+  /**
+   * Classes applied to body cells: <td>
+   *
+   * Example:
+   * className: "text-center"
+   */
   className?: string;
+
+  /**
+   * Classes applied to header cells: <th>
+   *
+   * Example:
+   * headerClassName: "text-center"
+   */
+  headerClassName?: string;
 }
 
 export interface TableProps<T> {
@@ -27,9 +76,6 @@ const hiddenClasses = {
   lg: "hidden lg:table-cell",
 } as const;
 
-/**
- *
- */
 export function Table<T>({
   columns,
   data,
@@ -57,6 +103,7 @@ export function Table<T>({
                 className={cn(
                   "px-3 py-2.5 text-sm font-semibold text-(--color-text)",
                   col.hideBelow && hiddenClasses[col.hideBelow],
+                  col.headerClassName,
                 )}
               >
                 {col.header}
@@ -64,6 +111,7 @@ export function Table<T>({
             ))}
           </tr>
         </thead>
+
         <tbody>
           {data.map((row) => (
             <tr
