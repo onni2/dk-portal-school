@@ -1,3 +1,8 @@
+/**
+ * Subscription products page — browse dk product catalogue and add products to the active subscription.
+ * Uses: @/shared/components/PageTemplate, ../api/overview.queries, ../api/products.queries, ./AddProductModal, ./ProductPanel
+ * Exports: SubscriptionProductsPage
+ */
 import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { PageTemplate } from "@/shared/components/PageTemplate";
@@ -66,6 +71,7 @@ export function SubscriptionProductsPage() {
       <PageTemplate
         title="Vörur dk"
         description="Skoðaðu vörur sem í boði eru og bættu við áskrift þína."
+        info="Hér sérð þú allar vörur og þjónustur sem dk hugbúnaður hefur í boði. Hægt er að bæta vörum við virka áskrift þína eða fá nánari upplýsingar um hverja vöru."
       >
         <div className="space-y-8">
           {groups.map((group) => (

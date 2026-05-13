@@ -9,6 +9,7 @@ import { switchCompany } from "@/features/company/api/company.api";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useSubmissions } from "../api/accountant.queries";
+import { InfoTooltip } from "@/shared/components/InfoTooltip";
 
 export function AccountantCompanies() {
   const companies = useAuthStore((s) => s.companies);
@@ -39,7 +40,10 @@ export function AccountantCompanies() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-[30px] font-bold text-[#0B0F1A]">Fyrirtækin mín</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-[30px] font-bold text-[#0B0F1A]">Fyrirtækin mín</h1>
+          <InfoTooltip text="Hér sérð þú öll fyrirtæki sem þú ert skráður sem bókari fyrir. Smelltu á fyrirtæki til að skipta yfir í það og skoða gögn þess." />
+        </div>
         <p className="text-[15px] text-[#5C667A]">
           Yfirlit yfir fyrirtæki sem þú starfar sem bókari fyrir
         </p>

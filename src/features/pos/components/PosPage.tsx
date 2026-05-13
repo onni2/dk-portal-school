@@ -1,3 +1,8 @@
+/**
+ * dkPOS page with a tab switcher (dkPOS / REST) and a two-column grid of service cards + log panel.
+ * Uses: @/shared/components/PageTemplate, @/shared/components/LoadingSpinner, ../api/pos.queries, ./PosServiceCard, ./PosLogPanel
+ * Exports: PosPage
+ */
 import { Suspense, useState } from "react";
 import { cn } from "@/shared/utils/cn";
 import { PageTemplate } from "@/shared/components/PageTemplate";
@@ -52,11 +57,12 @@ function ServicesGrid({ serviceType }: { serviceType: Tab }) {
   );
 }
 
+/** dkPOS page — tab switcher with a service grid and log panel per tab. */
 export function PosPage() {
   const [activeTab, setActiveTab] = useState<Tab>("dkpos");
 
   return (
-    <PageTemplate title="dkPOS" description="dkPOS þjónustur">
+    <PageTemplate title="dkPOS" description="dkPOS þjónustur" info="dkPOS er sölukerfi dk hugbúnaðar. Hér sérð þú stöðu þjónustanna sem eru tengdar við POS kerfið þitt og hvort þær séu í lagi eða þurfi athygli.">
       <div className="flex gap-1 rounded-lg border border-(--color-border) bg-(--color-surface) p-1 w-fit mb-6">
         {(["dkpos", "rest"] as const).map((tab) => (
           <button

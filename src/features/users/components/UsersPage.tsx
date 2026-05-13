@@ -13,6 +13,7 @@ import { UserPanel } from "./UserPanel";
 import { useInvalidateUsers } from "../api/users.queries";
 import type { PortalUser } from "../types/users.types";
 
+/** Portal users management page. Opens an invite modal or the user edit panel on interaction. */
 export function UsersPage() {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<PortalUser | null>(null);
@@ -23,6 +24,7 @@ export function UsersPage() {
       <PageTemplate
         title="Notendur"
         description="Yfirlit yfir notendur Mínna síðna hjá fyrirtækinu."
+        info="Hér sérð þú alla notendur sem hafa aðgang að Mínum síðum fyrir þetta fyrirtæki. Hægt er að bjóða nýjum notendum, breyta aðgangsréttindum þeirra og fjarlægja notendur."
         actions={<Button onClick={() => setIsInviteOpen(true)}>+ Bjóða notanda</Button>}
       >
         <UsersTable onSelectUser={setSelectedUser} />

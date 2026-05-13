@@ -1,3 +1,8 @@
+/**
+ * dk vefþjónustur page — manage API auth tokens and view per-token usage logs.
+ * Uses: @/shared/components/PageTemplate, ./AuthTokensPanel, ./AuthTokenApiLogsPage
+ * Exports: DkPlusPage
+ */
 import { Suspense, useState } from "react";
 import { PageTemplate } from "@/shared/components/PageTemplate";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
@@ -30,6 +35,7 @@ export function DkPlusPage() {
     <PageTemplate
       title={logToken ? `${logToken.description} — Notkun` : "dk vefþjónustur"}
       description={logToken ? undefined : "Á þessari síðu er hægt að stofna auðkenningartákn til að tengja vefþjónustur við bókhaldskerfið þitt. Einnig er hægt að sjá notkun á auðkenningartáknunum með því að ýta á 'Sjá notkun' hnappinn."}
+      info={logToken ? undefined : "Auðkenningartákn (API tokens) eru notuð til að tengja utanaðkomandi kerfi við dk API. Hvert tákn er bundið við ákveðna þjónustu og gefur leyfi til að nota API á vegum fyrirtækisins."}
       actions={logToken ? undefined : <HelpButton />}
     >
       <Suspense fallback={<LoadingSpinner />}>

@@ -1,9 +1,15 @@
+/**
+ * Knowledge base page — searchable article/video library powered by Zoho Desk and YouTube.
+ * Uses: minisearch, ../api/knowledgeBase.queries, ../api/youtube.queries
+ * Exports: KnowledgeBasePage
+ */
 import { useState, useMemo, useEffect, useRef } from "react";
 import MiniSearch from "minisearch";
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { Card } from "@/shared/components/Card";
 import { Input } from "@/shared/components/Input";
 import { cn } from "@/shared/utils/cn";
+import { InfoTooltip } from "@/shared/components/InfoTooltip";
 import { useKbData, useArticleContent } from "../api/knowledgeBase.queries";
 import { useYoutubeVideos } from "../api/youtube.queries";
 import type { KbArticle, KbCategory } from "../types/knowledgeBase.types";
@@ -796,7 +802,10 @@ function KnowledgeBaseContent() {
       {/* Header — searchBox is always at this exact position so it never remounts */}
       <div className="flex items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-(--color-text)">Hjálparmiðstöð</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-semibold text-(--color-text)">Hjálparmiðstöð</h1>
+            <InfoTooltip text="Hjálparmiðstöðin inniheldur leiðbeiningar, greinar og myndbönd um notkun á dk kerfum. Hægt er að leita að efni eða fletta í gegnum flokka." />
+          </div>
         </div>
         {searchBox}
       </div>
