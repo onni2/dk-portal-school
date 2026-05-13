@@ -4,6 +4,7 @@
  * Exports: AuthTokensPanel
  */
 import { useState } from "react";
+import { cn } from "@/shared/utils/cn";
 import { useAuthTokens, useDeleteAuthToken } from "../api/dkplus.queries";
 import type { AuthToken } from "../types/dkplus.types";
 
@@ -48,17 +49,67 @@ function LogsIcon() {
   );
 }
 
-function TokenTable({
-  tokens,
-  onCopy,
-  onRequestDelete,
-  onConfirmDelete,
-  onCancelDelete,
-  onViewLogs,
-  copiedId,
-  deletingId,
-  confirmingDeleteId,
-}: {
+interface PaginationControlsProps {
+  page: number;
+  totalPages: number;
+  pageSize: number;
+  totalItems: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
+}
+
+function PaginationControls({ page, totalPages, pageSize, totalItems, onPageChange, onPageSizeChange }: PaginationControlsProps) {
+  const start = totalItems === 0 ? 0 : (page - 1) * pageSize + 1;
+  const end = Math.min(page * pageSize, totalItems);
+
+  const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1)
+    .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+    .reduce<(number | "...")[]>((acc, p, i, arr) => {
+      if (i > 0 && p - (arr[i - 1] as number) > 1) acc.push("...");
+      acc.push(p);
+      return acc;
+    }, []);
+
+  return (
+    <div className="flex items-center justify-between px-4 py-3">
+      <div className="flex items-center gap-2 text-[13px] text-[#5C667A]">
+        <span>Sýna</span>
+        <select
+          value={pageSize}
+          onChange={(e) => { onPageSizeChange(Number(e.target.value)); onPageChange(1); }}
+          className="rounded-lg border border-[var(--color-border)] bg-white px-2 py-1 text-[13px] focus:outline-none focus:ring-2 focus:ring-[#4743F7]/30"
+        >
+          {PAGE_SIZE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <span>á síðu</span>
+        <span className="ml-2">{start}–{end} af {totalItems}</span>
+      </div>
+      <div className="flex items-center gap-1">
+        <button type="button" onClick={() => onPageChange(1)} disabled={page === 1}
+          className="rounded-lg border border-[var(--color-border)] bg-white px-2 py-1 text-[13px] text-[#5C667A] disabled:opacity-40 hover:bg-[#F6F8FC]">«</button>
+        <button type="button" onClick={() => onPageChange(page - 1)} disabled={page === 1}
+          className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-1 text-[13px] text-[#5C667A] disabled:opacity-40 hover:bg-[#F6F8FC]">‹</button>
+        {pageNumbers.map((p, i) =>
+          p === "..." ? (
+            <span key={`e-${i}`} className="px-2 text-[#5C667A]">…</span>
+          ) : (
+            <button key={p} type="button" onClick={() => onPageChange(p as number)}
+              className={cn("rounded-lg border px-3 py-1 text-[13px]",
+                page === p ? "border-[#4743F7] bg-[#4743F7] text-white" : "border-[var(--color-border)] bg-white text-[#5C667A] hover:bg-[#F6F8FC]")}>
+              {p}
+            </button>
+          )
+        )}
+        <button type="button" onClick={() => onPageChange(page + 1)} disabled={page === totalPages || totalPages === 0}
+          className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-1 text-[13px] text-[#5C667A] disabled:opacity-40 hover:bg-[#F6F8FC]">›</button>
+        <button type="button" onClick={() => onPageChange(totalPages)} disabled={page === totalPages || totalPages === 0}
+          className="rounded-lg border border-[var(--color-border)] bg-white px-2 py-1 text-[13px] text-[#5C667A] disabled:opacity-40 hover:bg-[#F6F8FC]">»</button>
+      </div>
+    </div>
+  );
+}
+
+interface TokenTableProps {
   tokens: AuthToken[];
   onCopy: (token: AuthToken) => void;
   onRequestDelete: (id: string) => void;
@@ -68,43 +119,42 @@ function TokenTable({
   copiedId: string | null;
   deletingId: string | null;
   confirmingDeleteId: string | null;
-}) {
+}
+
+function TokenTable({ tokens, onCopy, onRequestDelete, onConfirmDelete, onCancelDelete, onViewLogs, copiedId, deletingId, confirmingDeleteId }: TokenTableProps) {
   return (
     <table className="w-full text-sm">
       <thead>
-        <tr className="border-b border-(--color-border)">
-          <th className="px-4 py-3 text-left font-semibold text-(--color-text)">Lýsing</th>
-          <th className="px-4 py-3 text-left font-semibold text-(--color-text)">Fyrirtæki</th>
-          <th className="px-4 py-3 text-left font-semibold text-(--color-text)">Tákn</th>
-          <th className="px-4 py-3 text-right font-semibold text-(--color-text)">Aðgerðir</th>
+        <tr className="border-b border-[var(--color-border)] bg-[#F6F8FC]">
+          <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[#5C667A]">Lýsing</th>
+          <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[#5C667A]">Fyrirtæki</th>
+          <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[#5C667A]">Tákn</th>
+          <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-[#5C667A]">Aðgerðir</th>
         </tr>
       </thead>
       <tbody>
-        {tokens.map((t, i) => (
-          <tr
-            key={t.id}
-            className={i % 2 === 0 ? "bg-(--color-surface)" : "bg-(--color-background)"}
-          >
-            <td className="px-4 py-3 text-(--color-text)">{t.description}</td>
-            <td className="px-4 py-3 text-(--color-text-secondary)">{t.companyName}</td>
-            <td className="px-4 py-3 font-mono text-xs text-(--color-text-muted) tracking-wide">
+        {tokens.map((t) => (
+          <tr key={t.id} className="border-b border-[var(--color-border)] last:border-0 hover:bg-[#F6F8FC]">
+            <td className="px-4 py-3 font-medium text-[#0B0F1A]">{t.description}</td>
+            <td className="px-4 py-3 text-[#5C667A]">{t.companyName}</td>
+            <td className="px-4 py-3 font-mono text-xs text-[#5C667A] tracking-wide">
               {maskToken(t.token)}
             </td>
             <td className="px-4 py-3">
               {confirmingDeleteId === t.id ? (
                 <div className="flex items-center justify-end gap-2">
-                  <span className="text-xs text-(--color-text-secondary)">Eyða varanlega?</span>
+                  <span className="text-xs text-[#5C667A]">Eyða varanlega?</span>
                   <button
                     onClick={() => onConfirmDelete(t.id)}
                     disabled={deletingId === t.id}
-                    className="rounded px-2 py-1 text-xs font-medium text-white bg-(--color-error) transition-opacity hover:opacity-90 disabled:opacity-50"
+                    className="rounded-lg px-2 py-1 text-xs font-medium text-white bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50"
                   >
                     {deletingId === t.id ? "Eyði..." : "Já, eyða"}
                   </button>
                   <button
                     onClick={onCancelDelete}
                     disabled={deletingId === t.id}
-                    className="rounded border border-(--color-border) px-2 py-1 text-xs font-medium text-(--color-text) transition-colors hover:bg-(--color-surface-hover) disabled:opacity-50"
+                    className="rounded-lg border border-[var(--color-border)] px-2 py-1 text-xs font-medium text-[#5C667A] hover:bg-[#F6F8FC] transition-colors disabled:opacity-50"
                   >
                     Hætta við
                   </button>
@@ -114,11 +164,12 @@ function TokenTable({
                   <button
                     title={copiedId === t.id ? "Afritað!" : "Afrita tákn"}
                     onClick={() => onCopy(t)}
-                    className={`flex items-center gap-1 rounded px-2 py-1.5 text-xs transition-colors ${
+                    className={cn(
+                      "flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs transition-colors",
                       copiedId === t.id
-                        ? "text-(--color-primary)"
-                        : "text-(--color-text-secondary) hover:text-(--color-text) hover:bg-(--color-surface-hover)"
-                    }`}
+                        ? "text-[#4743F7]"
+                        : "text-[#5C667A] hover:text-[#4743F7] hover:bg-[#EEF2FF]",
+                    )}
                   >
                     <CopyIcon />
                     {copiedId === t.id ? "Afritað!" : "Afrita"}
@@ -126,14 +177,14 @@ function TokenTable({
                   <button
                     title="Eyða tákni"
                     onClick={() => onRequestDelete(t.id)}
-                    className="flex items-center gap-1 rounded px-2 py-1.5 text-xs text-(--color-text-secondary) transition-colors hover:text-(--color-error) hover:bg-(--color-surface-hover)"
+                    className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs text-[#5C667A] hover:text-red-600 hover:bg-[#F6F8FC] transition-colors"
                   >
                     <TrashIcon />
                     Eyða
                   </button>
                   <button
                     onClick={() => onViewLogs(t)}
-                    className="flex items-center gap-1 rounded px-2 py-1.5 text-xs text-(--color-text-secondary) transition-colors hover:text-(--color-text) hover:bg-(--color-surface-hover)"
+                    className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs text-[#5C667A] hover:text-green-600 hover:bg-green-50 transition-colors"
                   >
                     <LogsIcon />
                     Sjá notkun
@@ -148,7 +199,6 @@ function TokenTable({
   );
 }
 
-
 interface AuthTokensPanelProps {
   onViewLogs: (token: AuthToken) => void;
 }
@@ -159,7 +209,7 @@ export function AuthTokensPanel({ onViewLogs }: AuthTokensPanelProps) {
   const deleteMutation = useDeleteAuthToken();
 
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState<(typeof PAGE_SIZE_OPTIONS)[number]>(10);
+  const [pageSize, setPageSize] = useState(10);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
@@ -172,6 +222,15 @@ export function AuthTokensPanel({ onViewLogs }: AuthTokensPanelProps) {
 
   const totalPages = Math.max(1, Math.ceil(tokens.length / pageSize));
   const pagedTokens = tokens.slice((page - 1) * pageSize, page * pageSize);
+
+  const paginationProps = {
+    page,
+    totalPages,
+    pageSize,
+    totalItems: tokens.length,
+    onPageChange: setPage,
+    onPageSizeChange: (s: number) => { setPageSize(s); setPage(1); },
+  };
 
   function handleCopy(token: AuthToken) {
     navigator.clipboard.writeText(token.token);
@@ -193,9 +252,10 @@ export function AuthTokensPanel({ onViewLogs }: AuthTokensPanelProps) {
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-(--color-border)">
-      <div className="border-b border-(--color-border) bg-(--color-surface) px-4 py-3">
-        <h3 className="text-sm font-semibold text-(--color-text)">Auðkenningartákn</h3>
+    <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-white">
+      {/* Header */}
+      <div className="border-b border-[var(--color-border)] bg-[#F6F8FC] px-4 py-3">
+        <h3 className="text-[13px] font-semibold text-[#0B0F1A]">Auðkenningartákn</h3>
       </div>
 
       {error && (
@@ -204,61 +264,38 @@ export function AuthTokensPanel({ onViewLogs }: AuthTokensPanelProps) {
         </div>
       )}
 
-      {pagedTokens.length === 0 ? (
+      {tokens.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
-          <p className="text-sm font-medium text-(--color-text)">Engin auðkenningartákn skráð</p>
-          <p className="max-w-sm text-sm text-(--color-text-secondary)">
+          <p className="text-sm font-medium text-[#0B0F1A]">Engin auðkenningartákn skráð</p>
+          <p className="max-w-sm text-sm text-[#5C667A]">
             Notaðu hnappinn „Stofna tákn" til að búa til fyrsta táknið og tengja kerfi við DK vefþjónustur.
           </p>
         </div>
       ) : (
-        <TokenTable
-          tokens={pagedTokens}
-          onCopy={handleCopy}
-          onRequestDelete={(id) => setConfirmingDeleteId(id)}
-          onConfirmDelete={handleConfirmDelete}
-          onCancelDelete={() => setConfirmingDeleteId(null)}
-          onViewLogs={onViewLogs}
-          copiedId={copiedId}
-          deletingId={deletingId}
-          confirmingDeleteId={confirmingDeleteId}
-        />
-      )}
+        <>
+          {/* Top pagination */}
+          <div className="border-b border-[var(--color-border)]">
+            <PaginationControls {...paginationProps} />
+          </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-(--color-border) px-4 py-3 text-xs text-(--color-text-secondary)">
-        <div className="flex items-center gap-2">
-          <span>
-            Síða {page} af {totalPages} ({tokens.length} færslur)
-          </span>
-          <input
-            type="number"
-            min={1}
-            max={totalPages}
-            value={page}
-            onChange={(e) => {
-              const v = Math.min(totalPages, Math.max(1, Number(e.target.value)));
-              setPage(v);
-            }}
-            className="w-12 rounded border border-(--color-border) bg-(--color-surface) px-2 py-1 text-center text-xs text-(--color-text) outline-none focus:border-(--color-primary)"
+          <TokenTable
+            tokens={pagedTokens}
+            onCopy={handleCopy}
+            onRequestDelete={(id) => setConfirmingDeleteId(id)}
+            onConfirmDelete={handleConfirmDelete}
+            onCancelDelete={() => setConfirmingDeleteId(null)}
+            onViewLogs={onViewLogs}
+            copiedId={copiedId}
+            deletingId={deletingId}
+            confirmingDeleteId={confirmingDeleteId}
           />
-        </div>
-        <div className="flex items-center gap-2">
-          <span>Fjöldi á síðu:</span>
-          <select
-            value={pageSize}
-            onChange={(e) => {
-              setPageSize(Number(e.target.value) as (typeof PAGE_SIZE_OPTIONS)[number]);
-              setPage(1);
-            }}
-            className="rounded border border-(--color-border) bg-(--color-surface) px-2 py-1 text-xs text-(--color-text) outline-none focus:border-(--color-primary)"
-          >
-            {PAGE_SIZE_OPTIONS.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-        </div>
-      </div>
 
+          {/* Bottom pagination */}
+          <div className="border-t border-[var(--color-border)]">
+            <PaginationControls {...paginationProps} />
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -249,13 +249,15 @@ export function UsersTable({ onSelectUser }: Props) {
   }
 
   return (
-    <Table
-      columns={columns}
-      data={users}
-      keyFn={(u) => u.id}
-      footer={`${users.length} notendur`}
-      emptyMessage="Engir notendur fundust."
-      onRowClick={(u) => onSelectUser(u)}
-    />
+    <div className="w-full overflow-x-auto rounded-xl border border-[var(--color-border)] bg-white">
+      <Table
+        columns={columns}
+        data={users}
+        keyFn={(u) => u.id}
+        noBorder
+        emptyMessage="Engir notendur fundust."
+        onRowClick={(u) => onSelectUser(u)}
+      />
+    </div>
   );
 }
