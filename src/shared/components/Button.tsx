@@ -27,9 +27,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   size?: keyof typeof sizeStyles;
 }
 
-/**
- *
- */
+/** Styled button. Forwards the ref so it can be composed inside dialogs and form libraries. */
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ variant = "primary", size = "md", className, ...props }, ref) => {
     return (

@@ -1,3 +1,8 @@
+/**
+ * Modal for editing a user's kennitala and phone number.
+ * Uses: @/shared/components/Button, @/shared/components/Input, ../api/users.api, ../types/users.types
+ * Exports: EditUserModal
+ */
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/shared/components/Button";
@@ -11,6 +16,7 @@ interface Props {
   onSaved: (kennitala: string | undefined, phone: string | undefined) => void;
 }
 
+/** Small modal to update kennitala and phone. Calls `onSaved` with the new values on success. */
 export function EditUserModal({ user, onClose, onSaved }: Props) {
   const [kennitala, setKennitala] = useState(user.kennitala ?? "");
   const [phone, setPhone] = useState(user.phone ?? "");

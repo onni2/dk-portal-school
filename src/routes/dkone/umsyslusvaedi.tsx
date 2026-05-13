@@ -1,3 +1,6 @@
+/**
+ * /dkone/umsyslusvaedi — sub-company (umsýslusvæði) management page; prefetches sub-companies before mounting.
+ */
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
 import { subCompaniesQueryOptions } from "@/features/dkone/api/dkone.queries";

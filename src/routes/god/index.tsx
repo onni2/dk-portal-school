@@ -1,3 +1,6 @@
+/**
+ * /god — system admin page restricted to the "god" role; shows the MaintenanceManager tool.
+ */
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { Suspense } from "react";
 import { useAuthStore } from "@/features/auth/store/auth.store";

@@ -1,7 +1,5 @@
-// src/routes/users/index.tsx
 /**
- * Portal users page — admin only.
- * Lists all portal users and lets admins invite or remove them.
+ * /users — portal users admin page; guards access to super_admin/god/users-permission holders.
  */
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useState } from "react";

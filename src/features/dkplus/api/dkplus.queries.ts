@@ -1,3 +1,8 @@
+/**
+ * React Query options, hooks, and mutations for DK Plus auth tokens and API logs.
+ * Uses: @tanstack/react-query, ./dkplus.api
+ * Exports: authTokensQueryOptions, useAuthTokens, useAuthTokenApiLogs, useCreateAuthToken, useDeleteAuthToken
+ */
 import {
   queryOptions,
   useSuspenseQuery,
@@ -17,10 +22,12 @@ export const authTokensQueryOptions = queryOptions({
   queryFn: fetchAuthTokens,
 });
 
+/** Suspense hook for all auth tokens of the active company. */
 export function useAuthTokens() {
   return useSuspenseQuery(authTokensQueryOptions);
 }
 
+/** Hook for fetching API logs for a specific auth token (non-suspense). */
 export function useAuthTokenApiLogs(tokenId: string) {
   return useQuery({
     queryKey: ["auth-token-api-logs", tokenId],
@@ -28,6 +35,7 @@ export function useAuthTokenApiLogs(tokenId: string) {
   });
 }
 
+/** Mutation for creating a new auth token; invalidates the token list on success. */
 export function useCreateAuthToken() {
   const qc = useQueryClient();
   return useMutation({
@@ -39,6 +47,7 @@ export function useCreateAuthToken() {
   });
 }
 
+/** Mutation for deleting an auth token; invalidates the token list on success. */
 export function useDeleteAuthToken() {
   const qc = useQueryClient();
   return useMutation({

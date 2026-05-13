@@ -27,9 +27,7 @@ const hiddenClasses = {
   lg: "hidden lg:table-cell",
 } as const;
 
-/**
- *
- */
+/** Renders a bordered data table. Shows a text-only empty state when `data` is empty. */
 export function Table<T>({
   columns,
   data,

@@ -1,3 +1,10 @@
+/**
+ * Zustand store for UI language (IS/EN), font-size multiplier, and high-contrast mode.
+ * Font-size and high-contrast changes are applied directly to the document root so they
+ * take effect globally without a React re-render cycle.
+ * Uses: nothing — standalone store
+ * Exports: useLangStore
+ */
 import { create } from "zustand";
 
 type Lang = "IS" | "EN";

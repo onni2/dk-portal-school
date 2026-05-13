@@ -1,3 +1,6 @@
+/**
+ * /portalUserSettings — user profile and settings page; prefetches the connected hosting account.
+ */
 import { createFileRoute } from "@tanstack/react-router";
 import { SettingsPage } from "@/features/settings/components/SettingsPage";
 import { myHostingAccountQueryOptions } from "@/features/hosting/api/hosting.queries";

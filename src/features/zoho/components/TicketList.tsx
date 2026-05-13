@@ -16,6 +16,7 @@ interface Props {
   onDepartmentChange: (departmentId: string | undefined) => void;
 }
 
+// hardcoded colors here to match the Zoho/DK design — not using CSS vars intentionally
 const STATUS_STYLES: Record<TicketStatus, { label: string; bg: string; text: string }> = {
   opið:  { label: "OPIÐ",  bg: "bg-[#E3F2FD]", text: "text-[#4743F7]" },
   lokað: { label: "LOKAÐ", bg: "bg-[#E8F5E9]", text: "text-[#2E7D32]" },
@@ -29,6 +30,7 @@ function formatDate(dateStr: string) {
   });
 }
 
+/** Scrollable list of ticket cards with a department filter dropdown at the top. */
 export function TicketList({ tickets, isLoading, selectedId, onSelect, onDepartmentChange }: Props) {
   const [selectedDept, setSelectedDept] = useState<string>("");
   const { data: departments = [] } = useDepartments();
@@ -36,7 +38,7 @@ export function TicketList({ tickets, isLoading, selectedId, onSelect, onDepartm
   function handleDeptChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const val = e.target.value;
     setSelectedDept(val);
-    onDepartmentChange(val === "" ? undefined : val);
+    onDepartmentChange(val === "" ? undefined : val); // empty string = no filter
   }
 
   return (
@@ -67,7 +69,7 @@ export function TicketList({ tickets, isLoading, selectedId, onSelect, onDepartm
           <p className="text-sm text-[var(--color-text-secondary)]">Engar beiðnir fundust</p>
         </div>
       ) : (
-        <div className="nav-scroll flex flex-col gap-3 overflow-y-auto px-3 pt-3 pb-20">
+        <div className="nav-scroll flex flex-col gap-3 overflow-y-auto px-3 pt-3 pb-20"> {/* pb-20: breathing room so last card isn't clipped */}
           {tickets.map((ticket) => {
             const isSelected = ticket.id === selectedId;
             const status = STATUS_STYLES[ticket.status];

@@ -1,3 +1,8 @@
+/**
+ * Utility for computing Duo MFA shield state from a hosting account.
+ * Uses: ../types/hosting.types
+ * Exports: DuoShieldState, getDuoShieldState
+ */
 import type { HostingAccount } from "../types/hosting.types";
 
 export type DuoShieldState = "active" | "pending" | "none";

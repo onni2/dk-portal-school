@@ -1,3 +1,8 @@
+/**
+ * Table showing login/logout history for a hosting account. Used in both MyHosting and Hosting Management.
+ * Uses: @/shared/utils/cn, ../types/hosting.types
+ * Exports: HostingLoginHistoryTable
+ */
 import { cn } from "@/shared/utils/cn";
 import type { HostingLogEntry } from "../types/hosting.types";
 
@@ -64,6 +69,7 @@ function XIcon({ className }: { className?: string }) {
   );
 }
 
+/** Renders the login history table. Shows an empty state when there are no log entries. */
 export function HostingLoginHistoryTable({ log }: HostingLoginHistoryTableProps) {
   return (
     <div className=" mt-2.5 rounded-xl border border-(--color-border) bg-(--color-surface)">

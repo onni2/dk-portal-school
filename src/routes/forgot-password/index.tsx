@@ -1,3 +1,6 @@
+/**
+ * /forgot-password — form for requesting a password reset link by username.
+ */
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "@/shared/components/Button";

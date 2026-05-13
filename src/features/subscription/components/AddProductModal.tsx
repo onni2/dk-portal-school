@@ -1,3 +1,8 @@
+/**
+ * Two-step confirmation modal for adding a product to the subscription: confirm step and success step.
+ * Uses: @/shared/components/Button, @/shared/utils/cn, ../types/products.types
+ * Exports: AddProductModal
+ */
 import { useState } from "react";
 import { Button } from "@/shared/components/Button";
 import { cn } from "@/shared/utils/cn";
@@ -11,6 +16,7 @@ interface Props {
   onGoToInstructions: () => void;
 }
 
+/** Modal that asks for confirmation before adding a product, then offers to navigate to its setup guide. */
 export function AddProductModal({ product, onClose, onGoToInstructions }: Props) {
   const [step, setStep] = useState<Step>("confirm");
 

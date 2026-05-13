@@ -1,3 +1,9 @@
+/**
+ * Modal for inviting a new portal user. Collects name, email, kennitala, company role,
+ * optional hosting account, and initial module permissions.
+ * Uses: @/shared/components/Button, @/shared/components/Input, ../api/users.api, @/features/hosting/api/hosting.queries
+ * Exports: InviteUserModal
+ */
 import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/shared/components/Button";
@@ -35,11 +41,13 @@ interface Props {
   onInvited: () => void;
 }
 
+/** Invite modal. On success shows a confirmation screen before closing. */
 export function InviteUserModal({ onClose, onInvited }: Props) {
   const { data: licence } = useLicence();
   const { data: hostingAccounts = [] } = useQuery(hostingAccountsQueryOptions);
+  // only show permissions for modules the company actually has enabled
   const visiblePermissions = PERMISSION_LABELS.filter(({ licenceModule }) => {
-    if (!licenceModule) return true;
+    if (!licenceModule) return true; // no module = always show (e.g. invoices, users)
     const entry = licence?.[licenceModule];
     return entry && typeof entry === "object" && "Enabled" in entry && entry.Enabled;
   });
@@ -53,6 +61,7 @@ export function InviteUserModal({ onClose, onInvited }: Props) {
   const [invited, setInvited] = useState(false);
 
   const inviteMutation = useMutation({
+    // username and email are the same thing here — the API expects both
     mutationFn: () => inviteUser({ name, username: email, email, kennitala, hostingUsername, companyRole, permissions }),
     onSuccess: () => setInvited(true),
   });
@@ -61,6 +70,7 @@ export function InviteUserModal({ onClose, onInvited }: Props) {
     setPermissions((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
+  // show a simple confirmation screen after successful invite
   if (invited) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">

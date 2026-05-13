@@ -1,3 +1,9 @@
+/**
+ * Table listing Duo devices for a hosting account with a delete button per row.
+ * Shows an empty state if no devices are registered.
+ * Uses: ../../types/duo.types
+ * Exports: DuoDeviceList
+ */
 import type { DuoDevice } from "../../types/duo.types";
 
 interface DuoDeviceListProps {
@@ -14,6 +20,7 @@ function getStatusLabel(status: string) {
   return status;
 }
 
+/** Renders the device table. Highlights the row being deleted with a loading state. */
 export function DuoDeviceList({
   devices,
   isDeleting,

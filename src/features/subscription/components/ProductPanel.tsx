@@ -1,16 +1,23 @@
+/**
+ * Slide-over panel showing a product's description, price, and actions (add, cancel subscription, view instructions).
+ * Uses: @/shared/components/Button, ../types/products.types
+ * Exports: parseExtraDesc2, ProductPanel
+ */
 import { Button } from "@/shared/components/Button";
 import type { SubscriptionProduct } from "../types/products.types";
 
+/** Parse the ExtraDesc2 field — text before the first semicolon is the description; after is metadata (articleId). */
 export function parseExtraDesc2(raw: string | null | undefined): {
   description: string | null;
   articleId: string | null;
 } {
   if (!raw) return { description: null, articleId: null };
   const semi = raw.indexOf(";");
+  // if there's no semicolon, the whole string is just the description
   if (semi === -1) return { description: raw.trim() || null, articleId: null };
   const description = raw.slice(0, semi).trim() || null;
   const meta = raw.slice(semi + 1);
-  const match = meta.match(/articleId[=:]\s*"([^"]+)"/);
+  const match = meta.match(/articleId[=:]\s*"([^"]+)"/); // TODO: might want to handle more metadata fields here
   return { description, articleId: match?.[1] ?? null };
 }
 
@@ -23,6 +30,7 @@ interface Props {
   onGoToInstructions?: (articleId: string | null, productDescription?: string) => void;
 }
 
+/** Overlay panel with product details, price, and context-dependent action buttons. */
 export function ProductPanel({
   product,
   inSubscription,
@@ -93,6 +101,7 @@ export function ProductPanel({
               {product.UnitPrice1WithTax.toLocaleString("is-IS")} kr.
             </span>
           </div>
+          {/* only show add button if the product isn't already in the subscription */}
           {!inSubscription && onAddClick && (
             <Button onClick={onAddClick} className="w-full">
               + Bæta við

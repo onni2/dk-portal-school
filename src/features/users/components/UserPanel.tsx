@@ -1,3 +1,9 @@
+/**
+ * Slide-over modal for editing a portal user's hosting link and module permissions.
+ * Also allows deleting the user. Shown when a row is clicked in UsersTable.
+ * Uses: @/shared/components/Button, ../api/permissions.api, ../api/users.api, @/features/hosting/api/hosting.queries, ../api/users.queries
+ * Exports: UserPanel
+ */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/shared/components/Button";
@@ -27,6 +33,7 @@ interface Props {
   onClose: () => void;
 }
 
+/** Centred modal showing the user's details, hosting account picker, and permission checkboxes. */
 export function UserPanel({ user, onClose }: Props) {
   const qc = useQueryClient();
   const invalidateUsers = useInvalidateUsers();
@@ -61,10 +68,7 @@ export function UserPanel({ user, onClose }: Props) {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: () => {
-      if (!confirm(`Ertu viss um að þú viljir eyða ${user.name}?`)) return Promise.resolve();
-      return removeUser(user.id);
-    },
+    mutationFn: () => removeUser(user.id),
     onSuccess: () => {
       void invalidateUsers();
       onClose();
@@ -155,7 +159,15 @@ export function UserPanel({ user, onClose }: Props) {
 
         {/* Footer */}
         <div className="flex items-center justify-between border-t border-(--color-border) p-6">
-          <Button variant="danger" onClick={() => deleteMutation.mutate()} disabled={deleteMutation.isPending}>
+          <Button
+            variant="danger"
+            onClick={() => {
+              if (confirm(`Ertu viss um að þú viljir eyða ${user.name}?`)) {
+                deleteMutation.mutate();
+              }
+            }}
+            disabled={deleteMutation.isPending}
+          >
             {deleteMutation.isPending ? "Eyði..." : "Eyða notanda"}
           </Button>
           <div className="flex gap-3">

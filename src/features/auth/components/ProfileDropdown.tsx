@@ -13,9 +13,7 @@ interface ProfileDropdownProps {
   onLogout: () => void;
 }
 
-/**
- *
- */
+/** Profile button that opens a dropdown with the user's name, accessibility controls, and a logout button. */
 export function ProfileDropdown({ user, onLogout }: ProfileDropdownProps) {
   const [open, setOpen] = useState(false);
   const { lang, fontSize, setFontSize, highContrast, toggleHighContrast } = useLangStore();
@@ -23,9 +21,6 @@ export function ProfileDropdown({ user, onLogout }: ProfileDropdownProps) {
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    /**
-     *
-     */
     function handleClickOutside(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {
         setOpen(false);

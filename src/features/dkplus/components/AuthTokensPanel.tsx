@@ -1,3 +1,8 @@
+/**
+ * Panel listing all auth tokens for the active company with create, copy, delete, and log-view actions.
+ * Uses: @/shared/components/Button, @/features/auth/store/auth.store, ../api/dkplus.queries
+ * Exports: AuthTokensPanel
+ */
 import { useState } from "react";
 import { Button } from "@/shared/components/Button";
 import { useAuthStore } from "@/features/auth/store/auth.store";
@@ -238,6 +243,7 @@ interface AuthTokensPanelProps {
   onViewLogs: (token: AuthToken) => void;
 }
 
+/** Paginated token table with inline token creation form and per-token copy/delete/logs actions. */
 export function AuthTokensPanel({ onViewLogs }: AuthTokensPanelProps) {
   const { data: tokens } = useAuthTokens();
   const deleteMutation = useDeleteAuthToken();

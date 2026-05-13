@@ -18,10 +18,12 @@ export const DEFAULT_PERMISSIONS: UserPermissions = {
   users: false,
 };
 
+/** Fetches the module permission flags for a specific user. */
 export async function loadUserPermissions(userId: string): Promise<UserPermissions> {
   return mockClient.get<UserPermissions>(`/users/${userId}/permissions`);
 }
 
+/** Saves the full set of module permission flags for a user. */
 export async function saveUserPermissions(userId: string, permissions: UserPermissions): Promise<void> {
   return mockClient.put<void>(`/users/${userId}/permissions`, permissions);
 }

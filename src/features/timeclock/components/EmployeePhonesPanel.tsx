@@ -1,3 +1,8 @@
+/**
+ * Card panel for managing the list of employee phone numbers used for timeclock check-in.
+ * Uses: ../api/timeclock.queries, ../api/timeclock.api, ../store/timeclock.store, @/shared/components/*
+ * Exports: EmployeePhonesPanel
+ */
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/shared/components/Button";
@@ -7,6 +12,7 @@ import { useEmployeePhones } from "../api/timeclock.queries";
 import { addEmployeePhone, removeEmployeePhone } from "../api/timeclock.api";
 import { useTimeclockStore } from "../store/timeclock.store";
 
+/** Lists registered employee phones and provides a form to add new entries or remove existing ones. */
 export function EmployeePhonesPanel() {
   const { data: entries } = useEmployeePhones();
   const qc = useQueryClient();

@@ -1,3 +1,8 @@
+/**
+ * TypeScript types for the Duo MFA domain: user profiles, devices, and activation payloads.
+ * Uses: nothing — standalone file
+ * Exports: DuoUser, DuoDevice, CreateDuoDevicePayload, CreateDuoDeviceResponse, DuoDeviceStatusResponse, UpdateDuoUserPayload, UpdateDuoUserResponse
+ */
 export interface DuoUser {
   duoUserId: string;
   hostingAccountId: string;

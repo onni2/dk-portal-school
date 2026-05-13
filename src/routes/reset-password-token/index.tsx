@@ -1,3 +1,6 @@
+/**
+ * /reset-password-token — password reset form accessed via a one-time email link containing a token.
+ */
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";

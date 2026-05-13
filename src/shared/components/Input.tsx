@@ -11,9 +11,7 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
   error?: string;
 }
 
-/**
- *
- */
+/** Text input with optional label and error text. Forwards the ref for form library compatibility. */
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, className, id, ...props }, ref) => {
     const inputId =

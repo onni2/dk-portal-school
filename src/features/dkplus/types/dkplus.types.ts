@@ -1,3 +1,8 @@
+/**
+ * TypeScript types for DK Plus authentication tokens, API call log entries, and companies.
+ * Uses: nothing — standalone file
+ * Exports: AuthToken, AuthTokenApiLog, Company
+ */
 export interface AuthToken {
   id: string;
   description: string;

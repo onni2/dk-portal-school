@@ -16,9 +16,7 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   padding?: keyof typeof paddingStyles;
 }
 
-/**
- *
- */
+/** Renders a surface card with configurable padding. Use `padding="none"` when the content manages its own spacing. */
 export function Card({
   padding = "md",
   className,
