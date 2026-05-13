@@ -1,9 +1,15 @@
+/**
+ * Subscription overview page — active subscription, monthly cost, and linked products.
+ * Uses: @/shared/components/PageTemplate, @/shared/utils/format, ../api/overview.queries, ../api/products.queries
+ * Exports: SubscriptionOverviewPage
+ */
 import { Suspense, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { PageTemplate } from "@/shared/components/PageTemplate";
+import { formatISK } from "@/shared/utils/format";
 import { buildOverview } from "../api/overview.api";
 import { useProductsData, useSubscriptionOverview } from "../api/overview.queries";
 import { ProductPanel } from "./ProductPanel";
@@ -14,12 +20,6 @@ const IS_MONTHS = [
   "Janúar","Febrúar","Mars","Apríl","Maí","Júní",
   "Júlí","Ágúst","September","Október","Nóvember","Desember",
 ];
-
-function formatISK(n: number): string {
-  return Math.round(n)
-    .toString()
-    .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-}
 
 function StatCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
@@ -243,6 +243,7 @@ export function SubscriptionOverviewPage() {
   return (
     <PageTemplate
       title="Yfirlit áskriftar"
+      info="Hér sérð þú yfirlit yfir virkar áskriftir fyrirtækisins hjá dk hugbúnaði, mánaðarlegar greiðslur og tengdar vörur og þjónustur."
       actions={
         <Button onClick={() => navigate({ to: "/askrift/vorur" })}>
           Bæta við áskrift

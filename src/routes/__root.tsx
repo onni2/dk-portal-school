@@ -65,9 +65,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
   errorComponent: ({ error }) => <RouteError error={error} />,
 });
 
-/**
- *
- */
+/** Renders the bare Outlet for public pages (login, callback, etc.) or the full sidebar Layout for authenticated pages. */
 function RootComponent() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isLoginPage =

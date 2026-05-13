@@ -1,3 +1,8 @@
+/**
+ * Paginated, sortable table of sub-companies (umsýslusvæði) with inline add/delete controls.
+ * Uses: ../api/dkone.queries, ../api/dkone.api
+ * Exports: UmsyslusvaeðiTab
+ */
 import { useState, Suspense } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/shared/utils/cn";

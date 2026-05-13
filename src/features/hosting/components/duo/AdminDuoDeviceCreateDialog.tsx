@@ -1,3 +1,9 @@
+/**
+ * Admin version of the Duo device creation dialog — same flow as DuoDeviceCreateDialog but operates on a specific hosting account.
+ * Invalidates both the account devices cache and the global hosting accounts cache on completion.
+ * Uses: @/shared/components/Button, @/shared/utils/cn, ../../api/duo.queries, ../../api/hosting.queries, ../../api/duo.api, ./QrActivationForm, ./SmsActivationForm
+ * Exports: AdminDuoDeviceCreateDialog
+ */
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -66,6 +72,7 @@ function useActivationCountdown(expiresAt?: string | null) {
   };
 }
 
+/** Admin multi-step dialog for connecting a new Duo device to a specific hosting account. Same UX as DuoDeviceCreateDialog. */
 export function AdminDuoDeviceCreateDialog({
   accountId,
   onClose,

@@ -1,3 +1,9 @@
+/**
+ * Two-view modal for inviting DK employees to dkOne: a roster list of existing DK users and
+ * an employee search view for adding employees who aren't yet in the DK user list.
+ * Uses: ../api/dkone.queries, ../api/dkone.api, @/shared/components/LoadingSpinner, @/shared/components/Button
+ * Exports: InviteDkOneModal
+ */
 import { useState, Suspense, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
@@ -233,6 +239,7 @@ function AddEmployeeView({ onBack }: { onBack: () => void }) {
 
 // ── Modal shell ───────────────────────────────────────────────────────────────
 
+/** Modal shell that switches between the DK user roster view and the employee search/add view. */
 export function InviteDkOneModal({ onClose }: Props) {
   const [view, setView] = useState<"roster" | "add">("roster");
 

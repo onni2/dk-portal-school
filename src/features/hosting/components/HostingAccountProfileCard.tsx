@@ -1,3 +1,8 @@
+/**
+ * Sidebar profile card for the logged-in user's hosting account — shows name, username, login status, MFA state, and action buttons.
+ * Uses: @/shared/utils/cn
+ * Exports: HostingAccountProfileCard
+ */
 import { cn } from "@/shared/utils/cn";
 
 interface HostingAccountProfileCardProps {
@@ -58,6 +63,7 @@ function LogOutIcon({ className }: { className?: string }) {
   );
 }
 
+/** Profile card sidebar showing the user's hosting account details and password/sign-out action buttons. */
 export function HostingAccountProfileCard({
   username,
   displayName,

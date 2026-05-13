@@ -1,3 +1,8 @@
+/**
+ * Mock company list used for multi-company selection during development.
+ * Uses: ../features/company/types/company.types
+ * Exports: MOCK_COMPANIES
+ */
 import type { Company } from "../features/company/types/company.types";
 
 export const MOCK_COMPANIES: Company[] = [

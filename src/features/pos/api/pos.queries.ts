@@ -1,3 +1,10 @@
+/**
+ * React Query hooks and options for POS services and service logs.
+ * Service hooks auto-refetch every 2 seconds when any service is stopped.
+ * Uses: ./pos.api
+ * Exports: posServicesQueryOptions, posRestServicesQueryOptions, usePosServices, usePosRestServices,
+ *          usePosServiceLogs, usePosRestServiceLogs, useRestartPosService, useRestartPosRestService
+ */
 import { queryOptions, useSuspenseQuery, useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import {
   fetchPosServices,
@@ -18,6 +25,7 @@ export const posRestServicesQueryOptions = queryOptions({
   queryFn: fetchPosRestServices,
 });
 
+/** Suspense-enabled hook for dkPOS services. Polls every 2 s while any service is stopped. */
 export function usePosServices() {
   return useSuspenseQuery({
     ...posServicesQueryOptions,
@@ -26,6 +34,7 @@ export function usePosServices() {
   });
 }
 
+/** Suspense-enabled hook for REST POS services. Polls every 2 s while any service is stopped. */
 export function usePosRestServices() {
   return useSuspenseQuery({
     ...posRestServicesQueryOptions,

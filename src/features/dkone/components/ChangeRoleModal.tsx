@@ -1,3 +1,8 @@
+/**
+ * Modal for changing the dkOne role of an existing user, with an extra confirmation step for the owner role.
+ * Uses: @/shared/components/Button, ../api/dkone.api, ../api/dkone.queries
+ * Exports: ChangeRoleModal
+ */
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/shared/components/Button";
@@ -18,6 +23,7 @@ interface Props {
   onClose: () => void;
 }
 
+/** Displays the three dkOne roles as selectable cards and saves the chosen role; prompts for extra confirmation before granting owner. */
 export function ChangeRoleModal({ userId, userName, currentRole, onClose }: Props) {
   const queryClient = useQueryClient();
   const [selected, setSelected] = useState<DkOneRole>(currentRole);

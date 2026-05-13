@@ -1,7 +1,14 @@
+/**
+ * Full-page overlay shown when a route is locked for maintenance.
+ * Displayed by the route loader when a matching MaintenanceLock exists.
+ * Uses: nothing — standalone component
+ * Exports: MaintenanceOverlay
+ */
 interface Props {
   message: string;
 }
 
+/** Centred card with a wrench icon and the maintenance message. */
 export function MaintenanceOverlay({ message }: Props) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center text-center">

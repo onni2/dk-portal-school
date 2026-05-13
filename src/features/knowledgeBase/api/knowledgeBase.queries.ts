@@ -13,10 +13,12 @@ export const kbDataQueryOptions = queryOptions({
   staleTime: 10 * 60 * 1000,
 });
 
+/** Suspense hook that provides KB categories and articles. */
 export function useKbData() {
   return useSuspenseQuery(kbDataQueryOptions);
 }
 
+/** Non-suspense hook for lazy-loading a single article's full HTML content; no-ops when id is null. */
 export function useArticleContent(id: string | null) {
   return useQuery({
     queryKey: ["knowledge-base", "article", id],

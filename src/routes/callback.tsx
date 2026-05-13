@@ -75,6 +75,11 @@ function CallbackPage() {
           return;
         }
 
+        if (!portalData.token || typeof portalData.token !== "string") {
+          setError("Ógild svörun frá þjóni — reyndu aftur");
+          return;
+        }
+
         // Store JWT so subsequent API calls are authenticated
         localStorage.setItem("dk-auth-token", portalData.token);
         if (portalData.companyDkToken) {

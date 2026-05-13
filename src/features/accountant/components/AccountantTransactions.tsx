@@ -8,6 +8,7 @@ import { Table } from "@/shared/components/Table";
 import { useTransactions } from "../api/accountant.queries";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import type { Transaction } from "../api/accountant.api";
+import { InfoTooltip } from "@/shared/components/InfoTooltip";
 
 export function AccountantTransactions() {
   const companies = useAuthStore((s) => s.companies);
@@ -43,7 +44,10 @@ export function AccountantTransactions() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-[30px] font-bold text-[#0B0F1A]">Færslur</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-[30px] font-bold text-[#0B0F1A]">Færslur</h1>
+          <InfoTooltip text="Hér sérð þú bókhaldsfærslur fyrir fyrirtæki þín, skipt í tekjur og gjöld. Hægt er að sía eftir fyrirtæki, tegund og stöðu." />
+        </div>
         <p className="text-[15px] text-[#5C667A]">Bókhaldsfærslur fyrir fyrirtæki þín</p>
       </div>
 

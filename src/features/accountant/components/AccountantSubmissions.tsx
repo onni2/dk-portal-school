@@ -8,6 +8,7 @@ import { Table } from "@/shared/components/Table";
 import { useSubmissions } from "../api/accountant.queries";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import type { SubmissionStatus, Submission } from "../api/accountant.api";
+import { InfoTooltip } from "@/shared/components/InfoTooltip";
 
 const STATUS_STYLES: Record<SubmissionStatus, { label: string; bg: string; text: string }> = {
   "skilað":      { label: "Skilað",      bg: "bg-green-50",  text: "text-green-700"  },
@@ -47,8 +48,13 @@ export function AccountantSubmissions() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-[30px] font-bold text-[#0B0F1A]">Skilastaða</h1>
-        <p className="text-[15px] text-[#5C667A]">Yfirlit yfir skilastöðu skýrslna fyrir hvert fyrirtæki og tímabil</p>
+        <div className="flex items-center gap-2">
+          <h1 className="text-[30px] font-bold text-[#0B0F1A]">Skilastaða</h1>
+          <InfoTooltip text="Hér sérð þú skilastöðu VSK-skýrslna og launaskýrslna fyrir öll fyrirtæki þín. Gjaldfallnar skýrslur birtast efst á listanum." />
+        </div>
+        <p className="text-[15px] text-[#5C667A]">
+          Yfirlit yfir skilastöðu skýrslna fyrir hvert fyrirtæki og tímabil
+        </p>
       </div>
 
       <div className="mb-4 flex flex-wrap gap-3">

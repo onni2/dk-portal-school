@@ -1,3 +1,9 @@
+/**
+ * Modal dialog for changing the password of the logged-in user's hosting account.
+ * Enforces the password policy rules (length, upper/lower case, digit, special char) before enabling the save button.
+ * Uses: @/shared/utils/cn, ../api/hosting.api, ../api/hosting.queries
+ * Exports: HostingPasswordChangeDialog
+ */
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { cn } from "@/shared/utils/cn";
@@ -17,6 +23,7 @@ const PASSWORD_RULES = [
   { label: "Sértákn (!@#$%^&*)", test: (pw: string) => /[!@#$%^&*]/.test(pw) },
 ] as const;
 
+/** Password-change modal with live rule validation. Save is blocked until all rules pass and both fields match. */
 export function HostingPasswordChangeDialog({
   username,
   onClose,

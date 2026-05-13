@@ -1,3 +1,9 @@
+/**
+ * Scrollable list of hosting accounts shown in the left column of the Hosting Management page.
+ * Each row shows initials, username, login status, and a Duo shield icon indicating MFA state.
+ * Uses: @/shared/utils/cn, ../../types/hosting.types, ../../utils/duo-shield
+ * Exports: HostingAccountList
+ */
 import { cn } from "@/shared/utils/cn";
 import type { HostingAccount } from "../../types/hosting.types";
 import { getDuoShieldState, type DuoShieldState } from "../../utils/duo-shield";
@@ -47,6 +53,7 @@ function DuoShieldIcon({
   );
 }
 
+/** Renders the selectable account list with Duo shield indicators and a legend. */
 export function HostingAccountList({
   accounts,
   selectedAccountId,

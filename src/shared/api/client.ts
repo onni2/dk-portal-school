@@ -12,9 +12,7 @@ export const BASE_URL =
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/**
- *
- */
+/** Reads the auth token from localStorage (company DK Plus UUID) or falls back to the dev env token. */
 function authHeaders(): Record<string, string> {
   // Use the company DK Plus token (UUID) for api.dkplus.is calls.
   // Falls back to VITE_API_TOKEN for local dev without a backend.
@@ -32,9 +30,7 @@ function authHeaders(): Record<string, string> {
   return headers;
 }
 
-/**
- *
- */
+/** Throws an ApiError if the response is not OK, otherwise parses the body as JSON. */
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     let message = response.statusText;

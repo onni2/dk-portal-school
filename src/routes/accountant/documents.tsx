@@ -1,3 +1,6 @@
+/**
+ * /accountant/documents — document list for the accountant user.
+ */
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { AccountantDocuments } from "@/features/accountant/components/AccountantDocuments";
 import { useAuthStore } from "@/features/auth/store/auth.store";

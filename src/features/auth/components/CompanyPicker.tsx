@@ -1,3 +1,9 @@
+/**
+ * Full-page company picker shown after login when a user belongs to more than one company.
+ * Elevated users (super_admin/god) get a search box; regular users see a plain list.
+ * Uses: @/shared/utils/cn, ../store/auth.store, @/features/company/api/company.api
+ * Exports: CompanyPicker
+ */
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -8,6 +14,7 @@ import { cn } from "@/shared/utils/cn";
 
 const LAST_COMPANY_KEY = "dk-last-company";
 
+/** Sorts companies by most-recently-visited order stored in localStorage. */
 function getLastVisitedOrder<T extends { id: string }>(companies: T[]): T[] {
   try {
     const raw = localStorage.getItem(LAST_COMPANY_KEY);
@@ -24,6 +31,7 @@ function getLastVisitedOrder<T extends { id: string }>(companies: T[]): T[] {
   }
 }
 
+/** Full-page company selection screen. Switches auth tokens and invalidates all queries on selection. */
 export function CompanyPicker() {
   const { companies, user, setToken, setActiveCompany } = useAuthStore();
   const isElevated = user?.role === "super_admin" || user?.role === "god";
@@ -50,7 +58,7 @@ export function CompanyPicker() {
 
       try {
         const prev: string[] = JSON.parse(localStorage.getItem(LAST_COMPANY_KEY) ?? "[]");
-        const updated = [companyId, ...prev.filter((id) => id !== companyId)];
+        const updated = [companyId, ...prev.filter((id) => id !== companyId)]; // keep most-recent at top
         localStorage.setItem(LAST_COMPANY_KEY, JSON.stringify(updated));
       } catch { /* ignore */ }
 

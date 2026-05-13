@@ -1,3 +1,9 @@
+/**
+ * Slide-over modal for editing a portal user's hosting link and module permissions.
+ * Also allows deleting the user. Shown when a row is clicked in UsersTable.
+ * Uses: @/shared/components/Button, ../api/permissions.api, ../api/users.api, @/features/hosting/api/hosting.queries, ../api/users.queries
+ * Exports: UserPanel
+ */
 import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/shared/components/Button";

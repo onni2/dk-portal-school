@@ -1,3 +1,8 @@
+/**
+ * dk vefþjónustur page — manage API auth tokens and view per-token usage logs.
+ * Uses: @/shared/components/PageTemplate, ./AuthTokensPanel, ./AuthTokenApiLogsPage
+ * Exports: DkPlusPage
+ */
 import { Suspense, useState } from "react";
 import { PageTemplate } from "@/shared/components/PageTemplate";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";

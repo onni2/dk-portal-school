@@ -1,3 +1,8 @@
+/**
+ * React Query options and hooks for portal users and per-user permissions.
+ * Uses: ./users.api, ./permissions.api
+ * Exports: usersQueryOptions, usePortalUsers, useInvalidateUsers, permissionsQueryOptions, useUserPermissions, useInvalidatePermissions
+ */
 import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchUsers } from "./users.api";
 import { loadUserPermissions, DEFAULT_PERMISSIONS } from "./permissions.api";
@@ -10,6 +15,7 @@ export function usersQueryOptions(companyId: string | undefined) {
   });
 }
 
+/** Hook that fetches all portal users for the active company. */
 export function usePortalUsers() {
   const companyId = useAuthStore((s) => s.user?.companyId);
 
@@ -19,6 +25,7 @@ export function usePortalUsers() {
   });
 }
 
+/** Returns a callback that invalidates the portal-users query cache. */
 export function useInvalidateUsers() {
   const qc = useQueryClient();
 
@@ -36,6 +43,7 @@ export function permissionsQueryOptions(
   });
 }
 
+/** Fetches permissions for a specific user. Disabled when `userId` is undefined. */
 export function useUserPermissions(userId: string | undefined) {
   const companyId = useAuthStore((s) => s.user?.companyId);
 
@@ -45,6 +53,7 @@ export function useUserPermissions(userId: string | undefined) {
   });
 }
 
+/** Returns a callback that invalidates the permissions cache for a specific user. */
 export function useInvalidatePermissions() {
   const qc = useQueryClient();
   const companyId = useAuthStore((s) => s.user?.companyId);

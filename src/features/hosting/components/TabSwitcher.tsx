@@ -1,3 +1,8 @@
+/**
+ * Generic pill-style tab switcher. Used inside the hosting pages for Duo/history tabs.
+ * Uses: @/shared/utils/cn
+ * Exports: TabSwitcher
+ */
 import { cn } from "@/shared/utils/cn";
 
 interface TabItem<T extends string> {
@@ -12,6 +17,7 @@ interface TabSwitcherProps<T extends string> {
   className?: string;
 }
 
+/** Renders a row of pill tabs; the active tab gets the primary colour. Fully generic over tab value types. */
 export function TabSwitcher<T extends string>({
   tabs,
   active,

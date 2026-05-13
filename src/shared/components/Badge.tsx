@@ -17,9 +17,7 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   variant?: keyof typeof variantStyles;
 }
 
-/**
- *
- */
+/** Renders a small pill with the chosen colour variant. Defaults to "default" (neutral). */
 export function Badge({
   variant = "default",
   className,

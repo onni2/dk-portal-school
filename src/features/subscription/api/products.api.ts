@@ -1,3 +1,8 @@
+/**
+ * Fetches the DK product catalogue and groups visible products by predefined category prefixes.
+ * Uses: @/shared/api/client, ../types/products.types
+ * Exports: fetchDkProductGroups
+ */
 import { apiClient } from "@/shared/api/client";
 import type { ProductGroup, SubscriptionProduct } from "../types/products.types";
 
@@ -14,6 +19,7 @@ const GROUPS: { title: string; prefix: string; extra?: string[] }[] = [
   { title: "Microsoft Office", prefix: "v-av" },
 ];
 
+/** Fetch web-shop products and return them organised into named groups by item code prefix. */
 export async function fetchDkProductGroups(): Promise<ProductGroup[]> {
   const all = await apiClient.get<SubscriptionProduct[]>("/Product/page/1/500");
 

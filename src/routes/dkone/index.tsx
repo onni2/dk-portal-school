@@ -1,3 +1,6 @@
+/**
+ * /dkone — dkOne user management page; prefetches the user list before mounting.
+ */
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { Suspense } from "react";
 import { dkOneUsersQueryOptions } from "@/features/dkone/api/dkone.queries";

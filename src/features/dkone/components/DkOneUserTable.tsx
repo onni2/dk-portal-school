@@ -1,3 +1,8 @@
+/**
+ * Paginated, sortable, and searchable table of dkOne users with tabs for active members vs pending invites.
+ * Uses: ../api/dkone.queries, ../api/dkone.api, ./ChangeRoleModal, @/shared/utils/cn
+ * Exports: DkOneUserTable
+ */
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/shared/utils/cn";
@@ -144,7 +149,7 @@ export function DkOneUserTable() {
   const filtered = users
     .filter((u) => {
       if (u.status !== activeTab) return false;
-      if (!q) return true;
+      if (!q) return true; // skip search if empty
       return (
         u.fullName.toLowerCase().includes(q) ||
         u.email.toLowerCase().includes(q) ||
@@ -158,6 +163,7 @@ export function DkOneUserTable() {
       else if (sortKey === "role") cmp = (ROLE_ORDER[a.role] ?? 0) - (ROLE_ORDER[b.role] ?? 0);
       else if (sortKey === "addedByName") cmp = (a.addedByName ?? "").localeCompare(b.addedByName ?? "", "is");
       else if (sortKey === "createdAt") cmp = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      else if (sortKey === "lastUsed") cmp = 0;
       return sortDir === "asc" ? cmp : -cmp;
     });
 

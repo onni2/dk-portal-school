@@ -6,9 +6,7 @@
 import { apiClient } from "@/shared/api/client";
 import type { CustomerTransaction } from "../types/invoices.types";
 
-/**
- *
- */
+/** Fetches the first 100 customer transactions for the active company. */
 export async function fetchCustomerTransactions(): Promise<
   CustomerTransaction[]
 > {
@@ -17,9 +15,7 @@ export async function fetchCustomerTransactions(): Promise<
   );
 }
 
-/**
- *
- */
+/** Downloads the PDF for the given invoice number and triggers a browser download. */
 export async function fetchInvoicePdf(invoiceNumber: string): Promise<void> {
   const blob = await apiClient.getBlob(`/sales/invoice/${invoiceNumber}/pdf`);
   const url = URL.createObjectURL(blob);
