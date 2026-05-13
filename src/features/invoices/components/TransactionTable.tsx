@@ -8,7 +8,9 @@ import { useState } from "react";
 import { cn } from "@/shared/utils/cn";
 import { useCustomerTransactions } from "../api/invoices.queries";
 import { fetchInvoicePdf } from "../api/invoices.api";
+import { downloadInvoicesPdf } from "../api/invoices.pdf";
 import { useInvoiceFilters } from "../store/invoices.store";
+import { useAuthStore } from "@/features/auth/store/auth.store";
 import type { CustomerTransaction } from "../types/invoices.types";
 
 const PAGE_SIZE = 10;
@@ -57,6 +59,9 @@ export function TransactionTable() {
     selectedInvoiceNumber,
     setSelectedInvoiceNumber,
   } = useInvoiceFilters();
+  const { user, companies } = useAuthStore();
+  const companyName =
+    companies.find((c) => c.id === user?.companyId)?.name ?? "";
 
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
@@ -97,7 +102,9 @@ export function TransactionTable() {
       } else if (sortKey === "settled") {
         cmp = Number(a.Settled) - Number(b.Settled);
       } else if (sortKey === "settledAmount") {
-        cmp = a.SettledAmount - b.SettledAmount;
+        const aVal = a.Amount >= 0 ? a.Amount : 0;
+        const bVal = b.Amount >= 0 ? b.Amount : 0;
+        cmp = aVal - bVal;
       }
       return sortDir === "asc" ? cmp : -cmp;
     });
@@ -118,7 +125,7 @@ export function TransactionTable() {
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         {currencyEntries.map(([currency, { debit, credit }]) => {
           const net = debit - credit;
           return (
@@ -145,6 +152,17 @@ export function TransactionTable() {
             </div>
           );
         })}
+        {filtered.length > 0 && (
+          <button
+            onClick={() => downloadInvoicesPdf(filtered, dateFrom, dateTo, companyName)}
+            className="ml-auto flex items-center gap-1.5 rounded-md border border-(--color-border) bg-(--color-surface) px-3 py-2 text-sm text-(--color-text-secondary) transition-colors hover:bg-(--color-surface-hover)"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1m-4-4-4 4m0 0-4-4m4 4V4" />
+            </svg>
+            Hlaða niður PDF
+          </button>
+        )}
       </div>
 
       {filtered.length === 0 && (
@@ -182,7 +200,7 @@ export function TransactionTable() {
                   onClick={() => handleSort("settledAmount")}
                   className="inline-flex items-center font-medium text-(--color-text-secondary) transition-colors hover:text-(--color-text)"
                 >
-                  Gjaldm.<SortIcon active={sortKey === "settledAmount"} dir={sortDir} />
+                  Staða<SortIcon active={sortKey === "settledAmount"} dir={sortDir} />
                 </button>
               </th>
               <th className="px-4 py-3">
@@ -190,7 +208,7 @@ export function TransactionTable() {
                   onClick={() => handleSort("settled")}
                   className="inline-flex items-center font-medium text-(--color-text-secondary) transition-colors hover:text-(--color-text)"
                 >
-                  Staða<SortIcon active={sortKey === "settled"} dir={sortDir} />
+                  Greiðsla<SortIcon active={sortKey === "settled"} dir={sortDir} />
                 </button>
               </th>
               <th className="w-8 py-3 pr-4" />
@@ -222,7 +240,7 @@ export function TransactionTable() {
                     {!isDebit(tx) ? formatAmount(Math.abs(tx.Amount), tx.Currency) : ""}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    {formatAmount(tx.SettledAmount, tx.Currency)}
+                    {formatAmount(isDebit(tx) ? tx.Amount : 0, tx.Currency)}
                   </td>
                   <td className="px-4 py-3">
                     <span
