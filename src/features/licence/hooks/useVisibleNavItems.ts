@@ -1,9 +1,16 @@
+/**
+ * Hook that derives the visible sidebar nav items for the current user.
+ * Cops (god/super_admin) see everything; regular users see only items allowed by their licence + permissions.
+ * Uses: ../api/licence.queries, ../config/nav-items, ../store/role.store, ../utils/filter-nav, @/features/auth/store/auth.store
+ * Exports: useVisibleNavItems
+ */
 import { useLicence } from "../api/licence.queries";
 import { NAV_ITEMS } from "../config/nav-items";
 import { useRoleStore } from "../store/role.store";
 import { filterNavItems } from "../utils/filter-nav";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 
+/** Returns filtered NAV_ITEMS based on the current user's role, licence, and per-company permissions. */
 export function useVisibleNavItems() {
   const { data: licence, isLoading } = useLicence();
   const role = useRoleStore((s) => s.role);

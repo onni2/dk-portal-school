@@ -1,3 +1,10 @@
+/**
+ * Admin panel for toggling maintenance locks on individual routes.
+ * Only shown on the /god page (system admin only). Each toggle locks/unlocks the route
+ * and optionally sets a user-visible message.
+ * Uses: @/shared/components/Card, @/shared/components/PageTemplate, ../api/maintenance.queries, ../api/maintenance.api, @/features/licence/config/nav-items
+ * Exports: MaintenanceManager
+ */
 import { useState } from "react";
 import { Card } from "@/shared/components/Card";
 import { PageTemplate } from "@/shared/components/PageTemplate";
@@ -5,6 +12,7 @@ import { useMaintenanceLocks, useInvalidateMaintenance } from "../api/maintenanc
 import { lockRoute, unlockRoute } from "../api/maintenance.api";
 import { NAV_ITEMS } from "@/features/licence/config/nav-items";
 
+// NOTE: cop/accountant/god routes are excluded — they're internal and shouldn't be toggled
 const LOCKABLE_ROUTES = NAV_ITEMS.filter(
   (item) =>
     item.access.type !== "copOnly" &&
@@ -15,6 +23,7 @@ const LOCKABLE_ROUTES = NAV_ITEMS.filter(
   ...(item.children ?? []).map((c) => ({ label: `  ${c.label}`, to: c.to })),
 ]);
 
+/** Lists all lockable routes with toggle switches and optional maintenance message inputs. */
 export function MaintenanceManager() {
   const { data: locks } = useMaintenanceLocks();
   const invalidate = useInvalidateMaintenance();
@@ -29,6 +38,7 @@ export function MaintenanceManager() {
       if (currentlyLocked) {
         await unlockRoute(route);
       } else {
+        // use whatever custom message the admin typed, or fall back to the default
         await lockRoute(route, messages[route] || "Þjónusta er tímabundið ekki tiltæk.");
       }
       await invalidate();
@@ -49,7 +59,7 @@ export function MaintenanceManager() {
   }
 
   return (
-    <PageTemplate title="Kerfisstjórn — Viðhald">
+    <PageTemplate title="Kerfisstjórn — Viðhald" info="Hér getur kerfisstjóri lokað á hvaða hluta kerfisins sem er meðan viðhald er í gangi. Notendur sjá skilaboð þegar þeir reyna að opna lokaða hluta.">
       <p className="mb-4 text-sm text-(--color-text-muted)">
         Slökktu á hlutum kerfisins meðan þú ert að vinna í þeim. Notendur sjá skilaboð þegar þeir reyna að opna lokaða hluta.
       </p>

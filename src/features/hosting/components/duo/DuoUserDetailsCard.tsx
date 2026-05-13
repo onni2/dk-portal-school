@@ -1,3 +1,9 @@
+/**
+ * Card showing Duo user details (username, display name, email) with an inline edit mode.
+ * Used in both DuoPanel and AdminDuoPanel.
+ * Uses: @tanstack/react-query, ../../api/duo.api, ../../types/duo.types
+ * Exports: DuoUserDetailsCard
+ */
 import { useState } from "react";
 import type { UseMutationResult } from "@tanstack/react-query";
 import type { UpdateDuoUserPayload, UpdateDuoUserResponse } from "../../api/duo.api";
@@ -13,6 +19,7 @@ function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+/** Displays Duo user details and allows inline editing of display name and email. Email is validated before save. */
 export function DuoUserDetailsCard({ duoUser, updateMutation }: DuoUserDetailsCardProps) {
 
   const [isEditing, setIsEditing] = useState(false);

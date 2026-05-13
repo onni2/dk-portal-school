@@ -1,3 +1,9 @@
+/**
+ * Security and privacy information page — shows ISO certifications, transparency items, and GDPR summary.
+ * Static content only; real policy documents and legal text are placeholders pending legal review.
+ * Uses: @/shared/components/PageTemplate, @/shared/components/Card, @/shared/components/Badge
+ * Exports: SecurityPage
+ */
 import { PageTemplate } from "@/shared/components/PageTemplate";
 import { Card } from "@/shared/components/Card";
 import { Badge } from "@/shared/components/Badge";
@@ -93,11 +99,13 @@ const GDPR_ITEMS = [
   },
 ] as const;
 
+/** Renders ISO standards, customer transparency, GDPR summary, and a contact section. All legal text is pending review. */
 export function SecurityPage() {
   return (
     <PageTemplate
       title="Öryggi og persónuvernd"
       description="Upplýsingar um ISO, persónuvernd, vinnslu gagna og öryggisráðstafanir."
+      info="Þessi síða sýnir öryggisstaðla og persónuverndarstefnu dk hugbúnaðar. dk er með ISO 27001 vottun og fylgir GDPR reglum um vinnslu persónuupplýsinga."
     >
       {/* Intro banner */}
       <div className="flex items-start gap-4 rounded-lg border border-(--color-border) bg-(--color-success-bg) p-5">

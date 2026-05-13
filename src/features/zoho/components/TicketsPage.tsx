@@ -9,7 +9,9 @@ import { useTickets, useTicket } from "../api/tickets.queries";
 import { TicketList } from "./TicketList";
 import { TicketThread } from "./TicketThread";
 import { useAuthStore } from "@/features/auth/store/auth.store";
+import { InfoTooltip } from "@/shared/components/InfoTooltip";
 
+/** Two-panel tickets view: ticket list on the left, email thread on the right. */
 export function TicketsPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -39,7 +41,10 @@ export function TicketsPage() {
     <div className="flex h-full flex-col overflow-hidden -m-8 p-4 bg-[var(--color-background)]">
       {/* Page title */}
       <div className="mb-4 px-2">
-        <h1 className="text-[30px] font-bold text-[#0B0F1A]">Þjónustubeiðnir</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-[30px] font-bold text-[#0B0F1A]">Þjónustubeiðnir</h1>
+          <InfoTooltip text="Hér sérð þú öll þjónustumál sem hafa verið send til dk þjónustudeildar. Hægt er að skoða svör og fylgjast með stöðu mála. Til að opna nýtt mál skaltu hafa samband við þjónustudeild dk." />
+        </div>
         <p className="text-[15px] text-[#5C667A]">Leitaðu að leiðbeiningum, leiðsögn og svörum við algengum spruningum</p>
       </div>
 

@@ -1,3 +1,8 @@
+/**
+ * Modal for manually inviting a new dkOne user by filling in their details directly.
+ * Uses: @/shared/components/Input, @/shared/components/Button, ../api/dkone.api, ../api/dkone.queries
+ * Exports: AddDkOneUserModal
+ */
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/shared/components/Input";
@@ -16,6 +21,7 @@ const ROLES: { value: DkOneRole; label: string }[] = [
   { value: "user", label: "Notandi" },
 ];
 
+/** Form modal for inviting a dkOne user by providing their employee number, name, email, username, and role. */
 export function AddDkOneUserModal({ onClose }: Props) {
   const queryClient = useQueryClient();
   const [employeeNumber, setEmployeeNumber] = useState("");

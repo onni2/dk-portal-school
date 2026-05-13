@@ -12,9 +12,7 @@ export const licenceQueryOptions = queryOptions({
   staleTime: 5 * 60 * 1000,
 });
 
-/**
- *
- */
+/** Hook that fetches the company licence. Stale time is 5 minutes to avoid constant re-fetching. */
 export function useLicence() {
   return useQuery(licenceQueryOptions);
 }

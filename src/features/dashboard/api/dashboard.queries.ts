@@ -11,9 +11,7 @@ export const dashboardQueryOptions = queryOptions({
   queryFn: fetchDashboardSummary,
 });
 
-/**
- *
- */
+/** Hook that returns the dashboard summary. Uses Suspense, so the component is suspended while loading. */
 export function useDashboardSummary() {
   return useSuspenseQuery(dashboardQueryOptions);
 }

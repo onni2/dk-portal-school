@@ -7,6 +7,7 @@ import { useState } from "react";
 import { cn } from "@/shared/utils/cn";
 import { useDocuments } from "../api/accountant.queries";
 import { useAuthStore } from "@/features/auth/store/auth.store";
+import { InfoTooltip } from "@/shared/components/InfoTooltip";
 
 const TYPE_STYLES: Record<string, { bg: string; text: string }> = {
   "VSK":           { bg: "bg-[#EEF2FF]", text: "text-[#4743F7]" },
@@ -31,7 +32,10 @@ export function AccountantDocuments() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-[30px] font-bold text-[#0B0F1A]">Skjöl</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-[30px] font-bold text-[#0B0F1A]">Skjöl</h1>
+          <InfoTooltip text="Hér sérð þú skjöl og skýrslur fyrir fyrirtæki þín, s.s. VSK-skýrslur, launaskýrslur og ársreikninga. Hægt er að sía eftir fyrirtæki, tegund og stöðu." />
+        </div>
         <p className="text-[15px] text-[#5C667A]">Skjöl og skýrslur fyrir fyrirtæki þín</p>
       </div>
 

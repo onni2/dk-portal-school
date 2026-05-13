@@ -1,3 +1,10 @@
+/**
+ * Mini data previews rendered inside each dashboard card.
+ * Each card ID maps to a dedicated preview component that fetches its own data.
+ * The CardPreview dispatcher switches on card ID and renders the matching preview.
+ * Uses: @tanstack/react-query, @/shared/utils/cn, @/shared/store/lang.store, various feature API modules
+ * Exports: CardPreview
+ */
 import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/shared/utils/cn";
@@ -729,6 +736,7 @@ function SystemPreview({ compact, lang }: { compact?: boolean; lang: Lang }) {
 
 // ─── Dispatcher ───────────────────────────────────────────────────────────────
 
+/** Dispatches to the correct mini preview component based on the card `id`. Renders `fallback` for unknown IDs. */
 export function CardPreview({ id, fallback, compact }: { id: string; fallback: ReactNode; compact?: boolean }) {
   const lang = useLangStore((s) => s.lang) as Lang;
   switch (id) {

@@ -27,6 +27,7 @@ function TimeclockPageRoute() {
     <PageTemplate
       title="Stimpilklukka"
       description="Stjórnaðu aðgangi að stimpilklukku — IP-tölur og símanúmer starfsmanna."
+      info="Stimpilklukka dk notar hlekk sem starfsmenn opna í vafra til að skrá mætingar. Hér stillir þú hvaða IP-tölur mega nota klukkuna og hvaða símanúmer starfsmanna eru skráð til að auðkenna sig."
     >
       <Suspense fallback={<LoadingSpinner />}>
         <TimeclockPage />

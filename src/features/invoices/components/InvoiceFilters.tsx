@@ -1,3 +1,8 @@
+/**
+ * Filter toolbar for the invoices page: period buttons, date pickers, and a text search field.
+ * Uses: @/shared/utils/cn, @/shared/components/DatePicker, ../store/invoices.store
+ * Exports: InvoiceFilters
+ */
 import { cn } from "@/shared/utils/cn";
 import { DatePicker } from "@/shared/components/DatePicker";
 import { useInvoiceFilters } from "../store/invoices.store";
@@ -13,6 +18,7 @@ const PERIODS = [
   { key: "lastYear" as const, label: "Síðasta ár" },
 ];
 
+/** Filter bar with quick-period buttons, from/to date pickers, and text search. */
 export function InvoiceFilters() {
   const {
     dateFrom,
@@ -51,7 +57,6 @@ export function InvoiceFilters() {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Period buttons */}
       <div>
         <p className="mb-2 text-sm font-bold text-(--color-primary)">Veldu tímabil</p>
         <div className="flex flex-wrap items-center gap-2">
@@ -90,7 +95,6 @@ export function InvoiceFilters() {
         </div>
       </div>
 
-      {/* Date pickers + Search */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex gap-3">
           <DatePicker

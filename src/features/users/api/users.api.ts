@@ -27,6 +27,7 @@ function requireId(id: string, label: string): void {
   }
 }
 
+/** Fetches all portal users for the active company. */
 export async function fetchUsers(): Promise<PortalUser[]> {
   return mockClient.get<PortalUser[]>("/users");
 }

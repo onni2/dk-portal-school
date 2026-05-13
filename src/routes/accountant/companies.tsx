@@ -1,3 +1,6 @@
+/**
+ * /accountant/companies — lists companies managed by the accountant user.
+ */
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { AccountantCompanies } from "@/features/accountant/components/AccountantCompanies";
 import { useAuthStore } from "@/features/auth/store/auth.store";

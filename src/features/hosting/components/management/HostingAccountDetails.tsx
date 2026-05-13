@@ -1,3 +1,9 @@
+/**
+ * Right-column detail panel for a selected hosting account on the Hosting Management page.
+ * Tabs between Duo MFA and the hosting account info (status, linked portal user, password reset, delete, sign-out).
+ * Uses: ../../api/hosting.queries, ../../types/hosting.types, ../duo/AdminDuoPanel, ../HostingLoginHistoryTable, ../TabSwitcher
+ * Exports: HostingAccountDetails
+ */
 import { useState } from "react";
 import type { HostingAccount } from "../../types/hosting.types";
 import { AdminDuoPanel } from "../duo/AdminDuoPanel";
@@ -66,6 +72,7 @@ function HostingAccountDetailsPanel({
   );
 }
 
+/** Renders an empty-state placeholder when no account is selected; otherwise mounts the detail panel. */
 export function HostingAccountDetails({
   account,
   onResetPassword,

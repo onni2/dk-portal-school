@@ -1,3 +1,8 @@
+/**
+ * SMS activation step inside the Duo device creation dialog — collects phone number, device name, and platform (iOS/Android).
+ * Uses: @/shared/components/Button, @/shared/utils/cn
+ * Exports: DuoSmsActivationForm
+ */
 import { Apple, Bot, MessageSquare, X } from "lucide-react";
 import { Button } from "@/shared/components/Button";
 import { cn } from "@/shared/utils/cn";
@@ -19,6 +24,7 @@ interface DuoSmsActivationFormProps {
   onCancel: () => void;
 }
 
+/** Form step for SMS activation — phone number, device name, iOS/Android picker, error display, and back/cancel/submit footer. */
 export function DuoSmsActivationForm({
   phoneNumber,
   platform,

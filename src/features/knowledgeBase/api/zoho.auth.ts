@@ -26,6 +26,7 @@ const REFRESH_TOKEN = import.meta.env.VITE_ZOHO_REFRESH_TOKEN as string;
 let cache: { token: string; expiresAt: number } | null = null;
 let inflightRequest: Promise<string> | null = null;
 
+/** Returns a valid Zoho OAuth2 access token, refreshing it if the cached token is about to expire. */
 export async function getZohoAccessToken(): Promise<string> {
   const now = Date.now();
   if (cache && now < cache.expiresAt - 60_000) return cache.token;

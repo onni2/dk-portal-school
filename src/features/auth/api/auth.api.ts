@@ -26,6 +26,7 @@ interface MockLoginResponse {
   companies: CompanyMembership[];
 }
 
+/** Authenticates with username/password, stores the JWT + company token in localStorage, and returns user + companies. */
 export async function login(credentials: LoginCredentials): Promise<AuthResponse> {
   const data = await mockClient.post<MockLoginResponse>("/auth/login", credentials);
 
@@ -53,14 +54,17 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
   return { user, token: data.token, companies: data.companies ?? [] };
 }
 
+/** No-op API call — token cleanup is handled by the auth store's clearAuth action. */
 export async function logout(): Promise<void> {
   // Nothing to call on the API — the auth store handles clearing localStorage
 }
 
+/** Triggers a password-reset email for the given username. */
 export async function forgotPassword(username: string): Promise<void> {
   return mockClient.post<void>("/auth/forgot-password", { username });
 }
 
+/** Resets the user's password using a one-time token from the password-reset email. */
 export async function resetPasswordWithToken(token: string, newPassword: string): Promise<void> {
   return mockClient.post<void>("/auth/reset-password-token", { token, newPassword });
 }

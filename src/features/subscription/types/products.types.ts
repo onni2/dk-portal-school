@@ -1,3 +1,8 @@
+/**
+ * TypeScript types for DK subscription products and product groups used in the products catalogue.
+ * Uses: nothing — standalone file
+ * Exports: SubscriptionProduct, ProductGroup
+ */
 export interface SubscriptionProduct {
   ItemCode: string;
   Description: string;

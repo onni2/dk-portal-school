@@ -1,3 +1,13 @@
+/**
+ * React Query hooks and options for hosting accounts and login history.
+ * Covers Hosting Management (admin) and MyHosting (logged-in user).
+ * Uses: ./hosting.api
+ * Exports: hostingQueryKeys, hostingAccountsQueryOptions, myHostingAccountQueryOptions, myHostingLogQueryOptions,
+ *          useHostingAccounts, useInvalidateHostingAccounts, useHostingAccountLog,
+ *          useMyHostingAccount, useMyHostingAccountOptional, useInvalidateMyHostingAccount,
+ *          useMyHostingLog, useMyHostingLogOptional, useInvalidateMyHostingLog,
+ *          useSignOutHostingAccount, useSignOutMyHosting
+ */
 import {
   queryOptions,
   useMutation,
@@ -36,10 +46,12 @@ export const hostingAccountsQueryOptions = queryOptions({
   queryFn: fetchHostingAccounts,
 });
 
+/** Fetch all hosting accounts for the active company (Suspense). */
 export function useHostingAccounts() {
   return useSuspenseQuery(hostingAccountsQueryOptions);
 }
 
+/** Returns an imperative invalidator for the hosting accounts cache. */
 export function useInvalidateHostingAccounts() {
   const qc = useQueryClient();
 
@@ -177,6 +189,7 @@ export const myHostingAccountQueryOptions = queryOptions({
   queryFn: fetchMyHostingAccount,
 });
 
+/** Fetch the hosting account connected to the logged-in user (Suspense). */
 export function useMyHostingAccount() {
   return useSuspenseQuery(myHostingAccountQueryOptions);
 }
@@ -192,6 +205,7 @@ export function useMyHostingAccountOptional() {
   });
 }
 
+/** Returns an imperative invalidator for the current user's hosting account cache. */
 export function useInvalidateMyHostingAccount() {
   const qc = useQueryClient();
 
@@ -210,6 +224,7 @@ export const myHostingLogQueryOptions = queryOptions({
   queryFn: fetchMyHostingLog,
 });
 
+/** Fetch login/logout history for the logged-in user's hosting account (Suspense). */
 export function useMyHostingLog() {
   return useSuspenseQuery(myHostingLogQueryOptions);
 }
@@ -226,6 +241,7 @@ export function useMyHostingLogOptional(enabled = true) {
   });
 }
 
+/** Returns an imperative invalidator for the current user's hosting log cache. */
 export function useInvalidateMyHostingLog() {
   const qc = useQueryClient();
 

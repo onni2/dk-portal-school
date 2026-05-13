@@ -47,18 +47,21 @@ export interface AccountantDocument {
   status: "sent" | "uppkast";
 }
 
+/** Fetch all companies that the logged-in accountant manages. */
 export async function getAccountantCompanies(): Promise<AccountantCompany[]> {
   const res = await fetch(`${BASE}/accountant/companies`, { headers: headers() });
   if (!res.ok) throw new Error("Failed to fetch accountant companies");
   return res.json();
 }
 
+/** Fetch submission status records for all accountant companies. */
 export async function getSubmissions(): Promise<Submission[]> {
   const res = await fetch(`${BASE}/accountant/submissions`, { headers: headers() });
   if (!res.ok) throw new Error("Failed to fetch submissions");
   return res.json();
 }
 
+/** Fetch transactions; pass a companyId to filter to a single company. */
 export async function getTransactions(companyId?: string): Promise<Transaction[]> {
   const url = companyId
     ? `${BASE}/accountant/transactions?companyId=${companyId}`
@@ -68,6 +71,7 @@ export async function getTransactions(companyId?: string): Promise<Transaction[]
   return res.json();
 }
 
+/** Fetch documents; pass a companyId to filter to a single company. */
 export async function getDocuments(companyId?: string): Promise<AccountantDocument[]> {
   const url = companyId
     ? `${BASE}/accountant/documents?companyId=${companyId}`

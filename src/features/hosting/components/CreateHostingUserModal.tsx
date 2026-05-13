@@ -21,6 +21,7 @@ interface Props {
   onCreated: () => void;
 }
 
+/** Modal that collects username and display name, calls the API, and shows the generated temporary password once on success. */
 export function CreateHostingUserModal({ onClose, onCreated }: Props) {
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");

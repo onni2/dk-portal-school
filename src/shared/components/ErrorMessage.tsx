@@ -11,9 +11,7 @@ interface ErrorMessageProps {
   className?: string;
 }
 
-/**
- *
- */
+/** Renders an error string inside a styled red box. */
 export function ErrorMessage({ message, className }: ErrorMessageProps) {
   return (
     <div

@@ -1,3 +1,9 @@
+/**
+ * Zustand store for the authenticated user, JWT token, company memberships, and per-company permissions.
+ * All fields are persisted to localStorage so the session survives a page reload.
+ * Uses: ../types/auth.types
+ * Exports: useAuthStore
+ */
 import { create } from "zustand";
 import type { User, CompanyMembership, UserPermissions, CompanyRole } from "../types/auth.types";
 
@@ -11,11 +17,13 @@ const EMPTY_PERMISSIONS: UserPermissions = {
   dkOne: false, dkPlus: false, timeclock: false, users: false,
 };
 
+/** Looks up the active company's permissions from the companies array. Falls back to all-false if not found. */
 function derivePermissions(companies: CompanyMembership[], companyId: string | undefined): UserPermissions {
   const match = companies.find((c) => c.id === companyId);
   return match?.permissions ?? EMPTY_PERMISSIONS;
 }
 
+/** Returns the user's role within the given company, or undefined if not a member. */
 function deriveCompanyRole(
   companies: CompanyMembership[],
   companyId: string | undefined,
@@ -23,6 +31,7 @@ function deriveCompanyRole(
   return companies.find((c) => c.id === companyId)?.role;
 }
 
+/** Reads persisted auth state from localStorage on startup. Returns empty defaults on parse failure. */
 function loadFromStorage(): {
   user: User | null;
   token: string | null;

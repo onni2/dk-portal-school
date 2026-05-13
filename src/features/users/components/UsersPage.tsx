@@ -10,6 +10,7 @@ import {
 } from "../api/users.queries";
 import type { PortalUser } from "../types/users.types";
 
+/** Portal users management page. Opens an invite modal or the user edit panel on interaction. */
 export function UsersPage() {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<PortalUser | null>(null);
