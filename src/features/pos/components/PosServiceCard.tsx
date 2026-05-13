@@ -33,36 +33,37 @@ export function PosServiceCard({ service, serviceType, isSelected, onSelect }: P
   return (
     <div
       className={cn(
-        "cursor-pointer overflow-hidden rounded-xl border transition-colors",
+        "cursor-pointer overflow-hidden rounded-xl border bg-white shadow-sm transition-shadow hover:shadow-md",
         isSelected
-          ? "border-(--color-primary)"
-          : "border-(--color-border) hover:border-(--color-text-secondary)",
+          ? "border-[#4743F7]"
+          : "border-[#CFD3DB]",
       )}
       onClick={() => onSelect(service.id)}
     >
-      <div className="border-b border-(--color-border) bg-(--color-surface) px-4 py-3">
-        <h3 className="text-sm font-semibold text-(--color-text)">{service.id}</h3>
+      {/* Header */}
+      <div className={cn(
+        "border-b border-[#CFD3DB] px-4 py-3",
+        isSelected ? "bg-[#4743F7]/5" : "bg-[#F6F8FC]",
+      )}>
+        <h3 className="text-[13px] font-semibold text-[#0B0F1A]">{service.id}</h3>
       </div>
-      <div className="flex items-center justify-between bg-(--color-background) px-4 py-4">
+
+      {/* Status + button */}
+      <div className="flex items-center justify-between bg-white px-4 py-3">
         <div className="flex items-center gap-2">
-          <span
-            className={cn(
-              "h-3 w-3 rounded-full",
-              isRunning ? "bg-green-500" : "bg-red-500",
-            )}
-          />
-          <span className="text-sm font-medium text-(--color-text)">
-            {isRunning ? "Í gangi (Running)" : "Stoppað (Not Running)"}
+          <span className={cn("h-2.5 w-2.5 rounded-full", isRunning ? "bg-green-500" : "bg-red-500")} />
+          <span className={cn("text-[13px] font-medium", isRunning ? "text-green-700" : "text-red-600")}>
+            {isRunning ? "Í gangi" : "Stoppað"}
           </span>
         </div>
         <Button
           className={cn(
-            "rounded-full px-5 text-white transition-colors",
+            "rounded-full px-4 text-[12px] text-white transition-colors",
             isDisabled
               ? "cursor-not-allowed bg-gray-400 hover:bg-gray-400"
               : "bg-green-600 hover:bg-green-700",
           )}
-          size="md"
+          size="sm"
           disabled={isDisabled}
           onClick={(e) => {
             e.stopPropagation();

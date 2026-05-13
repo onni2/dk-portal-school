@@ -95,17 +95,17 @@ export function CompanySelector() {
         <svg
           xmlns="http://www.w3.org/2000/svg"
           className={cn(
-            "h-3 w-3 transition-transform text-[var(--color-text-muted)]",
+            "h-4 w-4 transition-transform text-[#4743F7]",
             open && "rotate-180",
           )}
-          viewBox="0 0 20 20"
-          fill="currentColor"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
         >
-          <path
-            fillRule="evenodd"
-            d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z"
-            clipRule="evenodd"
-          />
+          <path d="M6 9l6 6 6-6" />
         </svg>
       </button>
 

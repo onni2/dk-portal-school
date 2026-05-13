@@ -80,7 +80,10 @@ export function Layout({ children }: { children: ReactNode }) {
           </Link>
         </div>
 
-        <div className="flex flex-1 items-center px-1">
+        <div className="flex flex-1 items-center gap-2 px-4">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-secondary)]">
+            Virkt fyrirtæki
+          </span>
           <CompanySelector />
         </div>
 
