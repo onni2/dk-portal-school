@@ -1,3 +1,9 @@
+/**
+ * Modal for inviting a new portal user. Collects name, email, kennitala, company role,
+ * optional hosting account, and initial module permissions.
+ * Uses: @/shared/components/Button, @/shared/components/Input, ../api/users.api, @/features/hosting/api/hosting.queries
+ * Exports: InviteUserModal
+ */
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/shared/components/Button";

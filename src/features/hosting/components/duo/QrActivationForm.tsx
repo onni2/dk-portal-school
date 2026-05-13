@@ -1,3 +1,8 @@
+/**
+ * QR activation step inside the Duo device creation dialog — collects a device name and submits.
+ * Uses: @/shared/components/Button
+ * Exports: DuoQrActivationForm
+ */
 import { QrCode } from "lucide-react";
 import { Button } from "@/shared/components/Button";
 
@@ -12,6 +17,7 @@ interface DuoQrActivationFormProps {
   onCancel: () => void;
 }
 
+/** Form step for QR activation — device description input, error display, and back/cancel/submit footer. */
 export function DuoQrActivationForm({
   deviceDescription,
   isPending,

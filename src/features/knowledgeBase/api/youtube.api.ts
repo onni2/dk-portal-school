@@ -1,3 +1,8 @@
+/**
+ * Fetches the DK YouTube tutorial playlist and normalizes items into YoutubeVideo objects.
+ * Uses: @/shared/api/mockClient, ../types/youtube.types
+ * Exports: fetchYoutubeVideos
+ */
 import type { YoutubeVideo } from "../types/youtube.types";
 import { mockClient } from "@/shared/api/mockClient";
 
@@ -17,6 +22,7 @@ interface YtPlaylistItem {
   };
 }
 
+/** Fetch the playlist items, filter out private/deleted videos, and map to YoutubeVideo. */
 export async function fetchYoutubeVideos(): Promise<YoutubeVideo[]> {
   const items = await mockClient.get<YtPlaylistItem[]>("/knowledge-base/videos");
   return items

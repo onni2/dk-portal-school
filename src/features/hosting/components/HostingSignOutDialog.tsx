@@ -1,3 +1,8 @@
+/**
+ * Confirmation dialog for signing the logged-in user out of their active hosting session.
+ * Uses: nothing — presentational only
+ * Exports: HostingSignOutDialog
+ */
 interface HostingSignOutDialogProps {
   username: string;
   isLoading?: boolean;
@@ -5,6 +10,7 @@ interface HostingSignOutDialogProps {
   onClose: () => void;
 }
 
+/** Confirmation dialog asking the user to confirm signing out of their active hosting session. */
 export function HostingSignOutDialog({
   username,
   isLoading,

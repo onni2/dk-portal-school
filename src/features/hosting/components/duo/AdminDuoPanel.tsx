@@ -1,3 +1,9 @@
+/**
+ * Admin Duo MFA panel for the Hosting Management page — shows Duo user details and device list for a specific hosting account.
+ * Devices are only fetched after the user is confirmed to exist to avoid race conditions.
+ * Uses: ../../api/duo.queries, ./AdminDuoDeviceCreateDialog, ./DuoDeviceList, ./DuoUserDetailsCard
+ * Exports: AdminDuoPanel
+ */
 import { useState } from "react";
 import {
   useAdminDuoUser,
@@ -13,6 +19,7 @@ interface AdminDuoPanelProps {
   accountId: string;
 }
 
+/** Renders Duo user details and devices for a given hosting account. Handles the case where Duo is not provisioned. */
 export function AdminDuoPanel({ accountId }: AdminDuoPanelProps) {
   const { data: duoUser, isLoading: userLoading, isError, error } = useAdminDuoUser(accountId);
   // Only fetch devices after the user is confirmed to exist, preventing a race

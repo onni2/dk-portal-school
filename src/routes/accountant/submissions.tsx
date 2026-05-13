@@ -1,3 +1,6 @@
+/**
+ * /accountant/submissions — submission status overview for the accountant user.
+ */
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { AccountantSubmissions } from "@/features/accountant/components/AccountantSubmissions";
 import { useAuthStore } from "@/features/auth/store/auth.store";

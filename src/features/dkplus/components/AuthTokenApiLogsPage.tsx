@@ -1,3 +1,8 @@
+/**
+ * Detail page for a single auth token showing a bar chart of API usage and a filterable log table.
+ * Uses: @/shared/components/Button, @/features/auth/store/auth.store, ../api/dkplus.queries, @/shared/utils/cn
+ * Exports: AuthTokenApiLogsPage
+ */
 import { useState, useMemo } from "react";
 import { Button } from "@/shared/components/Button";
 import { useAuthStore } from "@/features/auth/store/auth.store";
@@ -413,6 +418,7 @@ interface AuthTokenApiLogsPageProps {
   onBack: () => void;
 }
 
+/** Full-page view of a token's API logs with a usage chart, filter panel, log table, and pagination. */
 export function AuthTokenApiLogsPage({ token, onBack }: AuthTokenApiLogsPageProps) {
   const { user } = useAuthStore();
   const { data: allLogs = [], isLoading } = useAuthTokenApiLogs(token.id);

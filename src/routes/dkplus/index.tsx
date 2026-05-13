@@ -1,3 +1,6 @@
+/**
+ * /dkplus — DK Plus web services page; prefetches auth tokens before mounting.
+ */
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { DkPlusPage } from "@/features/dkplus/components/DkPlusPage";
 import { authTokensQueryOptions } from "@/features/dkplus/api/dkplus.queries";

@@ -1,8 +1,16 @@
+/**
+ * Pure functions that filter the NAV_ITEMS list to only the items the current user can access.
+ * Handles all access rule types: alwaysVisible, copOnly, godOnly, accountantOnly, requiredPermission,
+ * licencedModule, requiredModules, hostingConnected, hostingManagement, hostingSecurityPrivacy.
+ * Uses: ../types/licence.types, ../config/nav-items, @/features/users/types/user-permissions.types, @/features/auth/types/auth.types
+ * Exports: filterNavItems
+ */
 import type { LicenceResponse, UserRole } from "../types/licence.types";
 import type { NavItem } from "../config/nav-items";
 import type { UserPermissions } from "@/features/users/types/user-permissions.types";
 import type { User, CompanyMembership } from "@/features/auth/types/auth.types";
 
+/** Returns true if the given licence module is enabled. Handles both Enabled and PurchaseOrders flags. */
 function isModuleEnabled(licence: LicenceResponse, module: string): boolean {
   const entry = licence[module as keyof LicenceResponse];
   if (!entry || typeof entry !== "object") return false;
@@ -80,6 +88,7 @@ function canShowNavItem(
   return false;
 }
 
+/** Recursively filters nav items by visibility, then prunes parent items whose children are all hidden. */
 export function filterNavItems(
   items: NavItem[],
   role: UserRole,

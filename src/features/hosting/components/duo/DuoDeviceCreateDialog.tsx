@@ -1,3 +1,10 @@
+/**
+ * Dialog for adding a new Duo device to the logged-in user's hosting account.
+ * Two-step: pick activation method (QR or SMS), then fill in the form.
+ * Polls device status every 5 s after QR creation until it is activated.
+ * Uses: @/shared/components/Button, @/shared/utils/cn, ../../api/duo.queries, ../../api/duo.api, ./QrActivationForm, ./SmsActivationForm
+ * Exports: DuoDeviceCreateDialog
+ */
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -64,6 +71,7 @@ function useActivationCountdown(expiresAt?: string | null) {
   };
 }
 
+/** Multi-step dialog for connecting a new Duo device — method picker → form → activation result with countdown timer. */
 export function DuoDeviceCreateDialog({
   onClose,
   onCreated,

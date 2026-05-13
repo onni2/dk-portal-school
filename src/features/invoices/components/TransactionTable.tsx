@@ -1,3 +1,9 @@
+/**
+ * Sortable, paginated table of customer transactions with a PDF download button per row.
+ * Filters applied via the invoices store (date range + text search).
+ * Uses: @/shared/utils/cn, ../api/invoices.queries, ../api/invoices.api, ../store/invoices.store, ../types/invoices.types
+ * Exports: TransactionTable
+ */
 import { useState } from "react";
 import { cn } from "@/shared/utils/cn";
 import { useCustomerTransactions } from "../api/invoices.queries";
@@ -27,7 +33,7 @@ function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return "—";
+  if (isNaN(d.getTime())) return "—"; // shouldn't happen but better safe
   return d.toLocaleDateString("is-IS");
 }
 
@@ -35,11 +41,13 @@ function formatAmount(amount: number, currency: string): string {
   return amount.toLocaleString("is-IS") + " " + (currency || "ISK");
 }
 
+// positive amount = debit, negative = credit
 function isDebit(tx: CustomerTransaction): boolean {
   return tx.Amount >= 0;
 }
 
 
+/** Renders a sortable transaction table with pagination and inline PDF download per row. */
 export function TransactionTable() {
   const { data: transactions } = useCustomerTransactions();
   const {
@@ -56,10 +64,10 @@ export function TransactionTable() {
 
   function handleSort(key: SortKey) {
     if (sortKey === key) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+      setSortDir((d) => (d === "asc" ? "desc" : "asc")); // toggle direction
     } else {
       setSortKey(key);
-      setSortDir("asc");
+      setSortDir("asc"); // always start ascending on a new column
     }
     setPage(1);
   }
@@ -228,7 +236,7 @@ export function TransactionTable() {
                   <td className="w-8 py-3 pr-4">
                     <button
                       onClick={(e) => {
-                        e.stopPropagation();
+                        e.stopPropagation(); // don't trigger row selection
                         if (tx.InvoiceNumber) fetchInvoicePdf(tx.InvoiceNumber);
                       }}
                       disabled={!tx.InvoiceNumber}

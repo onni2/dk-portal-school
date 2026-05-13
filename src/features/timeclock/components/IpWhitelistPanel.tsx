@@ -1,3 +1,8 @@
+/**
+ * Card panel for managing the IP whitelist that controls which devices can access the timeclock.
+ * Uses: ../api/timeclock.queries, ../api/timeclock.api, ../store/timeclock.store, @/shared/components/*
+ * Exports: IpWhitelistPanel
+ */
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/shared/components/Button";
@@ -7,6 +12,7 @@ import { useIpWhitelist } from "../api/timeclock.queries";
 import { addIpEntry, removeIpEntry } from "../api/timeclock.api";
 import { useTimeclockStore } from "../store/timeclock.store";
 
+/** Lists whitelisted IP addresses and provides a form to add new entries or remove existing ones. */
 export function IpWhitelistPanel() {
   const { data: entries } = useIpWhitelist();
   const qc = useQueryClient();
@@ -18,7 +24,7 @@ export function IpWhitelistPanel() {
     mutationFn: ({ ip, label }: { ip: string; label: string }) => addIpEntry(ip, label),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["timeclock-ip-whitelist"] });
-      setIp("");
+      setIp(""); // reset the form
       setLabel("");
       setAddIpOpen(false);
     },

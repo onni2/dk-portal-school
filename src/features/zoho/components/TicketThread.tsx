@@ -27,6 +27,7 @@ function formatDateTime(dateStr: string) {
   });
 }
 
+/** Read-only chat-bubble thread for a ticket. Customer messages on the right, support on the left. */
 export function TicketThread({ ticket }: Props) {
   const status = STATUS_STYLES[ticket.status];
   const messages = [...(ticket.messages ?? [])].sort(

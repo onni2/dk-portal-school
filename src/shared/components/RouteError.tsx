@@ -7,9 +7,7 @@
 import { Link, useRouter } from "@tanstack/react-router";
 import { Button } from "@/shared/components/Button";
 
-/**
- *
- */
+/** Error fallback with "Try again" (invalidates the router) and "Go home" buttons. Set as `errorComponent` on the root route. */
 export function RouteError({ error }: { error: unknown }) {
   const router = useRouter();
   const message =

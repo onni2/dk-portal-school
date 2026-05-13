@@ -1,3 +1,10 @@
+/**
+ * Zustand store and card definitions for the customisable dashboard layout.
+ * Card order and compact flags are persisted to localStorage so the layout
+ * survives a page reload.
+ * Uses: @/features/users/types/user-permissions.types, @/features/licence/types/licence.types
+ * Exports: CardDef, ALL_CARDS, useDashboardLayout
+ */
 import { create } from "zustand";
 import type { UserPermissions } from "@/features/users/types/user-permissions.types";
 import type { LicenceResponse } from "@/features/licence/types/licence.types";

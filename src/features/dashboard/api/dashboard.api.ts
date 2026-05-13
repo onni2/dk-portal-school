@@ -47,9 +47,7 @@ const MODULE_LABELS: Record<string, string> = {
   Purchase: "Innkaup",
 };
 
-/**
- *
- */
+/** Wraps apiClient.get so a failed sub-request returns the fallback instead of crashing the whole dashboard. */
 async function safeGet<T>(path: string, fallback: T): Promise<T> {
   try {
     return await apiClient.get<T>(path);
@@ -58,9 +56,7 @@ async function safeGet<T>(path: string, fallback: T): Promise<T> {
   }
 }
 
-/**
- *
- */
+/** Fetches company info, licence modules, employees, tokens, invoices, and customer count in parallel. */
 export async function fetchDashboardSummary(): Promise<DashboardSummary> {
   const [company, licence, employees, tokens, invoices, customerCount] =
     await Promise.all([

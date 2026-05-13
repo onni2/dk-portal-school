@@ -1,3 +1,6 @@
+/**
+ * /accountant/transactions — transaction list for the accountant user.
+ */
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { AccountantTransactions } from "@/features/accountant/components/AccountantTransactions";
 import { useAuthStore } from "@/features/auth/store/auth.store";

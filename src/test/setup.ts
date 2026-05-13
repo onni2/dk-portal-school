@@ -1,3 +1,10 @@
+/**
+ * Vitest global test setup. Imports jest-dom matchers and patches globalThis.localStorage
+ * with an in-memory implementation, because jsdom's built-in localStorage does not function
+ * correctly in this environment.
+ * Uses: @testing-library/jest-dom/vitest
+ * Exports: nothing — side-effect only
+ */
 import "@testing-library/jest-dom/vitest";
 
 // In-memory localStorage for tests — jsdom's localStorage is not functional in this environment

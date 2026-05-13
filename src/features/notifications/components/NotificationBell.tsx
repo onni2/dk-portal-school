@@ -13,9 +13,7 @@ import {
   useDeleteNotification,
 } from "../api/notifications.queries";
 
-/**
- *
- */
+/** Bell icon with unread badge. Opens a dropdown listing notifications sorted with unread first. */
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -37,9 +35,6 @@ export function NotificationBell() {
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    /**
-     *
-     */
     function handleClickOutside(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {
         setOpen(false);

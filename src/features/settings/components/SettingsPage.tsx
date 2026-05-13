@@ -1,3 +1,8 @@
+/**
+ * Settings page — update personal profile info and change portal password.
+ * Uses: @/shared/components/PageTemplate, @/shared/components/Button, @/features/auth/store/auth.store, @/features/users/api/users.api
+ * Exports: SettingsPage
+ */
 import { useState } from "react";
 import { PageTemplate } from "@/shared/components/PageTemplate";
 import { Button } from "@/shared/components/Button";
@@ -155,7 +160,7 @@ export function SettingsPage() {
   }
 
   return (
-    <PageTemplate title="Stillingar" description="Almennar stillingar fyrir Mínar síður.">
+    <PageTemplate title="Stillingar" description="Almennar stillingar fyrir Mínar síður." info="Hér getur þú uppfært persónulegar upplýsingar þínar eins og nafn og netfang, og breytt lykilorði fyrir Mínar síður.">
       {/* Must-reset banner */}
       {user?.mustResetPassword && (
         <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">

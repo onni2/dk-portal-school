@@ -1,3 +1,12 @@
+/**
+ * React Query hooks and options for Duo MFA. Covers both the logged-in user (MyHosting) and the admin view (Hosting Management).
+ * Uses: ./duo.api, ./hosting.queries
+ * Exports: duoQueryKeys, duoUserQueryOptions, duoDevicesQueryOptions, adminDuoQueryKeys,
+ *          useDuoUser, useDuoUserOptional, useDuoDevices, useDuoDevicesOptional, useDuoDeviceStatus,
+ *          useUpdateDuoUser, useCreateDuoDevice, useDeleteDuoDevice, useInvalidateDuoDevices,
+ *          useAdminDuoUser, useUpdateAdminDuoUser, useAdminDuoDevices, useAdminDuoDeviceStatus,
+ *          useCreateAdminDuoDevice, useDeleteAdminDuoDevice, useInvalidateAdminDuoDevices
+ */
 import {
   queryOptions,
   useMutation,
@@ -34,10 +43,12 @@ export const duoUserQueryOptions = queryOptions({
   retry: false,
 });
 
+/** Fetch the Duo user linked to the logged-in user's hosting account. Returns undefined if not connected. */
 export function useDuoUser() {
   return useQuery(duoUserQueryOptions);
 }
 
+/** Non-throwing version of useDuoUser — skip the query when the hosting account is not yet confirmed. */
 export function useDuoUserOptional(enabled = true) {
   return useQuery({
     ...duoUserQueryOptions,
@@ -52,10 +63,12 @@ export const duoDevicesQueryOptions = queryOptions({
   retry: false,
 });
 
+/** Fetch all Duo devices for the logged-in user's hosting account. */
 export function useDuoDevices() {
   return useQuery(duoDevicesQueryOptions);
 }
 
+/** Non-throwing version of useDuoDevices — skip the query until the hosting account is confirmed. */
 export function useDuoDevicesOptional(enabled = true) {
   return useQuery({
     ...duoDevicesQueryOptions,
@@ -64,6 +77,7 @@ export function useDuoDevicesOptional(enabled = true) {
   });
 }
 
+/** Poll activation status for a Duo device. Polls every 5 s until activated. */
 export function useDuoDeviceStatus(deviceId: string, enabled = true) {
   return useQuery({
     queryKey: duoQueryKeys.deviceStatus(deviceId),
@@ -80,6 +94,7 @@ export function useDuoDeviceStatus(deviceId: string, enabled = true) {
   });
 }
 
+/** Update display name and/or email for the logged-in user's Duo account. */
 export function useUpdateDuoUser() {
   const qc = useQueryClient();
 
@@ -93,6 +108,7 @@ export function useUpdateDuoUser() {
   });
 }
 
+/** Create a Duo device activation (SMS or QR) for the logged-in user's hosting account. */
 export function useCreateDuoDevice() {
   const qc = useQueryClient();
 
@@ -106,6 +122,7 @@ export function useCreateDuoDevice() {
   });
 }
 
+/** Delete a Duo device from the logged-in user's Duo account. */
 export function useDeleteDuoDevice() {
   const qc = useQueryClient();
 
@@ -119,6 +136,7 @@ export function useDeleteDuoDevice() {
   });
 }
 
+/** Returns an imperative invalidator for the current user's Duo devices cache. */
 export function useInvalidateDuoDevices() {
   const qc = useQueryClient();
 
@@ -138,6 +156,7 @@ export const adminDuoQueryKeys = {
     ["duo", "accounts", accountId, "devices", deviceId, "status"] as const,
 };
 
+/** Fetch Duo user linked to a specific hosting account (admin view). */
 export function useAdminDuoUser(accountId: string, enabled = true) {
   return useQuery({
     queryKey: adminDuoQueryKeys.user(accountId),
@@ -147,6 +166,7 @@ export function useAdminDuoUser(accountId: string, enabled = true) {
   });
 }
 
+/** Update display name and/or email for a specific hosting account's Duo user (admin view). */
 export function useUpdateAdminDuoUser(accountId: string) {
   const qc = useQueryClient();
 
@@ -161,6 +181,7 @@ export function useUpdateAdminDuoUser(accountId: string) {
   });
 }
 
+/** Fetch Duo devices for a specific hosting account. Gate on enabled to avoid a race with useAdminDuoUser. */
 export function useAdminDuoDevices(accountId: string, enabled = true) {
   return useQuery({
     queryKey: adminDuoQueryKeys.devices(accountId),
@@ -170,6 +191,7 @@ export function useAdminDuoDevices(accountId: string, enabled = true) {
   });
 }
 
+/** Poll activation status for a Duo device on a specific hosting account. Polls every 5 s until activated. */
 export function useAdminDuoDeviceStatus(
   accountId: string,
   deviceId: string,
@@ -188,6 +210,7 @@ export function useAdminDuoDeviceStatus(
   });
 }
 
+/** Create a Duo device activation (SMS or QR) for a specific hosting account (admin view). */
 export function useCreateAdminDuoDevice(accountId: string) {
   const qc = useQueryClient();
 
@@ -202,6 +225,7 @@ export function useCreateAdminDuoDevice(accountId: string) {
   });
 }
 
+/** Delete a Duo device from a specific hosting account and invalidate both device and account caches (admin view). */
 export function useDeleteAdminDuoDevice(accountId: string) {
   const qc = useQueryClient();
 
@@ -216,6 +240,7 @@ export function useDeleteAdminDuoDevice(accountId: string) {
   });
 }
 
+/** Returns an imperative invalidator for a specific hosting account's Duo devices cache. */
 export function useInvalidateAdminDuoDevices(accountId: string) {
   const qc = useQueryClient();
 

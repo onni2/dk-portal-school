@@ -7,9 +7,7 @@
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/shared/components/Button";
 
-/**
- *
- */
+/** 404 page with a "Go home" link. Set as `notFoundComponent` on the root route. */
 export function NotFound() {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">

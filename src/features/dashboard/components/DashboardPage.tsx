@@ -1,3 +1,9 @@
+/**
+ * Main dashboard page with a greeting, a draggable/customisable card grid, and a maintenance banner.
+ * Card visibility is filtered by the user's licence and permissions. Layout is persisted in localStorage.
+ * Uses: @dnd-kit/core, @dnd-kit/sortable, @/features/dashboard/store/dashboard.store, @/features/licence/api/licence.queries, @/features/maintenance/api/maintenance.api
+ * Exports: DashboardPage
+ */
 import { useState } from "react";
 import {
   DndContext,
@@ -17,6 +23,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { useLangStore } from "@/shared/store/lang.store";
+import { InfoTooltip } from "@/shared/components/InfoTooltip";
 import { ALL_CARDS, useDashboardLayout, type CardDef } from "../store/dashboard.store";
 import { SortableDashboardCard } from "./DashboardCard";
 import { useLicence } from "@/features/licence/api/licence.queries";

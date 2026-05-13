@@ -1,3 +1,6 @@
+/**
+ * /select-company — company picker shown after login when the user belongs to multiple companies.
+ */
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { CompanyPicker } from "@/features/auth/components/CompanyPicker";
