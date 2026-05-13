@@ -1,3 +1,9 @@
+/**
+ * Main dashboard page with a greeting, a draggable/customisable card grid, and a maintenance banner.
+ * Card visibility is filtered by the user's licence and permissions. Layout is persisted in localStorage.
+ * Uses: @dnd-kit/core, @dnd-kit/sortable, @/features/dashboard/store/dashboard.store, @/features/licence/api/licence.queries, @/features/maintenance/api/maintenance.api
+ * Exports: DashboardPage
+ */
 import { useState } from "react";
 import {
   DndContext,
@@ -17,6 +23,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { useLangStore } from "@/shared/store/lang.store";
+import { InfoTooltip } from "@/shared/components/InfoTooltip";
 import { ALL_CARDS, useDashboardLayout, type CardDef } from "../store/dashboard.store";
 import { SortableDashboardCard } from "./DashboardCard";
 import { useLicence } from "@/features/licence/api/licence.queries";
@@ -247,6 +254,10 @@ export function DashboardPage() {
             <h1 className="text-2xl font-bold text-(--color-text)">
               {greeting}{firstName ? `, ${firstName}` : ""}.
             </h1>
+            <InfoTooltip text={lang === "EN"
+              ? "Dashboard shows a customisable layout. Add more cards and drag them with the 6 dots in the top-right corner of each card to rearrange them."
+              : "Yfirlit sýnir sérsniðið útlit sem þú getur breytt með því að bæta fleiri kortum við og færð þau um með 6 doppurnar í hægra efra horni til að heyfa kortin."
+            } />
             {user?.role === "god" && (
               <span className="rounded-full bg-(--color-error-bg) px-2.5 py-0.5 text-xs font-semibold text-(--color-error)">
                 {lang === "EN" ? "System Admin" : "Kerfisstjóri"}

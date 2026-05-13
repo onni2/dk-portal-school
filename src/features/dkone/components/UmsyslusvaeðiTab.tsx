@@ -1,3 +1,8 @@
+/**
+ * Paginated, sortable table of sub-companies (umsýslusvæði) with inline add/delete controls.
+ * Uses: ../api/dkone.queries, ../api/dkone.api
+ * Exports: UmsyslusvaeðiTab
+ */
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSubCompanies, subCompaniesQueryOptions } from "../api/dkone.queries";
@@ -19,6 +24,7 @@ function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
   );
 }
 
+/** Tab content that lists sub-companies with search, sort, and add/delete actions. */
 export function UmsyslusvaeðiTab() {
   const { data: companies } = useSubCompanies();
   const queryClient = useQueryClient();

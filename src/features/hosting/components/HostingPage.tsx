@@ -39,6 +39,7 @@ export function HostingPage() {
   const [error, setError] = useState<string | null>(null);
   const errorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // NOTE: cleanup on unmount so we don't update state on an unmounted component
   useEffect(() => () => { if (errorTimer.current) clearTimeout(errorTimer.current); }, []);
 
   function showError(msg: string) {
@@ -64,6 +65,7 @@ export function HostingPage() {
     setPendingId(acc.id);
     try {
       const { tempPassword } = await resetHostingPassword(acc.id);
+      // NOTE: we only get the temp password once from the API, so we have to show it here
       setResetResult({ name: acc.displayName, password: tempPassword });
     } catch {
       showError("Villa kom upp við endurstillingu lykilorðs.");
@@ -90,6 +92,7 @@ export function HostingPage() {
     <PageTemplate
       title="Hýsing"
       description="Yfirlit yfir hýsingarnotendur fyrirtækisins hjá DK Hugbúnaði."
+      info="Hér eru allir hýsingarnotendur sem eru skráðir undir fyrirtækið. Hægt er að stofna nýja notendur, endurstilla lykilorð og stjórna Duo fjölþátta auðkenningu. Stjórnendur hafa aðgang að frekari stillingum í Hýsingarstjórnun."
       actions={
         <Button onClick={() => setIsCreateOpen(true)}>+ Nýr notandi</Button>
       }

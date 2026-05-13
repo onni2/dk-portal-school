@@ -1,3 +1,9 @@
+/**
+ * Hosting Management page — admin two-column layout with account list and a detail panel for Duo MFA, password reset, and account deletion.
+ * Uses: @/shared/components/PageTemplate, ../../api/hosting.queries, ../../api/hosting.api,
+ *       ../CreateHostingUserModal, ./HostingAccountDetails, ./HostingAccountList
+ * Exports: HostingManagementPage
+ */
 import { useMemo, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { PageTemplate } from "@/shared/components/PageTemplate";
@@ -13,6 +19,7 @@ import { CreateHostingUserModal } from "../CreateHostingUserModal";
 import { HostingAccountDetails } from "./HostingAccountDetails";
 import { HostingAccountList } from "./HostingAccountList";
 
+/** Admin page for managing all company hosting accounts. Selecting an account opens a detail panel with Duo, password, and delete actions. */
 export function HostingManagementPage() {
   const { data: accounts = [] } = useHostingAccounts();
   const invalidateHostingAccounts = useInvalidateHostingAccounts();
@@ -74,6 +81,7 @@ export function HostingManagementPage() {
     <PageTemplate
       title="Hýsingarstjórnun"
       description="Sjáðu yfirlit yfir hýsingarnotendur fyrirtækisins og stjórnaðu aðgangi þeirra, lykilorðum og Duo fjölþátta auðkenningu."
+      info="Stjórnendayfirlit yfir alla hýsingarnotendur fyrirtækisins. Hér er hægt að virkja og slökkva á Duo auðkenningu, endurstilla lykilorð og fjarlægja notendur."
       actions={
         <button
           type="button"

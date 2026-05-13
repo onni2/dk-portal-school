@@ -1,5 +1,12 @@
+/**
+ * MyHosting page — shows the logged-in user's own hosting account with Duo MFA management and login history.
+ * Uses: @/features/auth/store/auth.store, ../api/hosting.queries, ../api/duo.queries, ./duo/DuoPanel,
+ *       ./HostingAccountProfileCard, ./HostingLoginHistoryTable, ./HostingPasswordChangeDialog, ./HostingSignOutDialog, ./TabSwitcher
+ * Exports: MyHostingPage
+ */
 import { useMemo, useState } from "react";
 import { PageTemplate } from "@/shared/components/PageTemplate";
+import { useAuthStore } from "@/features/auth/store/auth.store";
 import {
   useMyHostingAccountOptional,
   useMyHostingLogOptional,
@@ -63,7 +70,12 @@ function AlertIcon({ className }: { className?: string }) {
   );
 }
 
+/** Personal hosting page showing the logged-in user's account, password, sign-out, Duo setup, and login history. */
 export function MyHostingPage() {
+  const user = useAuthStore((s) => s.user);
+  const companies = useAuthStore((s) => s.companies);
+  const companyName = companies.find((c) => c.id === user?.companyId)?.name ?? "fyrirtækið";
+
   const {
     data: account,
     isError: accountIsError,
@@ -108,6 +120,7 @@ export function MyHostingPage() {
     <PageTemplate
       title="Hýsingin mín"
       description="Hér getur þú stjórnað hýsingaraðgangi, lykilorði og Duo auðkenningu."
+      info={`Þetta er persónulegur hýsingaraðgangur þinn hjá dk hugbúnaður fyrir ${companyName}. Hér getur þú breytt lykilorði og stillt Duo tvíþætta auðkenningu til að vernda aðganginn.`}
     >
       {accountLoading && (
         <div className="rounded-xl border border-(--color-border) bg-(--color-surface) p-5">
