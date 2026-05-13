@@ -8,16 +8,18 @@ import { useMemo, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { PageTemplate } from "@/shared/components/PageTemplate";
 import {
+  useChangeHostingAccountPassword,
   useHostingAccounts,
   useInvalidateHostingAccounts,
+  useSignOutHostingAccount,
 } from "../../api/hosting.queries";
-import {
-  deleteHostingAccount,
-  resetHostingPassword,
-} from "../../api/hosting.api";
+import { deleteHostingAccount } from "../../api/hosting.api";
 import { CreateHostingUserModal } from "../CreateHostingUserModal";
+import { HostingPasswordChangeDialog } from "../HostingPasswordChangeDialog";
+import { HostingSignOutDialog } from "../HostingSignOutDialog";
 import { HostingAccountDetails } from "./HostingAccountDetails";
 import { HostingAccountList } from "./HostingAccountList";
+import { HostingPortalUserLinkDialog } from "./HostingPortalUserLinkDialog";
 
 /** Admin page for managing all company hosting accounts. Selecting an account opens a detail panel with Duo, password, and delete actions. */
 export function HostingManagementPage() {
@@ -27,9 +29,12 @@ export function HostingManagementPage() {
   const [selectedId, setSelectedId] = useState<string | null>(
     accounts[0]?.id ?? null,
   );
+
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [tempPassword, setTempPassword] = useState("");
-  const [tempPasswordUsername, setTempPasswordUsername] = useState("");
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
+  const [showPortalUserLinkDialog, setShowPortalUserLinkDialog] =
+    useState(false);
 
   const selectedAccount = useMemo(
     () =>
@@ -39,14 +44,8 @@ export function HostingManagementPage() {
     [accounts, selectedId],
   );
 
-  const resetPasswordMutation = useMutation({
-    mutationFn: resetHostingPassword,
-    onSuccess: async (result) => {
-      setTempPassword(result.tempPassword);
-      setTempPasswordUsername(selectedAccount?.username ?? "");
-      await invalidateHostingAccounts();
-    },
-  });
+  const passwordMutation = useChangeHostingAccountPassword();
+  const signOutMutation = useSignOutHostingAccount();
 
   const deleteMutation = useMutation({
     mutationFn: deleteHostingAccount,
@@ -60,9 +59,14 @@ export function HostingManagementPage() {
     await invalidateHostingAccounts();
   }
 
-  function handleResetPassword() {
+  function handleChangePassword() {
     if (!selectedAccount) return;
-    resetPasswordMutation.mutate(selectedAccount.id);
+    setShowPasswordModal(true);
+  }
+
+  function handleManagePortalUserLink() {
+    if (!selectedAccount) return;
+    setShowPortalUserLinkDialog(true);
   }
 
   function handleDeleteAccount() {
@@ -75,6 +79,29 @@ export function HostingManagementPage() {
     if (!confirmed) return;
 
     deleteMutation.mutate(selectedAccount.id);
+  }
+
+  async function handleSignOut() {
+    if (!selectedAccount) return;
+
+    await signOutMutation.mutateAsync(selectedAccount.id);
+    setShowSignOutConfirm(false);
+  }
+
+  async function handleChangeHostingPassword(password: string) {
+    if (!selectedAccount) {
+      throw new Error("Enginn hýsingaraðgangur valinn.");
+    }
+
+    await passwordMutation.mutateAsync({
+      id: selectedAccount.id,
+      password,
+    });
+  }
+
+  async function handlePortalUserLinkDialogClose() {
+    setShowPortalUserLinkDialog(false);
+    await invalidateHostingAccounts();
   }
 
   return (
@@ -93,10 +120,10 @@ export function HostingManagementPage() {
       }
     >
       <div className="flex flex-col gap-6">
-        {resetPasswordMutation.isError && (
+        {passwordMutation.isError && (
           <p className="rounded-lg border border-(--color-error) bg-(--color-error-bg) px-4 py-3 text-sm text-(--color-error)">
-            {(resetPasswordMutation.error as { message?: string })?.message ??
-              "Tókst ekki að endursetja lykilorð."}
+            {(passwordMutation.error as { message?: string })?.message ??
+              "Tókst ekki að breyta lykilorði."}
           </p>
         )}
 
@@ -104,6 +131,13 @@ export function HostingManagementPage() {
           <p className="rounded-lg border border-(--color-error) bg-(--color-error-bg) px-4 py-3 text-sm text-(--color-error)">
             {(deleteMutation.error as { message?: string })?.message ??
               "Tókst ekki að eyða hýsingaraðgangi."}
+          </p>
+        )}
+
+        {signOutMutation.isError && (
+          <p className="rounded-lg border border-(--color-error) bg-(--color-error-bg) px-4 py-3 text-sm text-(--color-error)">
+            {(signOutMutation.error as { message?: string })?.message ??
+              "Tókst ekki að skrá út úr hýsingunni."}
           </p>
         )}
 
@@ -127,10 +161,13 @@ export function HostingManagementPage() {
 
             <HostingAccountDetails
               account={selectedAccount}
-              onResetPassword={handleResetPassword}
+              onResetPassword={handleChangePassword}
               onDeleteAccount={handleDeleteAccount}
-              isResettingPassword={resetPasswordMutation.isPending}
+              onSignOut={() => setShowSignOutConfirm(true)}
+              onManagePortalUserLink={handleManagePortalUserLink}
+              isResettingPassword={passwordMutation.isPending}
               isDeleting={deleteMutation.isPending}
+              isSigningOut={signOutMutation.isPending}
             />
           </div>
         )}
@@ -143,46 +180,29 @@ export function HostingManagementPage() {
         />
       )}
 
-      {tempPassword && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          onClick={() => setTempPassword("")}
-        >
-          <div
-            className="w-full max-w-md rounded-xl border border-(--color-border) bg-(--color-surface) p-6 shadow-lg"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="text-lg font-semibold text-(--color-text)">
-              Lykilorð endursett
-            </h2>
+      {showPasswordModal && selectedAccount && (
+        <HostingPasswordChangeDialog
+          username={selectedAccount.username}
+          onClose={() => setShowPasswordModal(false)}
+          onSuccess={() => setShowPasswordModal(false)}
+          onSubmitPassword={handleChangeHostingPassword}
+        />
+      )}
 
-            <p className="mt-2 text-sm text-(--color-text-secondary)">
-              Nýtt tímabundið lykilorð fyrir{" "}
-              <span className="font-mono font-medium text-(--color-text)">
-                {tempPasswordUsername}
-              </span>
-              :
-            </p>
+      {showPortalUserLinkDialog && selectedAccount && (
+        <HostingPortalUserLinkDialog
+          account={selectedAccount}
+          onClose={() => void handlePortalUserLinkDialogClose()}
+        />
+      )}
 
-            <div className="mt-4 rounded-lg bg-(--color-surface-hover) px-4 py-3 font-mono text-base text-(--color-text)">
-              {tempPassword}
-            </div>
-
-            <p className="mt-3 text-xs text-(--color-text-secondary)">
-              Þetta lykilorð er aðeins sýnt einu sinni.
-            </p>
-
-            <div className="mt-6 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setTempPassword("")}
-                className="rounded-lg bg-(--color-primary) px-4 py-2 text-sm font-medium text-white hover:bg-(--color-primary-hover)"
-              >
-                Loka
-              </button>
-            </div>
-          </div>
-        </div>
+      {showSignOutConfirm && selectedAccount && (
+        <HostingSignOutDialog
+          username={selectedAccount.username}
+          isLoading={signOutMutation.isPending}
+          onClose={() => setShowSignOutConfirm(false)}
+          onConfirm={() => void handleSignOut()}
+        />
       )}
     </PageTemplate>
   );

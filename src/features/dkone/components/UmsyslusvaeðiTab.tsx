@@ -5,8 +5,9 @@
  */
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useSubCompanies, subCompaniesQueryOptions } from "../api/dkone.queries";
-import { createSubCompany, deleteSubCompany } from "../api/dkone.api";
+import { useSubCompanies, useAvailableCompanies, subCompaniesQueryOptions, availableCompaniesQueryOptions } from "../api/dkone.queries";
+import { linkSubCompany, deleteSubCompany } from "../api/dkone.api";
+import { Suspense } from "react";
 
 type SortKey = "name" | "id";
 type SortDir = "asc" | "desc";
@@ -24,7 +25,99 @@ function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
   );
 }
 
-/** Tab content that lists sub-companies with search, sort, and add/delete actions. */
+function AddCompanyPanel({ onClose }: { onClose: () => void }) {
+  const { data: available } = useAvailableCompanies();
+  const queryClient = useQueryClient();
+  const [selectedId, setSelectedId] = useState<string>("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pickerSearch, setPickerSearch] = useState("");
+
+  const filtered = available.filter((c) =>
+    !pickerSearch || c.name.toLowerCase().includes(pickerSearch.toLowerCase()),
+  );
+
+  async function handleAdd() {
+    if (!selectedId) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await linkSubCompany(selectedId);
+      queryClient.invalidateQueries({ queryKey: subCompaniesQueryOptions.queryKey });
+      queryClient.invalidateQueries({ queryKey: availableCompaniesQueryOptions.queryKey });
+      onClose();
+    } catch {
+      setError("Ekki tókst að tengja fyrirtæki. Reyndu aftur.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="rounded-md border border-(--color-border) bg-(--color-surface) p-4 space-y-3">
+      <p className="text-sm font-medium text-(--color-text)">Velja fyrirtæki til að bæta við</p>
+
+      {available.length === 0 ? (
+        <p className="py-4 text-center text-sm text-(--color-text-secondary)">
+          Engin fyrirtæki til að bæta við.
+        </p>
+      ) : (
+        <>
+          <input
+            type="search"
+            value={pickerSearch}
+            onChange={(e) => setPickerSearch(e.target.value)}
+            placeholder="Leita að fyrirtæki"
+            className="w-full rounded-md border border-(--color-border) bg-(--color-surface) px-3 py-2 text-sm text-(--color-text) placeholder:text-(--color-text-muted) focus:outline-none focus:ring-2 focus:ring-(--color-primary)"
+          />
+          <div className="max-h-48 overflow-y-auto rounded-md border border-(--color-border) divide-y divide-(--color-border)">
+            {filtered.length === 0 ? (
+              <p className="py-3 text-center text-sm text-(--color-text-secondary)">Ekkert fyrirtæki fannst.</p>
+            ) : (
+              filtered.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setSelectedId(c.id)}
+                  className={`w-full px-4 py-2.5 text-left text-sm transition-colors ${
+                    selectedId === c.id
+                      ? "bg-primary/10 text-(--color-primary) font-medium"
+                      : "text-(--color-text) hover:bg-(--color-surface-hover)"
+                  }`}
+                >
+                  {c.name}
+                </button>
+              ))
+            )}
+          </div>
+        </>
+      )}
+
+      {error && <p className="text-sm text-(--color-error)">{error}</p>}
+
+      <div className="flex gap-2 justify-end">
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-md border border-(--color-border) px-4 py-2 text-sm text-(--color-text-secondary) hover:bg-(--color-surface-hover) transition-colors"
+        >
+          Hætta við
+        </button>
+        {available.length > 0 && (
+          <button
+            type="button"
+            onClick={handleAdd}
+            disabled={!selectedId || saving}
+            className="rounded-md bg-(--color-primary) px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 transition-opacity"
+          >
+            {saving ? "Tengir..." : "Bæta við"}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function UmsyslusvaeðiTab() {
   const { data: companies } = useSubCompanies();
   const queryClient = useQueryClient();
@@ -33,9 +126,7 @@ export function UmsyslusvaeðiTab() {
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 10;
-  const [showForm, setShowForm] = useState(false);
-  const [name, setName] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -68,23 +159,6 @@ export function UmsyslusvaeðiTab() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  async function handleAdd(e: React.FormEvent) {
-    e.preventDefault();
-    if (!name.trim()) return;
-    setSaving(true);
-    setError(null);
-    try {
-      await createSubCompany(name.trim());
-      queryClient.invalidateQueries({ queryKey: subCompaniesQueryOptions.queryKey });
-      setName("");
-      setShowForm(false);
-    } catch {
-      setError("Ekki tókst að stofna fyrirtæki. Reyndu aftur.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
   async function handleDelete(id: string) {
     setDeletingId(id);
     setError(null);
@@ -109,9 +183,9 @@ export function UmsyslusvaeðiTab() {
           placeholder="Leita"
           className="flex-1 rounded-md border border-(--color-border) bg-(--color-surface) px-3 py-2 text-sm text-(--color-text) placeholder:text-(--color-text-muted) focus:outline-none focus:ring-2 focus:ring-(--color-primary)"
         />
-        {!showForm && (
+        {!showPicker && (
           <button
-            onClick={() => setShowForm(true)}
+            onClick={() => setShowPicker(true)}
             className="rounded-md bg-(--color-primary) px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity shrink-0"
           >
             + Bæta við fyrirtæki
@@ -121,7 +195,13 @@ export function UmsyslusvaeðiTab() {
 
       {error && <p className="text-sm text-(--color-error)">{error}</p>}
 
-      {filtered.length === 0 && !showForm ? (
+      {showPicker && (
+        <Suspense fallback={<p className="py-4 text-center text-sm text-(--color-text-secondary)">Hleð...</p>}>
+          <AddCompanyPanel onClose={() => setShowPicker(false)} />
+        </Suspense>
+      )}
+
+      {filtered.length === 0 && !showPicker ? (
         <p className="py-8 text-center text-sm text-(--color-text-secondary)">
           {search ? "Ekkert fyrirtæki fannst." : "Engar undirfyrirtæki skráð."}
         </p>
@@ -210,33 +290,6 @@ export function UmsyslusvaeðiTab() {
             </button>
           </div>
         </div>
-      )}
-
-      {showForm && (
-        <form onSubmit={handleAdd} className="flex items-center gap-2">
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Nafn fyrirtækis"
-            autoFocus
-            className="flex-1 rounded-md border border-(--color-border) bg-(--color-surface) px-3 py-2 text-sm text-(--color-text) placeholder:text-(--color-text-muted) focus:outline-none focus:ring-2 focus:ring-(--color-primary)"
-          />
-          <button
-            type="submit"
-            disabled={saving || !name.trim()}
-            className="rounded-md bg-(--color-primary) px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 transition-opacity"
-          >
-            {saving ? "Vista..." : "Vista"}
-          </button>
-          <button
-            type="button"
-            onClick={() => { setShowForm(false); setName(""); setError(null); }}
-            className="rounded-md border border-(--color-border) px-4 py-2 text-sm text-(--color-text-secondary) hover:bg-(--color-surface-hover) transition-colors"
-          >
-            Hætta við
-          </button>
-        </form>
       )}
     </div>
   );

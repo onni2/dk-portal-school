@@ -1,6 +1,15 @@
+// src/features/users/api/users.api.ts
 /**
- * Portal user management: invite, remove, update, and password reset.
- * All operations call the mock backend API (Express + PostgreSQL via Neon).
+ * Portal user management for the active company:
+ * fetch members, invite users, update own profile fields,
+ * remove users, and reset passwords.
+ *
+ * Backend resolves the active company from the authenticated user/JWT.
+ * Backend stores per-company module access on user_companies.
+ *
+ * Hosting account linking belongs to:
+ * @/features/hosting/api/hosting.api
+ *
  * Uses: @/shared/api/mockClient, ../types/users.types
  * Exports: fetchUsers, inviteUser, updateUser, removeUser, resetPassword
  */
@@ -9,6 +18,13 @@ import type { InviteUserInput, PortalUser } from "../types/users.types";
 
 interface InviteResponse {
   user: PortalUser;
+  generatedPassword: string;
+}
+
+function requireId(id: string, label: string): void {
+  if (!id) {
+    throw new Error(`${label} is required`);
+  }
 }
 
 /** Fetches all portal users for the active company. */
@@ -16,40 +32,66 @@ export async function fetchUsers(): Promise<PortalUser[]> {
   return mockClient.get<PortalUser[]>("/users");
 }
 
-/** Invites a new user. The backend creates the account and sends a password-reset email. */
+/**
+ * Invite a new portal user into the active company.
+ *
+ * Backend:
+ * - creates a standard portal user in portal_users
+ * - creates company membership in user_companies
+ * - stores initial module permissions on user_companies
+ *
+ * Hosting account linking is not handled here.
+ * Hosting linking belongs to the Hosting module.
+ */
 export async function inviteUser(
   input: InviteUserInput,
-): Promise<{ user: PortalUser }> {
+): Promise<InviteResponse> {
   return mockClient.post<InviteResponse>("/users/invite", input);
 }
 
-/** Updates a user's kennitala or phone number. */
+/**
+ * Update profile fields.
+ *
+ * Current backend only allows the logged-in user to update their own record.
+ */
 export async function updateUser(
   id: string,
   data: { kennitala?: string; phone?: string },
 ): Promise<void> {
+  requireId(id, "User id");
+
   return mockClient.patch<void>(`/users/${id}`, data);
 }
 
-/** Links or unlinks a hosting account username from a portal user. Pass null to remove the link. */
-export async function updateUserHosting(
-  id: string,
-  hostingUsername: string | null,
-): Promise<void> {
-  return mockClient.patch<void>(`/users/${id}/hosting`, { hostingUsername });
-}
-
-/** Permanently removes a portal user from the company. */
+/**
+ * Remove a portal user from the active company.
+ *
+ * Backend prevents removing yourself and elevated users.
+ */
 export async function removeUser(id: string): Promise<void> {
+  requireId(id, "User id");
+
   return mockClient.delete<void>(`/users/${id}`);
 }
 
-/** Resets a user's password. Requires `currentPassword` only when the user is resetting their own. */
+/**
+ * Reset password for a user.
+ *
+ * Backend allows:
+ * - self reset with currentPassword
+ * - elevated user reset without currentPassword
+ */
 export async function resetPassword(
   userId: string,
   newPassword: string,
   currentPassword?: string,
 ): Promise<void> {
+  requireId(userId, "User id");
+
+  if (!newPassword) {
+    throw new Error("New password is required");
+  }
+
   return mockClient.post<void>(`/users/${userId}/reset-password`, {
     currentPassword,
     newPassword,

@@ -4,9 +4,7 @@
  * Exports: AuthTokensPanel
  */
 import { useState } from "react";
-import { Button } from "@/shared/components/Button";
-import { useAuthStore } from "@/features/auth/store/auth.store";
-import { useAuthTokens, useCreateAuthToken, useDeleteAuthToken } from "../api/dkplus.queries";
+import { useAuthTokens, useDeleteAuthToken } from "../api/dkplus.queries";
 import type { AuthToken } from "../types/dkplus.types";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
@@ -150,94 +148,6 @@ function TokenTable({
   );
 }
 
-function CreateForm({
-  onCreated,
-  onSuccess,
-}: {
-  onCreated: () => void;
-  onSuccess: () => void;
-}) {
-  const { user, companies } = useAuthStore();
-  const createMutation = useCreateAuthToken();
-  const [description, setDescription] = useState("");
-  const [companyId, setCompanyId] = useState(user?.companyId ?? companies[0]?.id ?? "");
-  const [descError, setDescError] = useState(false);
-  const [createError, setCreateError] = useState<string | null>(null);
-
-  async function handleCreate() {
-    if (!description.trim()) {
-      setDescError(true);
-      return;
-    }
-    setDescError(false);
-    setCreateError(null);
-    try {
-      await createMutation.mutateAsync({ description: description.trim(), companyId });
-      setDescription("");
-      onCreated();
-      onSuccess();
-    } catch {
-      setCreateError("Villa kom upp við stofnun tákns.");
-    }
-  }
-
-  return (
-    <div className="border-t border-(--color-border)">
-      {createError && (
-        <div className="border-b border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {createError}
-        </div>
-      )}
-      <div className="flex items-center gap-2 px-4 py-3">
-        <div className="flex-1">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Lýsing: t.d. Bókhaldskerfi, DK One tenging"
-              value={description}
-              onChange={(e) => {
-                setDescription(e.target.value);
-                if (e.target.value.trim()) setDescError(false);
-              }}
-              onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-              className={`w-full rounded-lg border px-3 py-2 text-sm outline-none transition-colors focus:ring-2 ${
-                descError
-                  ? "border-(--color-error) focus:ring-(--color-error)/30"
-                  : "border-(--color-border) focus:border-(--color-primary) focus:ring-(--color-primary)/20"
-              } bg-(--color-surface) text-(--color-text) placeholder:text-(--color-text-muted)`}
-            />
-            {descError && (
-              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-(--color-error)">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="12" y1="8" x2="12" y2="12" stroke="white" strokeWidth="2" strokeLinecap="round" />
-                  <line x1="12" y1="16" x2="12.01" y2="16" stroke="white" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-              </span>
-            )}
-          </div>
-        </div>
-        <select
-          value={companyId}
-          onChange={(e) => setCompanyId(e.target.value)}
-          className="rounded-lg border border-(--color-border) bg-(--color-surface) px-3 py-2 text-sm text-(--color-text) outline-none focus:border-(--color-primary) focus:ring-2 focus:ring-(--color-primary)/20"
-        >
-          {companies.map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
-          ))}
-        </select>
-        <Button
-          variant="primary"
-          size="md"
-          onClick={handleCreate}
-          disabled={createMutation.isPending}
-        >
-          {createMutation.isPending ? "Stofna..." : "Stofna tákn"}
-        </Button>
-      </div>
-    </div>
-  );
-}
 
 interface AuthTokensPanelProps {
   onViewLogs: (token: AuthToken) => void;
@@ -254,16 +164,10 @@ export function AuthTokensPanel({ onViewLogs }: AuthTokensPanelProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   function showError(msg: string) {
     setError(msg);
     setTimeout(() => setError(null), 4000);
-  }
-
-  function showSuccess(msg: string) {
-    setSuccess(msg);
-    setTimeout(() => setSuccess(null), 4000);
   }
 
   const totalPages = Math.max(1, Math.ceil(tokens.length / pageSize));
@@ -294,12 +198,6 @@ export function AuthTokensPanel({ onViewLogs }: AuthTokensPanelProps) {
         <h3 className="text-sm font-semibold text-(--color-text)">Auðkenningartákn</h3>
       </div>
 
-      {success && (
-        <div className="border-b border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-          {success}
-        </div>
-      )}
-
       {error && (
         <div className="border-b border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
@@ -310,7 +208,7 @@ export function AuthTokensPanel({ onViewLogs }: AuthTokensPanelProps) {
         <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
           <p className="text-sm font-medium text-(--color-text)">Engin auðkenningartákn skráð</p>
           <p className="max-w-sm text-sm text-(--color-text-secondary)">
-            Fylltu út eyðublaðið hér að neðan til að búa til fyrsta táknið og tengja kerfi við DK vefþjónustur.
+            Notaðu hnappinn „Stofna tákn" til að búa til fyrsta táknið og tengja kerfi við DK vefþjónustur.
           </p>
         </div>
       ) : (
@@ -361,10 +259,6 @@ export function AuthTokensPanel({ onViewLogs }: AuthTokensPanelProps) {
         </div>
       </div>
 
-      <CreateForm
-        onCreated={() => setPage(1)}
-        onSuccess={() => showSuccess("Tákn stofnað!")}
-      />
     </div>
   );
 }

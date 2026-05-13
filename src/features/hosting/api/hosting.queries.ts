@@ -16,12 +16,16 @@ import {
   useSuspenseQuery,
 } from "@tanstack/react-query";
 import {
+  changeHostingAccountPassword,
   fetchHostingAccountLog,
   fetchHostingAccounts,
+  fetchHostingPortalUsers,
   fetchMyHostingAccount,
   fetchMyHostingLog,
+  linkHostingAccountToPortalUser,
   signOutHostingAccount,
   signOutMyHosting,
+  unlinkHostingAccountFromPortalUser,
 } from "./hosting.api";
 
 export const hostingQueryKeys = {
@@ -30,6 +34,7 @@ export const hostingQueryKeys = {
     ["hosting", "accounts", accountId, "log"] as const,
   me: ["hosting", "me"] as const,
   meLog: ["hosting", "me", "log"] as const,
+  portalUsers: ["hosting", "portal-users"] as const,
 };
 
 /**
@@ -58,7 +63,89 @@ export function useInvalidateHostingAccounts() {
 
 /**
  * Hosting Management:
- * Login/logout history for a specific hosting account (admin view).
+ * Portal users for the active company.
+ * Used when linking a hosting account to a Mínar síður user.
+ */
+export function useHostingPortalUsers() {
+  return useQuery({
+    queryKey: hostingQueryKeys.portalUsers,
+    queryFn: fetchHostingPortalUsers,
+  });
+}
+
+/**
+ * Hosting Management:
+ * Link hosting account to portal user.
+ *
+ * Backend updates portal_users.hosting_username.
+ */
+export function useLinkHostingAccountToPortalUser() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      accountId,
+      userId,
+    }: {
+      accountId: string;
+      userId: string;
+    }) =>
+      linkHostingAccountToPortalUser({
+        accountId,
+        userId,
+      }),
+
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({
+          queryKey: hostingQueryKeys.accounts,
+        }),
+        qc.invalidateQueries({
+          queryKey: hostingQueryKeys.portalUsers,
+        }),
+      ]);
+    },
+  });
+}
+
+/**
+ * Hosting Management:
+ * Unlink hosting account from portal user.
+ *
+ * Backend clears portal_users.hosting_username.
+ */
+export function useUnlinkHostingAccountFromPortalUser() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      accountId,
+      userId,
+    }: {
+      accountId: string;
+      userId: string;
+    }) =>
+      unlinkHostingAccountFromPortalUser({
+        accountId,
+        userId,
+      }),
+
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({
+          queryKey: hostingQueryKeys.accounts,
+        }),
+        qc.invalidateQueries({
+          queryKey: hostingQueryKeys.portalUsers,
+        }),
+      ]);
+    },
+  });
+}
+
+/**
+ * Hosting Management:
+ * Login/logout history for a specific hosting account.
  */
 export function useHostingAccountLog(accountId: string, enabled = true) {
   return useQuery({
@@ -66,6 +153,30 @@ export function useHostingAccountLog(accountId: string, enabled = true) {
     queryFn: () => fetchHostingAccountLog(accountId),
     enabled,
     retry: false,
+  });
+}
+
+/**
+ * Hosting Management:
+ * Change password for a specific hosting account.
+ */
+export function useChangeHostingAccountPassword() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      password,
+    }: {
+      id: string;
+      password: string;
+    }) => changeHostingAccountPassword(id, password),
+
+    onSuccess: async () => {
+      await qc.invalidateQueries({
+        queryKey: hostingQueryKeys.accounts,
+      });
+    },
   });
 }
 
@@ -142,7 +253,7 @@ export function useInvalidateMyHostingLog() {
 
 /**
  * Hosting Management:
- * Admin sign-out of a specific hosting account session.
+ * Sign out a specific hosting account session.
  */
 export function useSignOutHostingAccount() {
   const qc = useQueryClient();

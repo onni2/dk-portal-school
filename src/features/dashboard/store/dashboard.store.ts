@@ -120,32 +120,40 @@ export const ALL_CARDS: CardDef[] = [
 ];
 
 const DEFAULT_CARD_IDS = ["company", "reikningar", "notendur"];
-const STORAGE_KEY = "dk-dashboard-cards";
-const COMPACT_KEY = "dk-dashboard-compact";
 
-function loadSaved(): string[] {
+function cardsKey(companyId: string) { return `dk-dashboard-cards-${companyId}`; }
+function compactKey(companyId: string) { return `dk-dashboard-compact-${companyId}`; }
+
+function activeCompanyId(): string {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem("dk-auth-user");
+    if (raw) {
+      const user = JSON.parse(raw) as { companyId?: string };
+      if (user.companyId) return user.companyId;
+    }
+  } catch { /* ignore */ }
+  return "default";
+}
+
+function loadSavedFor(companyId: string): string[] {
+  try {
+    const raw = localStorage.getItem(cardsKey(companyId));
     if (raw !== null) {
       const parsed = JSON.parse(raw) as string[];
       if (Array.isArray(parsed)) return parsed;
     }
-  } catch {
-    // localStorage can have corrupt/stale data — just fall back to defaults
-  }
+  } catch { /* ignore */ }
   return DEFAULT_CARD_IDS;
 }
 
-function loadCompact(): string[] {
+function loadCompactFor(companyId: string): string[] {
   try {
-    const raw = localStorage.getItem(COMPACT_KEY);
+    const raw = localStorage.getItem(compactKey(companyId));
     if (raw !== null) {
       const parsed = JSON.parse(raw) as string[];
       if (Array.isArray(parsed)) return parsed;
     }
-  } catch {
-    // ignore corrupt data
-  }
+  } catch { /* ignore */ }
   return [];
 }
 
@@ -156,26 +164,30 @@ interface DashboardLayoutState {
   removeCard: (id: string) => void;
   compactIds: string[];
   toggleCompact: (id: string) => void;
+  loadForCompany: (companyId: string) => void;
 }
 
 export const useDashboardLayout = create<DashboardLayoutState>((set, get) => ({
-  cardIds: loadSaved(),
-  compactIds: loadCompact(),
+  cardIds: loadSavedFor(activeCompanyId()),
+  compactIds: loadCompactFor(activeCompanyId()),
 
   setCardIds(ids) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
+    const cid = activeCompanyId();
+    localStorage.setItem(cardsKey(cid), JSON.stringify(ids));
     set({ cardIds: ids });
   },
 
   addCard(id) {
     const ids = [...get().cardIds, id];
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
+    const cid = activeCompanyId();
+    localStorage.setItem(cardsKey(cid), JSON.stringify(ids));
     set({ cardIds: ids });
   },
 
   removeCard(id) {
     const ids = get().cardIds.filter((c) => c !== id);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
+    const cid = activeCompanyId();
+    localStorage.setItem(cardsKey(cid), JSON.stringify(ids));
     set({ cardIds: ids });
   },
 
@@ -183,7 +195,15 @@ export const useDashboardLayout = create<DashboardLayoutState>((set, get) => ({
     const next = get().compactIds.includes(id)
       ? get().compactIds.filter((c) => c !== id)
       : [...get().compactIds, id];
-    localStorage.setItem(COMPACT_KEY, JSON.stringify(next));
+    const cid = activeCompanyId();
+    localStorage.setItem(compactKey(cid), JSON.stringify(next));
     set({ compactIds: next });
+  },
+
+  loadForCompany(companyId) {
+    set({
+      cardIds: loadSavedFor(companyId),
+      compactIds: loadCompactFor(companyId),
+    });
   },
 }));

@@ -96,9 +96,6 @@ export function HostingLoginHistoryTable({ log }: HostingLoginHistoryTableProps)
                 <th className="px-4 py-2.5">Tími</th>
                 <th className="px-4 py-2.5">IP-tala</th>
                 <th className="hidden px-4 py-2.5 sm:table-cell">Tæki</th>
-                <th className="hidden px-4 py-2.5 lg:table-cell">
-                  User agent
-                </th>
               </tr>
             </thead>
 
@@ -149,9 +146,6 @@ export function HostingLoginHistoryTable({ log }: HostingLoginHistoryTableProps)
                       {entry.device ?? "—"}
                     </td>
 
-                    <td className="hidden px-4 py-2.5 text-(--color-text-secondary) lg:table-cell">
-                      {entry.userAgent ?? "—"}
-                    </td>
                   </tr>
                 );
               })}

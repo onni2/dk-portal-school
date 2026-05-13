@@ -175,6 +175,52 @@ function CustomizePanel({
   );
 }
 
+// ─── Info tooltip (matches PageTemplate pattern) ──────────────────────────────
+
+function DashboardInfoTooltip({ lang }: { lang: string }) {
+  const items = lang === "EN"
+    ? [
+        "Each card shows a live status overview of one of your active services.",
+        "Click the link at the bottom of any card to open that feature directly.",
+        "Use the Customise button (top right) to add or remove cards, or toggle compact mode for a condensed view.",
+        "Reorder cards by grabbing the drag handle (the six dots on the left edge) and dragging to the desired position.",
+        "Your card layout and order are saved separately for each company you switch between.",
+      ]
+    : [
+        "Hvert kort sýnir stöðuyfirlit einnar þjónustu sem þú hefur aðgang að.",
+        "Smelltu á hlekk neðst á korti til að opna viðkomandi þjónustu beint.",
+        "Notaðu Sérsníða hnappinn (efst til hægri) til að bæta við eða fjarlægja kort, eða kveikja á þjöppuðu ham.",
+        "Til að endurraða kortum sekaltu grípa í drag-merkið (sex punktar vinstra megin á korti) og draga það á réttan stað.",
+        "Kortaútlit og röðun er vistað sérstaklega fyrir hvert fyrirtæki sem þú skiptir á milli.",
+      ];
+
+  return (
+    <span className="group relative flex items-center">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-4 w-4 cursor-default text-(--color-text-muted) transition-colors group-hover:text-(--color-text-secondary)"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth={2}
+      >
+        <circle cx="12" cy="12" r="10" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-4m0-4h.01" />
+      </svg>
+      <span className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 w-80 -translate-x-1/2 rounded-md border border-(--color-border) bg-(--color-surface) px-3 py-3 text-xs text-(--color-text-secondary) opacity-0 shadow-md transition-opacity group-hover:opacity-100">
+        <ul className="space-y-1.5">
+          {items.map((item, i) => (
+            <li key={i} className="flex items-start gap-1.5">
+              <span className="mt-0.5 shrink-0 text-(--color-primary)">▪</span>
+              {item}
+            </li>
+          ))}
+        </ul>
+      </span>
+    </span>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 const FULL_PERMISSIONS: UserPermissions = {
@@ -254,10 +300,7 @@ export function DashboardPage() {
             <h1 className="text-2xl font-bold text-(--color-text)">
               {greeting}{firstName ? `, ${firstName}` : ""}.
             </h1>
-            <InfoTooltip text={lang === "EN"
-              ? "Dashboard shows a customisable layout. Add more cards and drag them with the 6 dots in the top-right corner of each card to rearrange them."
-              : "Yfirlit sýnir sérsniðið útlit sem þú getur breytt með því að bæta fleiri kortum við og færð þau um með 6 doppurnar í hægra efra horni til að heyfa kortin."
-            } />
+            <DashboardInfoTooltip lang={lang} />
             {user?.role === "god" && (
               <span className="rounded-full bg-(--color-error-bg) px-2.5 py-0.5 text-xs font-semibold text-(--color-error)">
                 {lang === "EN" ? "System Admin" : "Kerfisstjóri"}
@@ -328,12 +371,22 @@ export function DashboardPage() {
           onDragEnd={handleDragEnd}
         >
           <SortableContext items={cardIds} strategy={rectSortingStrategy}>
+            {customizing && (
+              <div className="flex items-center gap-1.5 text-xs text-(--color-text-muted)">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="9" cy="5" r="1.5" /><circle cx="15" cy="5" r="1.5" />
+                  <circle cx="9" cy="12" r="1.5" /><circle cx="15" cy="12" r="1.5" />
+                  <circle cx="9" cy="19" r="1.5" /><circle cx="15" cy="19" r="1.5" />
+                </svg>
+                {lang === "EN" ? "Drag cards to reorder" : "Dragðu kort til að endurraða"}
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 auto-rows-[16rem]">
               {visibleCards.map((card) => {
                 const isLocked = !!card.to && maintenanceLocks.some(
                   (l) => card.to!.startsWith(l.route),
                 );
-                return <SortableDashboardCard key={card.id} card={card} isLocked={isLocked} />;
+                return <SortableDashboardCard key={card.id} card={card} isLocked={isLocked} isCustomizing={customizing} />;
               })}
             </div>
           </SortableContext>

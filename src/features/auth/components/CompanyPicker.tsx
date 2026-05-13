@@ -9,6 +9,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../store/auth.store";
 import { switchCompany } from "@/features/company/api/company.api";
+import { useDashboardLayout } from "@/features/dashboard/store/dashboard.store";
 import { cn } from "@/shared/utils/cn";
 
 const LAST_COMPANY_KEY = "dk-last-company";
@@ -53,6 +54,7 @@ export function CompanyPicker() {
         localStorage.removeItem("dk-company-token");
       }
       setActiveCompany(companyId, permissions);
+      useDashboardLayout.getState().loadForCompany(companyId);
 
       try {
         const prev: string[] = JSON.parse(localStorage.getItem(LAST_COMPANY_KEY) ?? "[]");
