@@ -35,76 +35,103 @@ export function IpWhitelistPanel() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["timeclock-ip-whitelist"] }),
   });
 
-  return (
-    <Card>
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h2 className="text-base font-semibold text-(--color-text)">
-            IP-tölur í hvítlista
-          </h2>
-          <p className="mt-0.5 text-xs text-(--color-text-muted)">
-            Aðeins tæki með þessar IP-tölur mega nota stimpilklukku.
-          </p>
-        </div>
-        <Button size="sm" variant="primary" onClick={() => setAddIpOpen(true)}>
-          + Bæta við
-        </Button>
-      </div>
+  function handleClose() {
+    setIp("");
+    setLabel("");
+    setAddIpOpen(false);
+  }
 
-      {entries.length === 0 ? (
-        <p className="py-4 text-center text-sm text-(--color-text-muted)">
-          Engar IP-tölur skráðar.
-        </p>
-      ) : (
-        <ul className="divide-y divide-(--color-border)">
-          {entries.map((entry) => (
-            <li key={entry.id} className="flex items-center justify-between py-3">
-              <div>
-                <p className="text-sm font-medium text-(--color-text)">{entry.ip}</p>
-                {entry.label && (
-                  <p className="text-xs text-(--color-text-muted)">{entry.label}</p>
-                )}
-              </div>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => removeMutation.mutate(entry.id)}
-                disabled={removeMutation.isPending && removeMutation.variables === entry.id} // only disable the one being deleted
-              >
-                {removeMutation.isPending && removeMutation.variables === entry.id ? "..." : "Fjarlægja"}
-              </Button>
-            </li>
-          ))}
-        </ul>
-      )}
+  return (
+    <>
+      <Card>
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-(--color-text)">IP-tölur í hvítlista</h2>
+            <p className="mt-0.5 text-xs text-(--color-text-muted)">
+              Aðeins tæki með þessar IP-tölur mega nota stimpilklukku.
+            </p>
+          </div>
+          <Button size="sm" variant="primary" onClick={() => setAddIpOpen(true)}>
+            + Bæta við
+          </Button>
+        </div>
+
+        {entries.length === 0 ? (
+          <p className="py-4 text-center text-sm text-(--color-text-muted)">Engar IP-tölur skráðar.</p>
+        ) : (
+          <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-white">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[var(--color-border)] bg-[#F6F8FC]">
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[#5C667A]">IP-tala</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[#5C667A]">Lýsing</th>
+                  <th className="px-4 py-3" />
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map((entry) => (
+                  <tr key={entry.id} className="border-b border-[var(--color-border)] last:border-0 hover:bg-[#F6F8FC]">
+                    <td className="px-4 py-3 font-medium text-[#0B0F1A]">{entry.ip}</td>
+                    <td className="px-4 py-3 text-[#5C667A]">{entry.label || "—"}</td>
+                    <td className="px-4 py-3 text-right">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => removeMutation.mutate(entry.id)}
+                        disabled={removeMutation.isPending && removeMutation.variables === entry.id}
+                      >
+                        {removeMutation.isPending && removeMutation.variables === entry.id ? "..." : "Fjarlægja"}
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
 
       {addIpOpen && (
-        <div className="mt-4 flex flex-col gap-3 border-t border-(--color-border) pt-4">
-          <Input
-            placeholder="IP-tala, t.d. 192.168.1.10"
-            value={ip}
-            onChange={(e) => setIp(e.target.value)}
-          />
-          <Input
-            placeholder="Lýsing (valkvætt)"
-            value={label}
-            onChange={(e) => setLabel(e.target.value)}
-          />
-          <div className="flex gap-2">
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => { if (ip.trim()) addMutation.mutate({ ip: ip.trim(), label: label.trim() }); }}
-              disabled={addMutation.isPending || !ip.trim()}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={handleClose}>
+          <div className="w-full max-w-md rounded-lg border border-(--color-border) bg-(--color-surface) p-6 shadow-lg" onClick={(e) => e.stopPropagation()}>
+            <h2 className="mb-4 text-lg font-bold text-(--color-text)">Bæta við IP-tölu</h2>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (ip.trim()) addMutation.mutate({ ip: ip.trim(), label: label.trim() });
+              }}
+              className="flex flex-col gap-4"
             >
-              {addMutation.isPending ? "Vista..." : "Vista"}
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => setAddIpOpen(false)}>
-              Hætta við
-            </Button>
+              <Input
+                label="IP-tala"
+                placeholder="192.168.1.10"
+                value={ip}
+                onChange={(e) => setIp(e.target.value)}
+                required
+              />
+              <Input
+                label="Lýsing (valkvætt)"
+                placeholder="T.d. Skrifstofan"
+                value={label}
+                onChange={(e) => setLabel(e.target.value)}
+              />
+              {addMutation.isError && (
+                <p className="text-sm text-(--color-error)">
+                  {(addMutation.error as { message?: string })?.message ?? "Villa kom upp"}
+                </p>
+              )}
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="ghost" onClick={handleClose} disabled={addMutation.isPending}>
+                  Hætta við
+                </Button>
+                <Button type="submit" disabled={addMutation.isPending || !ip.trim()}>
+                  {addMutation.isPending ? "Vista..." : "Vista"}
+                </Button>
+              </div>
+            </form>
           </div>
         </div>
       )}
-    </Card>
+    </>
   );
 }

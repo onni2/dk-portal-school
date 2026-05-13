@@ -1,3 +1,4 @@
+// server/src/routes/hosting.js
 /**
  * 
  * Responsibilities:
@@ -39,6 +40,20 @@ function getCompanyId(req) {
 }
 
 function mapAccount(row) {
+  let linkedPortalUsers = row.linked_portal_users ?? [];
+
+  if (typeof linkedPortalUsers === "string") {
+    try {
+      linkedPortalUsers = JSON.parse(linkedPortalUsers);
+    } catch {
+      linkedPortalUsers = [];
+    }
+  }
+
+  if (!Array.isArray(linkedPortalUsers)) {
+    linkedPortalUsers = [];
+  }
+
   return {
     id: row.id,
     username: row.username,
@@ -48,11 +63,13 @@ function mapAccount(row) {
     hasPendingActivation: row.has_pending_activation ?? false,
     status: row.status ?? null,
     isLoggedIn: row.latest_event_type != null
-      ? row.latest_event_type === 'login'
+      ? row.latest_event_type === "login"
       : null,
-    linkedPortalUser: row.linked_user_name
-      ? { name: row.linked_user_name, username: row.linked_user_username }
-      : null,
+
+    linkedPortalUsers,
+
+    // heldur eldri frontend-kóða lifandi
+    linkedPortalUser: linkedPortalUsers[0] ?? null,
   };
 }
 
@@ -162,18 +179,6 @@ async function ensurePortalUserBelongsToCompany(db, userId, companyId) {
   return rows[0] ?? null;
 }
 
-async function ensureHostingAccountIsNotLinkedToAnotherUser(db, username, userId) {
-  const { rows } = await db.query(
-    `SELECT id
-     FROM portal_users
-     WHERE hosting_username = $1
-       AND id <> $2
-     LIMIT 1`,
-    [username, userId],
-  );
-
-  return rows.length === 0;
-}
 
 async function getCurrentHostingAccount(userId, companyId) {
   if (!companyId) return null;
@@ -327,8 +332,21 @@ router.get("/accounts", requireAuth, requireHostingManagement, async (req, res) 
              AND hdd.status = 'active'
          ) AS has_mfa,
          ha.status,
-         pu.name AS linked_user_name,
-         pu.username AS linked_user_username,
+         COALESCE(
+           (
+             SELECT json_agg(
+               json_build_object(
+                 'id', pu.id,
+                 'name', pu.name,
+                 'username', pu.username
+               )
+               ORDER BY pu.name ASC, pu.username ASC
+             )
+             FROM portal_users pu
+             WHERE pu.hosting_username = ha.username
+           ),
+           '[]'::json
+         ) AS linked_portal_users,
          hdu.duo_display_name,
          (
            SELECT event_type
@@ -346,8 +364,6 @@ router.get("/accounts", requireAuth, requireHostingManagement, async (req, res) 
              AND hdd.activation_expires_at > NOW()
          ) AS has_pending_activation
        FROM hosting_accounts ha
-       LEFT JOIN portal_users pu
-         ON pu.hosting_username = ha.username
        LEFT JOIN hosting_duo_users hdu
          ON hdu.hosting_account_id = ha.id
        WHERE ha.company_id = $1
@@ -435,16 +451,24 @@ router.post("/accounts", requireAuth, requireHostingManagement, async (req, res)
         });
       }
 
-      const isAvailable = await ensureHostingAccountIsNotLinkedToAnotherUser(
-        client,
-        username,
-        portalUserId,
+      const { rows: selectedUserRows } = await client.query(
+        `SELECT id, hosting_username
+         FROM portal_users
+         WHERE id = $1
+         LIMIT 1`,
+        [portalUserId],
       );
 
-      if (!isAvailable) {
+      const selectedUser = selectedUserRows[0];
+
+      if (
+        selectedUser?.hosting_username &&
+        selectedUser.hosting_username !== username
+      ) {
         await client.query("ROLLBACK");
         return res.status(409).json({
-          message: "Þessi hýsingaraðgangur er nú þegar tengdur öðrum portal notanda",
+          message:
+            "Þessi portal notandi er nú þegar tengdur öðrum hýsingaraðgangi",
         });
       }
 
@@ -464,7 +488,7 @@ router.post("/accounts", requireAuth, requireHostingManagement, async (req, res)
     try {
       const duoUser = await createDuoUser({
         username: account.username,
-        displayName: displayName,
+        displayName,
         status: "active",
       });
 
@@ -482,11 +506,14 @@ router.post("/accounts", requireAuth, requireHostingManagement, async (req, res)
         ],
       );
     } catch (duoErr) {
-      console.warn("Duo provisioning failed for new hosting account (will auto-sync on first access):", {
-        accountId: account.id,
-        username: account.username,
-        error: duoErr?.message,
-      });
+      console.warn(
+        "Duo provisioning failed for new hosting account (will auto-sync on first access):",
+        {
+          accountId: account.id,
+          username: account.username,
+          error: duoErr?.message,
+        },
+      );
     }
 
     res.status(201).json({
@@ -604,6 +631,7 @@ router.patch("/accounts/:id", requireAuth, requireHostingManagement, async (req,
  * POST /hosting/accounts/:id/link-user
  *
  * Connects an existing hosting account to a portal user.
+ * Multiple portal users may be connected to the same hosting account.
  * The connection is stored on portal_users.hosting_username.
  */
 router.post(
@@ -621,12 +649,22 @@ router.post(
 
     const companyId = getCompanyId(req);
 
+    if (!companyId) {
+      return res.status(400).json({
+        message: "Ekkert virkt fyrirtæki valið",
+      });
+    }
+
     const client = await pool.connect();
 
     try {
       await client.query("BEGIN");
 
-      const account = await getHostingAccountById(client, req.params.id, companyId);
+      const account = await getHostingAccountById(
+        client,
+        req.params.id,
+        companyId,
+      );
 
       if (!account) {
         await client.query("ROLLBACK");
@@ -648,16 +686,24 @@ router.post(
         });
       }
 
-      const isAvailable = await ensureHostingAccountIsNotLinkedToAnotherUser(
-        client,
-        account.username,
-        userId,
+      const { rows: selectedUserRows } = await client.query(
+        `SELECT id, hosting_username
+         FROM portal_users
+         WHERE id = $1
+         LIMIT 1`,
+        [userId],
       );
 
-      if (!isAvailable) {
+      const selectedUser = selectedUserRows[0];
+
+      if (
+        selectedUser?.hosting_username &&
+        selectedUser.hosting_username !== account.username
+      ) {
         await client.query("ROLLBACK");
         return res.status(409).json({
-          message: "Þessi hýsingaraðgangur er nú þegar tengdur öðrum portal notanda",
+          message:
+            "Þessi portal notandi er nú þegar tengdur öðrum hýsingaraðgangi",
         });
       }
 
@@ -671,7 +717,7 @@ router.post(
       await client.query("COMMIT");
 
       res.json({
-        account: mapAccount(account),
+        ok: true,
         linkedPortalUserId: userId,
       });
     } catch (err) {
@@ -946,5 +992,75 @@ router.post("/me/sign-out", requireAuth, async (req, res) => {
   }
 });
 
+/**
+ * GET /hosting/portal-users
+ *
+ * Lists portal users in the active company so a hosting account can be linked
+ * to one or more of them.
+ */
+router.get(
+  "/portal-users",
+  requireAuth,
+  requireHostingManagement,
+  async (req, res) => {
+    const companyId = getCompanyId(req);
+
+    if (!companyId) {
+      return res.status(400).json({
+        message: "Ekkert virkt fyrirtæki valið",
+      });
+    }
+
+    try {
+      const { rows } = await pool.query(
+        `SELECT
+           u.id,
+           u.username,
+           u.email,
+           u.name,
+           u.status,
+           u.hosting_username,
+           uc.role AS company_role,
+           COALESCE(uc.hosting, false) AS hosting,
+           ha.id AS linked_hosting_account_id,
+           ha.username AS linked_hosting_username
+         FROM portal_users u
+         LEFT JOIN user_companies uc
+           ON uc.user_id = u.id
+          AND uc.company_id = $1
+         LEFT JOIN hosting_accounts ha
+           ON ha.username = u.hosting_username
+          AND ha.company_id = $1
+          AND ha.deleted_at IS NULL
+         WHERE u.company_id = $1
+            OR uc.company_id = $1
+         ORDER BY u.name ASC, u.username ASC`,
+        [companyId],
+      );
+
+      res.json(
+        rows.map((user) => ({
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          name: user.name,
+          status: user.status,
+          companyRole: user.company_role ?? "user",
+          hasHostingPermission: user.hosting === true,
+          hostingUsername: user.hosting_username ?? null,
+          linkedHostingAccount: user.linked_hosting_account_id
+            ? {
+                id: user.linked_hosting_account_id,
+                username: user.linked_hosting_username,
+              }
+            : null,
+        })),
+      );
+    } catch (err) {
+      console.error("List hosting portal users:", err);
+      res.status(500).json({ message: "Villa á þjóni" });
+    }
+  },
+);
 
 module.exports = { router, requireHostingManagement };
