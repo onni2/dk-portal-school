@@ -213,7 +213,7 @@ export function TransactionTable() {
               </span>
               <span className="text-[var(--color-border)]">|</span>
               <span className="flex items-center gap-1.5">
-                <span className="text-[#5C667A]">Nettó</span>
+                <span className="text-(--color-text-muted)">Staðan fyrir valið tímabil</span>
                 <span className={cn("font-semibold", net >= 0 ? "text-[#0B0F1A]" : "text-red-600")}>
                   {net < 0 ? "−" : ""}{formatAmount(Math.abs(net), currency)}
                 </span>
