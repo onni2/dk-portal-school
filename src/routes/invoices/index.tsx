@@ -31,7 +31,7 @@ function ReikningarPage() {
   return (
     <PageTemplate
       title="Reikningsyfirlit"
-      info="Reikningsyfirlit sýnir útgefna reikninga, innborganir og kreditnótur ásamt greiðslustöðu þeirra. Til að sækja reikning sem PDF skaltu smella á niðurhalstáknið í listanum lengst til hægri."
+      info="Reikningsyfirlit sýnir útgefna reikninga, innborganir og kreditnótur ásamt greiðslustöðu þeirra. Notaðu tímabilssíurnar til að þrengja listann og smelltu á Hlaða niður PDF til að sækja hreyfingaskýrslu fyrir valið tímabil. Einstaka reikninga má sækja með niðurhalstákninu lengst til hægri í töflunni."
     >
       <InvoiceFilters />
       <Suspense fallback={<LoadingSpinner />}>
