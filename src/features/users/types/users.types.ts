@@ -1,3 +1,8 @@
+/**
+ * TypeScript types for the portal user management domain: user profiles, invite inputs, and status flags.
+ * Uses: @/features/auth/types/auth.types
+ * Exports: PortalUserStatus, PortalUser, InviteUserInput
+ */
 import type { AuthRole, CompanyRole } from "@/features/auth/types/auth.types";
 
 export type PortalUserStatus = "active" | "pending";

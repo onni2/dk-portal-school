@@ -1,6 +1,6 @@
-// src/features/users/api/hosting.api.ts
 /**
- * Hosting accounts API — fetches the company's hosting accounts for the invite modal.
+ * Hosting accounts API for the user management feature — fetches the company's hosting accounts
+ * so they can be linked to portal users in the invite and edit modals.
  * Uses: @/shared/api/mockClient
  * Exports: fetchHostingAccounts, HostingAccount
  */
@@ -12,7 +12,7 @@ export interface HostingAccount {
   displayName: string;
 }
 
-// 
+/** Fetches all hosting accounts for the active company. */
 export async function fetchHostingAccounts(): Promise<HostingAccount[]> {
   return mockClient.get<HostingAccount[]>("/hosting/accounts");
 }

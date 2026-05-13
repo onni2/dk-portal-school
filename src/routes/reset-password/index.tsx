@@ -1,3 +1,6 @@
+/**
+ * /reset-password — forced password change form for users who must reset their password on first login.
+ */
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useAuthStore } from "@/features/auth/store/auth.store";

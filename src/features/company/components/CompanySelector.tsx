@@ -11,9 +11,7 @@ import { switchCompany } from "../api/company.api";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 
-/**
- *
- */
+/** Header dropdown for switching the active company. Shows a plain label when the user has only one company. */
 export function CompanySelector() {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -34,9 +32,6 @@ export function CompanySelector() {
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    /**
-     *
-     */
     function handleClickOutside(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {
         setOpen(false);

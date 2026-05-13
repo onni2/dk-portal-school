@@ -1,3 +1,8 @@
+/**
+ * Password input with a show/hide toggle button. Extends InputProps but omits `type` since it manages that internally.
+ * Uses: @/shared/utils/cn
+ * Exports: PasswordInputProps, PasswordInput
+ */
 import { useState, forwardRef } from "react";
 import { cn } from "@/shared/utils/cn";
 
@@ -6,6 +11,7 @@ export interface PasswordInputProps extends Omit<React.InputHTMLAttributes<HTMLI
   error?: string;
 }
 
+/** Password field with an eye-icon toggle to show/hide the value. */
 export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
   ({ label, error, className, id, ...props }, ref) => {
     const [show, setShow] = useState(false);

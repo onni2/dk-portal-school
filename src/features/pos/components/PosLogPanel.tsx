@@ -1,3 +1,9 @@
+/**
+ * Log panel showing the activity history for a selected POS service.
+ * Dispatches to DkPosLogContent or RestPosLogContent based on serviceType.
+ * Uses: ../api/pos.queries, ../types/pos.types
+ * Exports: PosLogPanel
+ */
 import { usePosServiceLogs, usePosRestServiceLogs } from "../api/pos.queries";
 import type { PosServiceType } from "../types/pos.types";
 

@@ -11,6 +11,7 @@ import {
 } from "./accountant.api";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 
+/** Hook for fetching the list of companies managed by the accountant. */
 export function useAccountantCompanies() {
   const userId = useAuthStore((s) => s.user?.id);
   return useQuery({
@@ -19,6 +20,7 @@ export function useAccountantCompanies() {
   });
 }
 
+/** Hook for fetching submission status records across accountant companies. */
 export function useSubmissions() {
   const userId = useAuthStore((s) => s.user?.id);
   return useQuery({
@@ -27,6 +29,7 @@ export function useSubmissions() {
   });
 }
 
+/** Hook for fetching transactions, optionally filtered to a single company. */
 export function useTransactions(companyId?: string) {
   const userId = useAuthStore((s) => s.user?.id);
   return useQuery({
@@ -35,6 +38,7 @@ export function useTransactions(companyId?: string) {
   });
 }
 
+/** Hook for fetching documents, optionally filtered to a single company. */
 export function useDocuments(companyId?: string) {
   const userId = useAuthStore((s) => s.user?.id);
   return useQuery({

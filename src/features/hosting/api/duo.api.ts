@@ -1,3 +1,10 @@
+/**
+ * Duo MFA API functions for both the logged-in user's own account (MyHosting) and the admin view (Hosting Management).
+ * Uses: @/shared/api/mockClient, ../types/duo.types
+ * Exports: CreateDuoDevicePayload, CreateDuoDeviceResponse, DuoDeviceStatusResponse, UpdateDuoUserPayload, UpdateDuoUserResponse,
+ *          fetchDuoUser, updateDuoUser, fetchDuoDevices, createDuoDevice, fetchDuoDeviceStatus, deleteDuoDevice,
+ *          updateAdminDuoUser, fetchAdminDuoUser, fetchAdminDuoDevices, createAdminDuoDevice, fetchAdminDuoDeviceStatus, deleteAdminDuoDevice
+ */
 import { mockClient } from "@/shared/api/mockClient";
 import type { DuoDevice, DuoUser } from "../types/duo.types";
 
@@ -107,6 +114,7 @@ export async function deleteDuoDevice(
 
 // ─── Admin (Hosting Management) ──────────────────────────────────────────────
 
+/** Update display name and/or email for a specific hosting account's Duo user. */
 export async function updateAdminDuoUser(
   accountId: string,
   payload: UpdateDuoUserPayload,
@@ -117,14 +125,17 @@ export async function updateAdminDuoUser(
   );
 }
 
+/** Fetch Duo user connected to a specific hosting account (admin view). */
 export async function fetchAdminDuoUser(accountId: string): Promise<DuoUser> {
   return mockClient.get<DuoUser>(`/duo/accounts/${accountId}`);
 }
 
+/** Fetch devices connected to a specific hosting account's Duo user (admin view). */
 export async function fetchAdminDuoDevices(accountId: string): Promise<DuoDevice[]> {
   return mockClient.get<DuoDevice[]>(`/duo/accounts/${accountId}/devices`);
 }
 
+/** Create a Duo device activation for a specific hosting account (admin view). SMS requires phoneNumber + platform; QR only requires deviceDescription. */
 export async function createAdminDuoDevice(
   accountId: string,
   payload: CreateDuoDevicePayload,
@@ -135,6 +146,7 @@ export async function createAdminDuoDevice(
   );
 }
 
+/** Poll activation status for a Duo device on a specific hosting account (admin view). */
 export async function fetchAdminDuoDeviceStatus(
   accountId: string,
   deviceId: string,
@@ -144,6 +156,7 @@ export async function fetchAdminDuoDeviceStatus(
   );
 }
 
+/** Delete a Duo device from a specific hosting account (admin view). */
 export async function deleteAdminDuoDevice(
   accountId: string,
   deviceId: string,

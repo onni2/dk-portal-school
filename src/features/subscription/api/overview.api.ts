@@ -1,3 +1,9 @@
+/**
+ * Subscription overview API — fetches active subscription invoices and product module data,
+ * and provides helper functions to group invoice lines by product category.
+ * Uses: @/shared/api/client, ../types/products.types, ../types/overview.types
+ * Exports: PACKAGE_ITEM_CODES, groupLines, buildOverview, fetchProductsData, fetchSubscriptionOverview
+ */
 import { apiClient } from "@/shared/api/client";
 import type { SubscriptionProduct } from "../types/products.types";
 import type {
@@ -41,6 +47,7 @@ function isPackageLine(line: InvoiceLine): boolean {
   return PACKAGE_ITEM_CODES.includes((line.ItemCode ?? "").toLowerCase());
 }
 
+/** Group invoice lines by predefined product-category prefixes; unmatched lines go into "Aðrar vörur". */
 export function groupLines(lines: InvoiceLine[]): LineGroup[] {
   const matched = new Set<number>();
   const groups: LineGroup[] = [];
@@ -77,6 +84,7 @@ export interface OverviewData {
   groups: LineGroup[];
 }
 
+/** Split all invoice lines from multiple invoices into package lines and grouped product lines. */
 export function buildOverview(invoices: SubscriptionInvoice[]): OverviewData {
   const allLines = invoices.flatMap((inv) => inv.Lines ?? []);
   const packageLines = allLines.filter(isPackageLine);
@@ -92,6 +100,7 @@ export interface ProductsData {
   productMap: Record<string, SubscriptionProduct>;
 }
 
+/** Fetch all DK products and build a module-map (package code → included module names) and a product lookup map. */
 export async function fetchProductsData(): Promise<ProductsData> {
   const all = await apiClient.get<SubscriptionProduct[]>("/Product/page/1/500");
   const moduleMap: Record<string, string[]> = {};
@@ -112,6 +121,7 @@ export async function fetchProductsData(): Promise<ProductsData> {
   return { moduleMap, productMap };
 }
 
+/** Fetch subscription invoices for the fixed subscription customer, deduplicated to the latest invoice per order. */
 export async function fetchSubscriptionOverview(): Promise<
   SubscriptionInvoice[]
 > {

@@ -23,15 +23,14 @@ function findActiveChild(children: { to: string }[], path: string): string | nul
   return matches.sort((a, b) => b.to.length - a.to.length)[0]!.to;
 }
 
-/**
- *
- */
+/** Root app shell. Renders the header, sidebar, and the active page in the main area. */
 export function Layout({ children }: { children: ReactNode }) {
   const matches = useMatches();
   const currentPath = matches[matches.length - 1]?.fullPath ?? "/";
   const rawNavItems = useVisibleNavItems();
   const hasDkOne = rawNavItems.some((item) => item.to === "/dkone");
   const { data: subCompanies } = useQuery({ ...subCompaniesQueryOptions, enabled: hasDkOne });
+  // TODO: if more nav items need dynamic children like dkOne, extract this into a hook
   const navItems = rawNavItems.map((item) =>
     item.to === "/dkone" && (subCompanies?.length ?? 0) > 0
       ? {
@@ -60,9 +59,7 @@ export function Layout({ children }: { children: ReactNode }) {
       prev.includes(to) ? prev.filter((t) => t !== to) : [...prev, to],
     );
 
-  /**
-   *
-   */
+  /** Calls the logout API, clears auth state, and redirects to /login. */
   async function handleLogout() {
     await logout();
     clearAuth();

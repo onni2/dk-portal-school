@@ -6,9 +6,7 @@
  */
 import { cn } from "@/shared/utils/cn";
 
-/**
- *
- */
+/** Spinning circle used as the Suspense fallback. Optional `className` overrides positioning. */
 export function LoadingSpinner({ className }: { className?: string }) {
   return (
     <div className={cn("flex items-center justify-center py-12", className)}>

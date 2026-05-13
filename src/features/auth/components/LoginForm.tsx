@@ -37,12 +37,12 @@ export function LoginForm() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  // "polling" = waiting for user to confirm on their phone (Rafræn / Kort)
+  // polling = waiting for the user to confirm on their phone (Rafræn / Kort flows)
   const [polling, setPolling] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
   const navigate = useNavigate();
   const setAuth = useAuthStore((s) => s.setAuth);
-  const setRole = useRoleStore((s) => s.setRole);
+  const setRole = useRoleStore((s) => s.setRole); // role drives what shows in the sidebar
 
   function handleTabChange(tab: Tab) {
     setActiveTab(tab);
@@ -66,9 +66,11 @@ export function LoginForm() {
       const { user, token: authToken, companies } = await login({ username, password });
       setAuth(user, authToken, companies ?? []);
       setRole(authRoleToUserRole(user.role));
+      // three possible outcomes after login — handle each in order
       if (user.mustResetPassword) {
         navigate({ to: "/reset-password" });
       } else if ((companies ?? []).length > 1) {
+        // user belongs to multiple companies, let them pick
         navigate({ to: "/select-company" });
       } else {
         navigate({ to: "/" });
@@ -89,10 +91,10 @@ export function LoginForm() {
       await initiateAudkenniLogin(
         "sim",
         phoneNumber,
-        () => { setPolling(true); },
-        (code) => { setVerificationCode(code); },
+        () => { setPolling(true); }, // called when the request reaches the phone
+        (code) => { setVerificationCode(code); }, // the 4-digit security code to show
       );
-      // page redirects to /callback — loading stays true
+      // if all goes well the page redirects to /callback — loading stays true
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Tenging við Auðkenni mistókst",

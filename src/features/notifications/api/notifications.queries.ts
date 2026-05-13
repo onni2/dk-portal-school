@@ -1,6 +1,13 @@
+/**
+ * React Query hooks for notifications: fetch (polled every 30 s), mark-as-read, mark-all-as-read, and delete.
+ * Each mutation invalidates the notifications query on success.
+ * Uses: ./notifications.api
+ * Exports: useNotifications, useMarkAsRead, useMarkAllAsRead, useDeleteNotification
+ */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getNotifications, markAsRead, markAllAsRead, deleteNotification } from "./notifications.api";
 
+/** Polls notifications every 30 seconds. */
 export function useNotifications() {
   return useQuery({
     queryKey: ["notifications"],

@@ -1,3 +1,8 @@
+/**
+ * TypeScript types for subscription invoice lines, invoices, and grouped line categories.
+ * Uses: nothing — standalone file
+ * Exports: InvoiceLine, SubscriptionInvoice, LineGroup
+ */
 export interface InvoiceLine {
   SequenceNumber: number;
   ItemCode: string | null;

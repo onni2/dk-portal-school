@@ -1,3 +1,6 @@
+/**
+ * /pos — dkPOS services page; prefetches POS and REST service data before mounting.
+ */
 import { createFileRoute } from "@tanstack/react-router";
 import { posServicesQueryOptions, posRestServicesQueryOptions } from "@/features/pos/api/pos.queries";
 import { PosPage } from "@/features/pos/components/PosPage";

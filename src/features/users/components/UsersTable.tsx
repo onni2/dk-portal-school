@@ -41,6 +41,7 @@ interface Props {
   onSelectUser: (user: PortalUser) => void;
 }
 
+/** Renders users in the shared Table component. Columns for permission flags are filtered by active licence modules. */
 export function UsersTable({ onSelectUser }: Props) {
   const { data: users = [], isLoading } = usePortalUsers();
   const { data: licence } = useLicence();

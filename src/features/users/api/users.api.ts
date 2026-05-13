@@ -11,16 +11,19 @@ interface InviteResponse {
   user: PortalUser;
 }
 
+/** Fetches all portal users for the active company. */
 export async function fetchUsers(): Promise<PortalUser[]> {
   return mockClient.get<PortalUser[]>("/users");
 }
 
+/** Invites a new user. The backend creates the account and sends a password-reset email. */
 export async function inviteUser(
   input: InviteUserInput,
 ): Promise<{ user: PortalUser }> {
   return mockClient.post<InviteResponse>("/users/invite", input);
 }
 
+/** Updates a user's kennitala or phone number. */
 export async function updateUser(
   id: string,
   data: { kennitala?: string; phone?: string },
@@ -28,6 +31,7 @@ export async function updateUser(
   return mockClient.patch<void>(`/users/${id}`, data);
 }
 
+/** Links or unlinks a hosting account username from a portal user. Pass null to remove the link. */
 export async function updateUserHosting(
   id: string,
   hostingUsername: string | null,
@@ -35,10 +39,12 @@ export async function updateUserHosting(
   return mockClient.patch<void>(`/users/${id}/hosting`, { hostingUsername });
 }
 
+/** Permanently removes a portal user from the company. */
 export async function removeUser(id: string): Promise<void> {
   return mockClient.delete<void>(`/users/${id}`);
 }
 
+/** Resets a user's password. Requires `currentPassword` only when the user is resetting their own. */
 export async function resetPassword(
   userId: string,
   newPassword: string,

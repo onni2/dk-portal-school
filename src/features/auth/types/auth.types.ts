@@ -1,3 +1,8 @@
+/**
+ * TypeScript types for authentication: roles, user profiles, company memberships, and per-company permissions.
+ * Uses: nothing — standalone file
+ * Exports: AuthRole, CompanyRole, UserPermissions, CompanyMembership, User, LoginCredentials, AuthResponse
+ */
 export type AuthRole = "user" | "super_admin" | "god" | "accountant";
 export type CompanyRole = "admin" | "user" | "accountant";
 

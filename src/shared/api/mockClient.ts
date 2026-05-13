@@ -1,4 +1,3 @@
-// src/shared/api/mockClient.ts
 /**
  * HTTP client for the local mock backend (Express + PostgreSQL via Docker).
  * Always sends the JWT token stored in localStorage.
@@ -8,6 +7,7 @@
 export const MOCK_API_URL =
   import.meta.env.VITE_MOCK_API_URL ?? "http://localhost:3001";
 
+/** Reads the JWT token from localStorage and returns appropriate fetch headers. */
 function authHeaders(): Record<string, string> {
   const token = localStorage.getItem("dk-auth-token");
   const headers: Record<string, string> = {
@@ -19,6 +19,7 @@ function authHeaders(): Record<string, string> {
   return headers;
 }
 
+/** Throws a structured error if the response is not OK; handles 204 No Content as undefined. */
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
     let message = res.statusText;

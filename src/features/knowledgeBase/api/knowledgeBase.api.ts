@@ -1,3 +1,8 @@
+/**
+ * Fetches and normalizes Knowledge Base categories and articles from the Zoho Desk mock endpoint.
+ * Uses: @/shared/api/mockClient, ../types/knowledgeBase.types
+ * Exports: fetchKbData, fetchArticleFull
+ */
 import type { KbData, KbCategory, KbArticle } from "../types/knowledgeBase.types";
 import { mockClient } from "@/shared/api/mockClient";
 
@@ -51,6 +56,7 @@ function flattenCategories(nodes: ZohoCategory[], parentId: string | null = null
   return result;
 }
 
+/** Fetch all KB categories and published articles for the Ráðgjafadeild department. */
 export async function fetchKbData(): Promise<KbData> {
   const { categories: rawCats, articles: rawArticles } = await mockClient.get<{
     categories: ZohoCategory[];
@@ -88,6 +94,7 @@ export async function fetchKbData(): Promise<KbData> {
   return { categories, articles };
 }
 
+/** Fetch the full HTML body and tags for a single KB article. */
 export async function fetchArticleFull(id: string): Promise<{ content: string | null; tags: string[] }> {
   const data = await mockClient.get<ZohoArticleFull>(`/knowledge-base/articles/${id}`);
   return {

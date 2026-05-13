@@ -1,6 +1,5 @@
-// src/routes/notendur/index.tsx
 /**
- * /notendur — Users page. Prefetches portal users before rendering.
+ * /notendur — portal users page; prefetches the user list before rendering.
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { usersQueryOptions } from "@/features/users/api/users.queries";

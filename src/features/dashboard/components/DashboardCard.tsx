@@ -1,3 +1,9 @@
+/**
+ * Sortable dashboard card component. Wraps the card content in a dnd-kit sortable node
+ * and shows a drag handle, card preview, and a footer link to the feature page.
+ * Uses: @dnd-kit/sortable, @dnd-kit/utilities, ../store/dashboard.store, @/shared/utils/cn
+ * Exports: SortableDashboardCard
+ */
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Link } from "@tanstack/react-router";
@@ -7,6 +13,7 @@ import { useDashboardLayout } from "../store/dashboard.store";
 import { useLangStore } from "@/shared/store/lang.store";
 import { CardPreview } from "./CardPreviews";
 
+/** Dashboard card with dnd-kit drag support. Shows a lock icon instead of content when `isLocked` is true. */
 export function SortableDashboardCard({
   card,
   isLocked = false,
@@ -27,6 +34,7 @@ export function SortableDashboardCard({
   const compact = compactIds.includes(card.id);
   const lang = useLangStore((s) => s.lang);
   const title = lang === "EN" ? card.titleEn : card.title;
+  // fall back to a generic label if none was specified in the card definition
   const footerLabel = lang === "EN"
     ? (card.footerLabelEn ?? `Open ${card.titleEn}`)
     : (card.footerLabel ?? `Opna ${card.title}`);
@@ -34,7 +42,7 @@ export function SortableDashboardCard({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.4 : 1,
+    opacity: isDragging ? 0.4 : 1, // dim the card while it's being dragged
   };
 
   return (

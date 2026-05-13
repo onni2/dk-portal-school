@@ -1,3 +1,8 @@
+/**
+ * TypeScript types for dkOne users, roles, employees, company users, sub-companies, and invite payloads.
+ * Uses: nothing — standalone file
+ * Exports: DkOneRole, DkOneStatus, DkOneUser, DkUser, DkEmployee, CompanyUser, SubCompany, InviteDkOneUserInput
+ */
 export type DkOneRole = "owner" | "admin" | "user";
 export type DkOneStatus = "invited" | "active";
 

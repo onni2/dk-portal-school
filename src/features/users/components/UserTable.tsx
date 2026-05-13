@@ -11,6 +11,7 @@ import { removeUser } from "../api/users.api";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { cn } from "@/shared/utils/cn";
 
+/** Simpler user table used on older screens. Shows name, username, email, role badge, status, and remove button. */
 export function UserTable() {
   const { data: users = [], isLoading, error } = usePortalUsers();
   const invalidate = useInvalidateUsers();

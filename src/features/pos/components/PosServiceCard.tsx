@@ -1,3 +1,9 @@
+/**
+ * Card showing a single POS service's state (running/stopped) with a restart button.
+ * Invalidates the log cache when the service transitions from stopped → running.
+ * Uses: @/shared/utils/cn, @/shared/components/Button, ../api/pos.queries, ../types/pos.types
+ * Exports: PosServiceCard
+ */
 import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/shared/utils/cn";
@@ -12,6 +18,7 @@ interface PosServiceCardProps {
   onSelect: (id: string) => void;
 }
 
+/** Card for a single POS service. Restart button is disabled while a restart is in progress or cooling down. */
 export function PosServiceCard({ service, serviceType, isSelected, onSelect }: PosServiceCardProps) {
   const dkposRestart = useRestartPosService(service.id);
   const restRestart = useRestartPosRestService(service.id);
@@ -20,6 +27,7 @@ export function PosServiceCard({ service, serviceType, isSelected, onSelect }: P
   const qc = useQueryClient();
   const prevState = useRef(service.state);
   useEffect(() => {
+    // when a service comes back online, refresh the logs so the user sees fresh output
     if (prevState.current === "stopped" && service.state === "running") {
       qc.invalidateQueries({ queryKey: ["pos-service-logs", serviceType, service.id] });
     }
@@ -27,6 +35,7 @@ export function PosServiceCard({ service, serviceType, isSelected, onSelect }: P
   }, [service.state, service.id, serviceType, qc]);
 
   const isRunning = service.state === "running";
+  // "cooling down" = stopped but not actively restarting — still show Starting...
   const isCoolingDown = !isRunning && !isPending;
   const isDisabled = isPending || isCoolingDown;
 
