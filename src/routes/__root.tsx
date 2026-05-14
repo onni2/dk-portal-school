@@ -16,7 +16,11 @@ import { Layout } from "@/shared/components/Layout";
 import { NotFound } from "@/shared/components/NotFound";
 import { RouteError } from "@/shared/components/RouteError";
 import { licenceQueryOptions } from "@/features/licence/api/licence.queries";
+import { kbDataQueryOptions } from "@/features/knowledgeBase/api/knowledgeBase.queries";
+import { youtubeVideosQueryOptions } from "@/features/knowledgeBase/api/youtube.queries";
 import { useAuthStore } from "@/features/auth/store/auth.store";
+import { maintenanceQueryOptions, useMaintenanceLocks } from "@/features/maintenance/api/maintenance.queries";
+import { MaintenanceOverlay } from "@/features/maintenance/components/MaintenanceOverlay";
 
 export interface RouterContext {
   queryClient: QueryClient;
@@ -24,28 +28,52 @@ export interface RouterContext {
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   beforeLoad: ({ location }) => {
-    const isLoginPage = location.pathname === "/login";
+    const isPublicPage =
+      location.pathname === "/login" ||
+      location.pathname === "/callback" ||
+      location.pathname === "/select-company" ||
+      location.pathname === "/forgot-password" ||
+      location.pathname === "/reset-password-token";
     const isAuthenticated = useAuthStore.getState().isAuthenticated;
 
-    if (!isAuthenticated && !isLoginPage) {
+    if (!isAuthenticated && !isPublicPage) {
       throw redirect({ to: "/login" });
     }
   },
-  loader: ({ context: { queryClient } }) => {
+  loader: async ({ context: { queryClient } }) => {
     if (!useAuthStore.getState().isAuthenticated) return;
-    return queryClient.ensureQueryData(licenceQueryOptions);
+    // Fire-and-forget background prefetches — warm the cache while the user
+    // browses other pages so Hjálparmiðstöð loads instantly when visited.
+    void queryClient.prefetchQuery(kbDataQueryOptions);
+    void queryClient.prefetchQuery(youtubeVideosQueryOptions);
+    void queryClient.prefetchQuery(maintenanceQueryOptions);
+
+    try {
+      return await queryClient.ensureQueryData(licenceQueryOptions);
+    } catch (err: unknown) {
+      if (typeof err === "object" && err !== null && "status" in err && (err as { status: number }).status === 401) {
+        useAuthStore.getState().clearAuth();
+        throw redirect({ to: "/login" });
+      }
+      // Non-auth errors (network down, DB issues, etc.) — log and continue
+      // so the rest of the app still renders in degraded mode
+      console.warn("[root loader] licence fetch failed:", err);
+    }
   },
   component: RootComponent,
   notFoundComponent: NotFound,
   errorComponent: ({ error }) => <RouteError error={error} />,
 });
 
-/**
- *
- */
+/** Renders the bare Outlet for public pages (login, callback, etc.) or the full sidebar Layout for authenticated pages. */
 function RootComponent() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const isLoginPage = pathname === "/login";
+  const isLoginPage =
+    pathname === "/login" ||
+    pathname === "/callback" ||
+    pathname === "/select-company" ||
+    pathname.startsWith("/reset-password") ||
+    pathname === "/forgot-password";
 
   if (isLoginPage) {
     return (
@@ -58,8 +86,24 @@ function RootComponent() {
 
   return (
     <Layout>
-      <Outlet />
+      <MaintenanceGate />
       <TanStackRouterDevtools position="bottom-right" />
     </Layout>
   );
+}
+
+function MaintenanceGate() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { data: locks = [] } = useMaintenanceLocks();
+  const user = useAuthStore((s) => s.user);
+
+  const activeLock = locks.find(
+    (lock) => pathname === lock.route || pathname.startsWith(lock.route + "/"),
+  );
+
+  if (activeLock && user?.role !== "god") {
+    return <MaintenanceOverlay message={activeLock.message} />;
+  }
+
+  return <Outlet />;
 }

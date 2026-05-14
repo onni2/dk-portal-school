@@ -1,0 +1,292 @@
+/**
+ * React Query hooks and options for hosting accounts and login history.
+ * Covers Hosting Management (admin) and MyHosting (logged-in user).
+ * Uses: ./hosting.api
+ * Exports: hostingQueryKeys, hostingAccountsQueryOptions, myHostingAccountQueryOptions, myHostingLogQueryOptions,
+ *          useHostingAccounts, useInvalidateHostingAccounts, useHostingAccountLog,
+ *          useMyHostingAccount, useMyHostingAccountOptional, useInvalidateMyHostingAccount,
+ *          useMyHostingLog, useMyHostingLogOptional, useInvalidateMyHostingLog,
+ *          useSignOutHostingAccount, useSignOutMyHosting
+ */
+import {
+  queryOptions,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
+import {
+  changeHostingAccountPassword,
+  fetchHostingAccountLog,
+  fetchHostingAccounts,
+  fetchHostingPortalUsers,
+  fetchMyHostingAccount,
+  fetchMyHostingLog,
+  linkHostingAccountToPortalUser,
+  signOutHostingAccount,
+  signOutMyHosting,
+  unlinkHostingAccountFromPortalUser,
+} from "./hosting.api";
+
+export const hostingQueryKeys = {
+  accounts: ["hosting", "accounts"] as const,
+  accountLog: (accountId: string) =>
+    ["hosting", "accounts", accountId, "log"] as const,
+  me: ["hosting", "me"] as const,
+  meLog: ["hosting", "me", "log"] as const,
+  portalUsers: ["hosting", "portal-users"] as const,
+};
+
+/**
+ * Hosting Management:
+ * All hosting accounts for the active company.
+ */
+export const hostingAccountsQueryOptions = queryOptions({
+  queryKey: hostingQueryKeys.accounts,
+  queryFn: fetchHostingAccounts,
+});
+
+/** Fetch all hosting accounts for the active company (Suspense). */
+export function useHostingAccounts() {
+  return useSuspenseQuery(hostingAccountsQueryOptions);
+}
+
+/** Returns an imperative invalidator for the hosting accounts cache. */
+export function useInvalidateHostingAccounts() {
+  const qc = useQueryClient();
+
+  return () =>
+    qc.invalidateQueries({
+      queryKey: hostingQueryKeys.accounts,
+    });
+}
+
+/**
+ * Hosting Management:
+ * Portal users for the active company.
+ * Used when linking a hosting account to a Mínar síður user.
+ */
+export function useHostingPortalUsers() {
+  return useQuery({
+    queryKey: hostingQueryKeys.portalUsers,
+    queryFn: fetchHostingPortalUsers,
+  });
+}
+
+/**
+ * Hosting Management:
+ * Link hosting account to portal user.
+ *
+ * Backend updates portal_users.hosting_username.
+ */
+export function useLinkHostingAccountToPortalUser() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      accountId,
+      userId,
+    }: {
+      accountId: string;
+      userId: string;
+    }) =>
+      linkHostingAccountToPortalUser({
+        accountId,
+        userId,
+      }),
+
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({
+          queryKey: hostingQueryKeys.accounts,
+        }),
+        qc.invalidateQueries({
+          queryKey: hostingQueryKeys.portalUsers,
+        }),
+      ]);
+    },
+  });
+}
+
+/**
+ * Hosting Management:
+ * Unlink hosting account from portal user.
+ *
+ * Backend clears portal_users.hosting_username.
+ */
+export function useUnlinkHostingAccountFromPortalUser() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      accountId,
+      userId,
+    }: {
+      accountId: string;
+      userId: string;
+    }) =>
+      unlinkHostingAccountFromPortalUser({
+        accountId,
+        userId,
+      }),
+
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({
+          queryKey: hostingQueryKeys.accounts,
+        }),
+        qc.invalidateQueries({
+          queryKey: hostingQueryKeys.portalUsers,
+        }),
+      ]);
+    },
+  });
+}
+
+/**
+ * Hosting Management:
+ * Login/logout history for a specific hosting account.
+ */
+export function useHostingAccountLog(accountId: string, enabled = true) {
+  return useQuery({
+    queryKey: hostingQueryKeys.accountLog(accountId),
+    queryFn: () => fetchHostingAccountLog(accountId),
+    enabled,
+    retry: false,
+  });
+}
+
+/**
+ * Hosting Management:
+ * Change password for a specific hosting account.
+ */
+export function useChangeHostingAccountPassword() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      password,
+    }: {
+      id: string;
+      password: string;
+    }) => changeHostingAccountPassword(id, password),
+
+    onSuccess: async () => {
+      await qc.invalidateQueries({
+        queryKey: hostingQueryKeys.accounts,
+      });
+    },
+  });
+}
+
+/**
+ * MyHosting:
+ * Hosting account connected to the logged-in portal user.
+ */
+export const myHostingAccountQueryOptions = queryOptions({
+  queryKey: hostingQueryKeys.me,
+  queryFn: fetchMyHostingAccount,
+});
+
+/** Fetch the hosting account connected to the logged-in user (Suspense). */
+export function useMyHostingAccount() {
+  return useSuspenseQuery(myHostingAccountQueryOptions);
+}
+
+/**
+ * Optional version for places where the user may not have MyHosting.
+ * Useful because /hosting/me can return 404 if no hosting account is connected.
+ */
+export function useMyHostingAccountOptional() {
+  return useQuery({
+    ...myHostingAccountQueryOptions,
+    retry: false,
+  });
+}
+
+/** Returns an imperative invalidator for the current user's hosting account cache. */
+export function useInvalidateMyHostingAccount() {
+  const qc = useQueryClient();
+
+  return () =>
+    qc.invalidateQueries({
+      queryKey: hostingQueryKeys.me,
+    });
+}
+
+/**
+ * MyHosting:
+ * Login/logout history for the logged-in user's hosting account.
+ */
+export const myHostingLogQueryOptions = queryOptions({
+  queryKey: hostingQueryKeys.meLog,
+  queryFn: fetchMyHostingLog,
+});
+
+/** Fetch login/logout history for the logged-in user's hosting account (Suspense). */
+export function useMyHostingLog() {
+  return useSuspenseQuery(myHostingLogQueryOptions);
+}
+
+/**
+ * Optional version for places where /hosting/me/log should only run
+ * after /hosting/me has successfully returned an account.
+ */
+export function useMyHostingLogOptional(enabled = true) {
+  return useQuery({
+    ...myHostingLogQueryOptions,
+    enabled,
+    retry: false,
+  });
+}
+
+/** Returns an imperative invalidator for the current user's hosting log cache. */
+export function useInvalidateMyHostingLog() {
+  const qc = useQueryClient();
+
+  return () =>
+    qc.invalidateQueries({
+      queryKey: hostingQueryKeys.meLog,
+    });
+}
+
+/**
+ * Hosting Management:
+ * Sign out a specific hosting account session.
+ */
+export function useSignOutHostingAccount() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: signOutHostingAccount,
+    onSuccess: async (_data, id) => {
+      await qc.invalidateQueries({ queryKey: hostingQueryKeys.accounts });
+      await qc.invalidateQueries({ queryKey: hostingQueryKeys.accountLog(id) });
+    },
+  });
+}
+
+/**
+ * MyHosting:
+ * Sign out the logged-in user's hosting session.
+ *
+ * Backend is currently mock/provider-based, but this hook stays the same
+ * when the real hosting environment is plugged in.
+ */
+export function useSignOutMyHosting() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: signOutMyHosting,
+    onSuccess: async () => {
+      await qc.invalidateQueries({
+        queryKey: hostingQueryKeys.me,
+      });
+
+      await qc.invalidateQueries({
+        queryKey: hostingQueryKeys.meLog,
+      });
+    },
+  });
+}

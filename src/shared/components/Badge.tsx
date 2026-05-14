@@ -6,20 +6,18 @@
 import { cn } from "@/shared/utils/cn";
 
 const variantStyles = {
-  default: "bg-[var(--color-background)] text-[var(--color-text-secondary)]",
-  success: "bg-[var(--color-success-bg)] text-[var(--color-success)]",
-  warning: "bg-[var(--color-warning-bg)] text-[var(--color-warning)]",
-  error: "bg-[var(--color-error-bg)] text-[var(--color-error)]",
-  info: "bg-[var(--color-primary-light)] text-[var(--color-primary)]",
+  default: "bg-(--color-background) text-(--color-text-secondary)",
+  success: "bg-(--color-success-bg) text-(--color-success)",
+  warning: "bg-(--color-warning-bg) text-(--color-warning)",
+  error: "bg-(--color-error-bg) text-(--color-error)",
+  info: "bg-(--color-primary-light) text-(--color-primary)",
 } as const;
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   variant?: keyof typeof variantStyles;
 }
 
-/**
- *
- */
+/** Renders a small pill with the chosen colour variant. Defaults to "default" (neutral). */
 export function Badge({
   variant = "default",
   className,

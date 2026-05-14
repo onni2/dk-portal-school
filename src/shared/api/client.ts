@@ -7,18 +7,16 @@
 import type { ApiError } from "./types";
 
 export const BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? "https://api.dkplus.is/api/v1";
+  import.meta.env.VITE_API_BASE_URL ?? "/api/v1";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/**
- *
- */
+/** Reads the auth token from localStorage (company DK Plus UUID) or falls back to the dev env token. */
 function authHeaders(): Record<string, string> {
-  // Only use the stored token if it looks like a real UUID — guards against
-  // stale mock tokens (e.g. "mock-token-u1-...") that the real API rejects.
-  const stored = localStorage.getItem("dk-auth-token");
+  // Use the company DK Plus token (UUID) for api.dkplus.is calls.
+  // Falls back to VITE_API_TOKEN for local dev without a backend.
+  const stored = localStorage.getItem("dk-company-token");
   const token =
     (stored && UUID_RE.test(stored) ? stored : null) ??
     import.meta.env.VITE_API_TOKEN ??
@@ -32,9 +30,7 @@ function authHeaders(): Record<string, string> {
   return headers;
 }
 
-/**
- *
- */
+/** Throws an ApiError if the response is not OK, otherwise parses the body as JSON. */
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     let message = response.statusText;

@@ -1,44 +1,24 @@
 /**
- * TypeScript types for timeclock entries, employee stamp status, stamp input, and the stamp API response.
+ * TypeScript types for timeclock IP whitelist, employee phone numbers, and company config.
  * Uses: nothing — standalone file
- * Exports: TimeclockEntry, TimeclockEmployee, StampInput, StampResponse, TimeclockSettings, TimeclockWebConfig
+ * Exports: IpWhitelistEntry, EmployeePhoneEntry, TimeclockConfig
  */
-export interface TimeclockEntry {
-  ID: number;
-  Employee: string;
-  EmployeeName: string;
-  Start: string;
-  End: string | null;
-  TotalHours: number;
-  TotalMinutes: number;
-  Project: string;
-  Phase: string;
-  Task: string;
-  Comment: string;
-  CurrentStatus: number; // 1 = clocked in, -1 = clocked out
-  Processed: boolean;
+
+export interface IpWhitelistEntry {
+  id: string;
+  ip: string;
+  label: string;
 }
 
-export interface TimeclockEmployee {
-  Number: string;
-  Name: string;
-  Email: string;
-  StampStatus: number; // 1 = clocked in, -1 = clocked out
-  LastStampTime: string;
+export interface EmployeePhoneEntry {
+  id: string;
+  kennitala: string;
+  employeeName: string;
+  phone: string;
 }
 
-export interface StampInput {
-  employeeNumber: string;
-  comment?: string;
-  project?: string;
+/** Company name and fake stimpilklukka site URL from the portal backend */
+export interface TimeclockConfig {
+  companyName: string;
+  timeclockUrl: string | null;
 }
-
-export interface StampResponse {
-  success: boolean;
-  newStatus: number;
-  entry?: TimeclockEntry;
-}
-
-// Shape unknown until we call the real API — tighten this up once we see the response
-export type TimeclockSettings = Record<string, unknown>;
-export type TimeclockWebConfig = Record<string, unknown>;

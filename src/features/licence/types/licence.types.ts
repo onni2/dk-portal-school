@@ -13,6 +13,12 @@ export interface LicenceResponse {
   Payroll?: { Enabled: boolean };
   Member?: { Enabled: boolean };
   Purchase?: { PurchaseOrders: boolean };
+  // Portal product access — served from company_licences table, shaped to match DK API style
+  TimeClock?: { Enabled: boolean };
+  Hosting?: { Enabled: boolean };
+  POS?: { Enabled: boolean };
+  dkOne?: { Enabled: boolean };
+  dkPlus?: { Enabled: boolean };
 }
 
 export type LicenceModule =
@@ -24,6 +30,11 @@ export type LicenceModule =
   | "Project"
   | "Payroll"
   | "Member"
-  | "Purchase";
+  | "Purchase"
+  | "TimeClock"
+  | "Hosting"
+  | "POS"
+  | "dkOne"
+  | "dkPlus";
 
 export type UserRole = "cop" | "client";

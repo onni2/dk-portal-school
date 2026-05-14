@@ -16,9 +16,7 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   padding?: keyof typeof paddingStyles;
 }
 
-/**
- *
- */
+/** Renders a surface card with configurable padding. Use `padding="none"` when the content manages its own spacing. */
 export function Card({
   padding = "md",
   className,
@@ -28,7 +26,7 @@ export function Card({
   return (
     <div
       className={cn(
-        "rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-sm)]",
+        "rounded-[var(--radius-lg)] border border-(--color-border) bg-(--color-surface) shadow-[var(--shadow-sm)]",
         paddingStyles[padding],
         className,
       )}

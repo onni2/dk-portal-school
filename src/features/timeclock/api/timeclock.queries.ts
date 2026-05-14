@@ -1,62 +1,55 @@
 /**
- * React Query options and hooks for timeclock entries, employee statuses, settings, and web config.
+ * React Query options and hooks for timeclock config, IP whitelist, and employee phone numbers.
  * Uses: ./timeclock.api
- * Exports: timeclockEntriesQueryOptions, timeclockEmployeesQueryOptions, timeclockSettingsQueryOptions, timeclockWebConfigQueryOptions, useTimeclockEntries, useTimeclockEmployees, useTimeclockSettings, useTimeclockWebConfig
+ * Exports: timeclockConfigQueryOptions, ipWhitelistQueryOptions, employeePhonesQueryOptions,
+ *          useTimeclockConfig, useIpWhitelist, useEmployeePhones,
+ *          useInvalidateIpWhitelist, useInvalidateEmployeePhones
  */
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import {
-  fetchTimeclockEntries,
-  fetchTimeclockEmployees,
-  fetchTimeclockSettings,
-  fetchTimeclockWebConfig,
+  queryOptions,
+  useSuspenseQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import {
+  fetchTimeclockConfig,
+  fetchIpWhitelist,
+  fetchEmployeePhones,
 } from "./timeclock.api";
 
-export const timeclockEntriesQueryOptions = queryOptions({
-  queryKey: ["timeclock-entries"],
-  queryFn: fetchTimeclockEntries,
+export const timeclockConfigQueryOptions = queryOptions({
+  queryKey: ["timeclock-config"],
+  queryFn: fetchTimeclockConfig,
 });
 
-export const timeclockEmployeesQueryOptions = queryOptions({
-  queryKey: ["timeclock-employees"],
-  queryFn: fetchTimeclockEmployees,
+export const ipWhitelistQueryOptions = queryOptions({
+  queryKey: ["timeclock-ip-whitelist"],
+  queryFn: fetchIpWhitelist,
 });
 
-export const timeclockSettingsQueryOptions = queryOptions({
-  queryKey: ["timeclock-settings"],
-  queryFn: fetchTimeclockSettings,
-  staleTime: 10 * 60 * 1000, // settings don't change often — cache for 10 minutes
+export const employeePhonesQueryOptions = queryOptions({
+  queryKey: ["timeclock-employee-phones"],
+  queryFn: fetchEmployeePhones,
 });
 
-export const timeclockWebConfigQueryOptions = queryOptions({
-  queryKey: ["timeclock-web-config"],
-  queryFn: fetchTimeclockWebConfig,
-  staleTime: 10 * 60 * 1000,
-});
-
-/**
- *
- */
-export function useTimeclockEntries() {
-  return useSuspenseQuery(timeclockEntriesQueryOptions);
+export function useTimeclockConfig() {
+  return useSuspenseQuery(timeclockConfigQueryOptions);
 }
 
-/**
- *
- */
-export function useTimeclockEmployees() {
-  return useSuspenseQuery(timeclockEmployeesQueryOptions);
+export function useIpWhitelist() {
+  return useSuspenseQuery(ipWhitelistQueryOptions);
 }
 
-/**
- *
- */
-export function useTimeclockSettings() {
-  return useSuspenseQuery(timeclockSettingsQueryOptions);
+export function useEmployeePhones() {
+  return useSuspenseQuery(employeePhonesQueryOptions);
 }
 
-/**
- *
- */
-export function useTimeclockWebConfig() {
-  return useSuspenseQuery(timeclockWebConfigQueryOptions);
+export function useInvalidateIpWhitelist() {
+  const qc = useQueryClient();
+  return () => qc.invalidateQueries({ queryKey: ["timeclock-ip-whitelist"] });
+}
+
+export function useInvalidateEmployeePhones() {
+  const qc = useQueryClient();
+  return () =>
+    qc.invalidateQueries({ queryKey: ["timeclock-employee-phones"] });
 }

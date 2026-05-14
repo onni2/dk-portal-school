@@ -11,9 +11,7 @@ export const customerTransactionsQueryOptions = queryOptions({
   queryFn: fetchCustomerTransactions,
 });
 
-/**
- *
- */
+/** Hook that returns customer transactions. Suspends until data is available. */
 export function useCustomerTransactions() {
   return useSuspenseQuery(customerTransactionsQueryOptions);
 }

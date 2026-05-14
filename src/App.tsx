@@ -30,9 +30,7 @@ declare module "@tanstack/react-router" {
   }
 }
 
-/**
- *
- */
+/** Mounts the React Query provider and the TanStack Router provider, wiring the queryClient into the router context. */
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>

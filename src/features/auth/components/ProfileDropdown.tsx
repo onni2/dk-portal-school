@@ -5,6 +5,7 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/shared/utils/cn";
+import { useLangStore } from "@/shared/store/lang.store";
 import type { User } from "../types/auth.types";
 
 interface ProfileDropdownProps {
@@ -12,19 +13,14 @@ interface ProfileDropdownProps {
   onLogout: () => void;
 }
 
-/**
- *
- */
+/** Profile button that opens a dropdown with the user's name, accessibility controls, and a logout button. */
 export function ProfileDropdown({ user, onLogout }: ProfileDropdownProps) {
   const [open, setOpen] = useState(false);
-  const [lang, setLang] = useState<"IS" | "EN">("IS");
+  const { lang, fontSize, setFontSize, highContrast, toggleHighContrast } = useLangStore();
   const ref = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    /**
-     *
-     */
     function handleClickOutside(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {
         setOpen(false);
@@ -42,12 +38,12 @@ export function ProfileDropdown({ user, onLogout }: ProfileDropdownProps) {
       {/* Trigger button */}
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 py-1.5 text-sm font-medium text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-hover)]"
+        className="flex items-center gap-2 rounded-[var(--radius-lg)] border border-[var(--color-border)] px-3 py-1.5 text-sm font-medium text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-hover)]"
       >
         {/* Person icon */}
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-4 w-4 text-[var(--color-primary)]"
+          className="h-4 w-4 text-(--color-primary)"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -63,70 +59,83 @@ export function ProfileDropdown({ user, onLogout }: ProfileDropdownProps) {
         <svg
           xmlns="http://www.w3.org/2000/svg"
           className={cn(
-            "h-3 w-3 transition-transform text-[var(--color-text-muted)]",
+            "h-4 w-4 transition-transform text-[#4743F7]",
             open && "rotate-180",
           )}
-          viewBox="0 0 20 20"
-          fill="currentColor"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
         >
-          <path
-            fillRule="evenodd"
-            d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z"
-            clipRule="evenodd"
-          />
+          <path d="M6 9l6 6 6-6" />
         </svg>
       </button>
 
       {/* Dropdown panel */}
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg">
+        <div style={{ fontSize: "16px" }} className="absolute right-0 top-full z-50 mt-2 w-72 rounded-[var(--radius-lg)] border border-(--color-border) bg-(--color-surface) shadow-lg">
           <div className="p-4">
             {/* Avatar + name + kennitala */}
             <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary)] text-sm font-bold text-white">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-(--color-primary) text-sm font-bold text-white">
                 {initial}
               </div>
               <div>
-                <p className="font-semibold text-[var(--color-text)]">
+                <p className="font-semibold text-(--color-text)">
                   {user.name}
                 </p>
                 {user.kennitala && (
-                  <p className="text-xs text-[var(--color-text-muted)]">
+                  <p className="text-xs text-(--color-text-muted)">
                     {user.kennitala}
                   </p>
                 )}
               </div>
             </div>
 
-            {/* Language selector */}
+            {/* Accessibility */}
             <div className="mb-4">
-              <p className="mb-2 text-xs text-[var(--color-text-secondary)]">
-                Velja annað tungumál
+              <p className="mb-2 text-xs text-(--color-text-secondary)">
+                {lang === "EN" ? "Accessibility" : "Aðgengileiki"}
               </p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setLang("IS")}
-                  className={cn(
-                    "rounded-[var(--radius-md)] border px-3 py-1 text-sm font-medium transition-colors",
-                    lang === "IS"
-                      ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white"
-                      : "border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)]",
-                  )}
-                >
-                  IS
-                </button>
-                <button
-                  onClick={() => setLang("EN")}
-                  className={cn(
-                    "rounded-[var(--radius-md)] border px-3 py-1 text-sm font-medium transition-colors",
-                    lang === "EN"
-                      ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white"
-                      : "border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)]",
-                  )}
-                >
-                  EN
-                </button>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm text-(--color-text-secondary)">{lang === "EN" ? "Text size" : "Stærð texta"}</span>
+                <span className="text-xs font-medium text-(--color-primary)">{fontSize}%</span>
               </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setFontSize(Math.max(100, fontSize - 10))}
+                  disabled={fontSize <= 100}
+                  className="icon-btn border border-(--color-border) text-(--color-text-secondary) font-bold disabled:opacity-30"
+                >−</button>
+                <input
+                  type="range"
+                  min={100}
+                  max={150}
+                  step={10}
+                  value={fontSize}
+                  onChange={(e) => setFontSize(Number(e.target.value))}
+                  className="flex-1 accent-[var(--color-primary)]"
+                />
+                <button
+                  onClick={() => setFontSize(Math.min(150, fontSize + 10))}
+                  disabled={fontSize >= 150}
+                  className="icon-btn border border-(--color-border) text-(--color-text-secondary) font-bold disabled:opacity-30"
+                >+</button>
+              </div>
+              <button
+                onClick={toggleHighContrast}
+                className={cn(
+                  "mt-2 flex w-full items-center justify-between rounded-[var(--radius-md)] border px-3 py-2 text-sm font-medium transition-colors",
+                  highContrast
+                    ? "border-(--color-primary) bg-(--color-primary) text-white"
+                    : "border-(--color-border) text-(--color-text-secondary) hover:bg-(--color-surface-hover)",
+                )}
+              >
+                <span>{lang === "EN" ? "High contrast" : "Há skerpa"}</span>
+                <span className="text-xs">{highContrast ? (lang === "EN" ? "On" : "Virkt") : (lang === "EN" ? "Off" : "Óvirkt")}</span>
+              </button>
             </div>
 
             {/* Logout */}
@@ -135,9 +144,9 @@ export function ProfileDropdown({ user, onLogout }: ProfileDropdownProps) {
                 setOpen(false);
                 onLogout();
               }}
-              className="w-full rounded-[var(--radius-md)] bg-[var(--color-primary)] py-2 text-sm font-medium text-white transition-colors hover:bg-[var(--color-primary-hover)]"
+              className="w-full rounded-[var(--radius-md)] bg-(--color-primary) py-2 text-sm font-medium text-white transition-colors hover:bg-(--color-primary-hover)"
             >
-              Útskrá
+              {lang === "EN" ? "Log out" : "Útskrá"}
             </button>
           </div>
         </div>

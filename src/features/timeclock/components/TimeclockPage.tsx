@@ -1,29 +1,28 @@
 /**
- * Composes the full timeclock page by rendering the summary stats, employee status grid, and recent entries table.
- * Uses: @/shared/components/LoadingSpinner, ./TimeclockSummary, ./EmployeeStatusGrid, ./TimeclockEntries
+ * Composes the timeclock admin page: company info, IP whitelist, and employee phone numbers.
+ * Uses: ./TimeclockCompanyCard, ./IpWhitelistPanel, ./EmployeePhonesPanel, ./TimeclockSkeletons
  * Exports: TimeclockPage
  */
 import { Suspense } from "react";
-import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
-import { TimeclockSummary } from "./TimeclockSummary";
-import { EmployeeStatusGrid } from "./EmployeeStatusGrid";
-import { TimeclockEntries } from "./TimeclockEntries";
+import { TimeclockCompanyCard } from "./TimeclockCompanyCard";
+import { IpWhitelistPanel } from "./IpWhitelistPanel";
+import { EmployeePhonesPanel } from "./EmployeePhonesPanel";
+import { PanelSkeleton } from "./TimeclockSkeletons";
 
-/**
- *
- */
 export function TimeclockPage() {
   return (
     <div className="space-y-6">
-      <Suspense fallback={<LoadingSpinner />}>
-        <TimeclockSummary />
+      <Suspense fallback={<PanelSkeleton />}>
+        <TimeclockCompanyCard />
       </Suspense>
-      <Suspense fallback={<LoadingSpinner />}>
-        <EmployeeStatusGrid />
-      </Suspense>
-      <Suspense fallback={<LoadingSpinner />}>
-        <TimeclockEntries />
-      </Suspense>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Suspense fallback={<PanelSkeleton />}>
+          <IpWhitelistPanel />
+        </Suspense>
+        <Suspense fallback={<PanelSkeleton />}>
+          <EmployeePhonesPanel />
+        </Suspense>
+      </div>
     </div>
   );
 }

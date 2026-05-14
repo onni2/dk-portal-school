@@ -8,9 +8,7 @@ import type { UserRole } from "../types/licence.types";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { authRoleToUserRole } from "@/features/auth/utils/role-mapping";
 
-/**
- *
- */
+/** Reads the persisted auth user on store creation and derives the initial UI role. */
 function getInitialRole(): UserRole {
   const authUser = useAuthStore.getState().user;
   if (authUser) return authRoleToUserRole(authUser.role);
