@@ -1,12 +1,12 @@
 /**
- * /notendur — portal users page; prefetches the user list before rendering.
+ * /users — portal users page; prefetches the user list before rendering.
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { usersQueryOptions } from "@/features/users/api/users.queries";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { UsersPage } from "@/features/users/components/UsersPage";
 
-export const Route = createFileRoute("/notendur/")({
+export const Route = createFileRoute("/users/")({
   loader: ({ context: { queryClient } }) => {
     const companyId = useAuthStore.getState().user?.companyId;
 

@@ -1,3 +1,4 @@
+// Modal for creating a new dkPlus auth token, with company selector and token display on success.
 import { useState } from "react";
 import { Button } from "@/shared/components/Button";
 import { Input } from "@/shared/components/Input";

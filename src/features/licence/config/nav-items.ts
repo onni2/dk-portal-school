@@ -46,11 +46,11 @@ export const NAV_ITEMS: NavItem[] = [
   {
     label: "Áskrift",
     labelEn: "Subscription",
-    to: "/askrift",
+    to: "/subscription",
     access: { type: "licencedModule", module: "dkPlus", permission: "subscription" },
     children: [
-      { label: "Yfirlit áskriftar", labelEn: "Subscription Overview", to: "/askrift/yfirlit", access: { type: "licencedModule", module: "dkPlus", permission: "subscription" } },
-      { label: "Vörur dk", labelEn: "DK Products", to: "/askrift/vorur", access: { type: "licencedModule", module: "dkPlus", permission: "subscription" } },
+      { label: "Yfirlit áskriftar", labelEn: "Subscription Overview", to: "/subscription/yfirlit", access: { type: "licencedModule", module: "dkPlus", permission: "subscription" } },
+      { label: "Vörur dk", labelEn: "DK Products", to: "/subscription/vorur", access: { type: "licencedModule", module: "dkPlus", permission: "subscription" } },
     ],
   },
 
@@ -74,7 +74,7 @@ export const NAV_ITEMS: NavItem[] = [
   // Always visible to all logged-in users
   { label: "Zoho beiðnir", labelEn: "Support Tickets", to: "/zoho", access: { type: "alwaysVisible" } },
   { label: "Hjálparmiðstöð", labelEn: "Help Center", to: "/knowledge-base", access: { type: "alwaysVisible" } },
-  { label: "Notendur", labelEn: "Users", to: "/notendur", access: { type: "requiredPermission", permission: "users" } },
+  { label: "Notendur", labelEn: "Users", to: "/users", access: { type: "requiredPermission", permission: "users" } },
   { label: "Stillingar", labelEn: "Settings", to: "/portalUserSettings", access: { type: "alwaysVisible" } },
   { label: "Kerfisstjórn", labelEn: "System Admin", to: "/god", access: { type: "godOnly" } },
 ];

@@ -1,5 +1,5 @@
 /**
- * /askrift/vorur — DK products catalogue. Guards by dkPlus licence.
+ * /subscription/vorur — DK products catalogue. Guards by dkPlus licence.
  */
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { Suspense } from "react";
@@ -9,7 +9,7 @@ import { SubscriptionProductsPage } from "@/features/subscription/components/Sub
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 import { licenceQueryOptions } from "@/features/licence/api/licence.queries";
 
-export const Route = createFileRoute("/askrift/vorur/")({
+export const Route = createFileRoute("/subscription/vorur/")({
   beforeLoad: async ({ context: { queryClient } }) => {
     const licence = await queryClient.ensureQueryData(licenceQueryOptions);
     if (!licence?.dkPlus?.Enabled) throw redirect({ to: "/" });

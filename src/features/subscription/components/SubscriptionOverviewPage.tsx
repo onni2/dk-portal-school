@@ -245,7 +245,7 @@ export function SubscriptionOverviewPage() {
       title="Yfirlit áskriftar"
       info="Hér sérð þú yfirlit yfir virkar áskriftir fyrirtækisins hjá dk hugbúnaði, mánaðarlegar greiðslur og tengdar vörur og þjónustur."
       actions={
-        <Button onClick={() => navigate({ to: "/askrift/vorur" })}>
+        <Button onClick={() => navigate({ to: "/subscription/vorur" })}>
           Bæta við áskrift
         </Button>
       }

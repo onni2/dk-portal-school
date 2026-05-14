@@ -1,3 +1,4 @@
+// Detail panel for a single hosting account showing status, MFA, linked portal users, login history, and action buttons.
 import { useHostingAccountLog } from "../../api/hosting.queries";
 import type {
   HostingAccount,

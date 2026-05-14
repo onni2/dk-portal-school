@@ -666,15 +666,15 @@ function NotendurPreview({ compact, lang }: { compact?: boolean; lang: Lang }) {
 const LOCK_ROUTE_LABELS: Record<string, { is: string; en: string }> = {
   "/invoices":       { is: "Reikningar",      en: "Invoices" },
   "/invoices/":      { is: "Reikningar",      en: "Invoices" },
-  "/askrift":        { is: "Áskrift",          en: "Subscription" },
-  "/askrift/yfirlit":{ is: "Áskrift",          en: "Subscription" },
+  "/subscription":        { is: "Áskrift",          en: "Subscription" },
+  "/subscription/yfirlit":{ is: "Áskrift",          en: "Subscription" },
   "/hosting":        { is: "Hýsing",           en: "Hosting" },
   "/pos":            { is: "POS",              en: "POS" },
   "/dkone":          { is: "dkOne",            en: "dkOne" },
   "/dkplus":         { is: "dkPlus",           en: "dkPlus" },
   "/timeclock":      { is: "Stimpilklukka",   en: "Timeclock" },
   "/timeclock/":     { is: "Stimpilklukka",   en: "Timeclock" },
-  "/notendur":       { is: "Notendur",         en: "Users" },
+  "/users":       { is: "Notendur",         en: "Users" },
   "/god":            { is: "Kerfisstjórnun",  en: "System Admin" },
   "/god/":           { is: "Kerfisstjórnun",  en: "System Admin" },
 };

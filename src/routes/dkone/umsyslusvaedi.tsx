@@ -4,7 +4,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
 import { subCompaniesQueryOptions } from "@/features/dkone/api/dkone.queries";
-import { UmsyslusvaeðiPage } from "@/features/dkone/components/UmsyslusvaeðiPage";
+import { SubCompaniesPage } from "@/features/dkone/components/SubCompaniesPage";
 import { LoadingSpinner } from "@/shared/components/LoadingSpinner";
 
 export const Route = createFileRoute("/dkone/umsyslusvaedi")({
@@ -13,7 +13,7 @@ export const Route = createFileRoute("/dkone/umsyslusvaedi")({
   },
   component: () => (
     <Suspense fallback={<LoadingSpinner />}>
-      <UmsyslusvaeðiPage />
+      <SubCompaniesPage />
     </Suspense>
   ),
 });

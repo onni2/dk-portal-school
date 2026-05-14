@@ -1,5 +1,5 @@
 /**
- * /askrift/yfirlit — Subscription overview page. Guards by dkPlus licence.
+ * /subscription/yfirlit — Subscription overview page. Guards by dkPlus licence.
  */
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import {
@@ -9,7 +9,7 @@ import {
 import { SubscriptionOverviewPage } from "@/features/subscription/components/SubscriptionOverviewPage";
 import { licenceQueryOptions } from "@/features/licence/api/licence.queries";
 
-export const Route = createFileRoute("/askrift/yfirlit/")({
+export const Route = createFileRoute("/subscription/yfirlit/")({
   beforeLoad: async ({ context: { queryClient } }) => {
     const licence = await queryClient.ensureQueryData(licenceQueryOptions);
     if (!licence?.dkPlus?.Enabled) throw redirect({ to: "/" });

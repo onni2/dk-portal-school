@@ -28,7 +28,7 @@ const copItem: NavItem = { label: "Admin", to: "/admin", access: { type: "copOnl
 const accountantItem: NavItem = { label: "Bókari", to: "/accountant", access: { type: "accountantOnly" } };
 const permItem: NavItem = { label: "Reikningar", to: "/invoices", access: { type: "requiredPermission", permission: "invoices" } };
 const licencedItem: NavItem = {
-  label: "Áskrift", to: "/askrift",
+  label: "Áskrift", to: "/subscription",
   access: { type: "licencedModule", module: "dkPlus", permission: "subscription" },
 };
 const modulesItem: NavItem = {

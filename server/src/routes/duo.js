@@ -466,7 +466,7 @@ router.get("/me/devices", async (req, res) => {
  *
  * Body:
  * {
- *   phoneNumber: "+3546614104",
+ *   phoneNumber: "+3540000000",
  *   platform: "ios" | "android",
  *   deviceDescription: "Ágústa",
  *   activationMethod: "sms" | "qr"
@@ -505,7 +505,7 @@ router.post("/me/devices", deviceActivationLimiter, async (req, res) => {
 
     if (!isValidPhoneNumber(phoneNumber)) {
       return res.status(400).json({
-        message: "Símanúmer þarf að vera á alþjóðlegu formi, t.d. +3546614104",
+        message: "Símanúmer þarf að vera á alþjóðlegu formi, t.d. +3540000000",
       });
     }
 
@@ -973,7 +973,7 @@ router.post(
       }
       if (!isValidPhoneNumber(phoneNumber)) {
         return res.status(400).json({
-          message: "Símanúmer þarf að vera á alþjóðlegu formi, t.d. +3546614104",
+          message: "Símanúmer þarf að vera á alþjóðlegu formi, t.d. +3540000000",
         });
       }
       if (!platform) {

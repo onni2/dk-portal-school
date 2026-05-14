@@ -1,3 +1,4 @@
+// Action button group for a hosting account: link portal user, change password, delete account, and sign out.
 interface HostingAccountActionButtonsProps {
   loggedIn: boolean;
   portalUserLinked?: boolean;

@@ -1,3 +1,4 @@
+// Dialog for linking or unlinking portal (Mínar síður) users to a hosting account.
 import { useMemo, useState } from "react";
 import type {
   HostingAccount,

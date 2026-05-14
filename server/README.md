@@ -30,7 +30,7 @@ DK_TOKEN=shared-dk-plus-api-token
 
 - **DATABASE_URL** — get this from [neon.tech](https://neon.tech) → your project → Connection string. Everyone on the team uses the same database, so share this privately (Discord/Teams).
 - **JWT_SECRET** — can be anything, just keep it the same across the team.
-- **DK_TOKEN** — the shared DK Plus API token for company HR. Ask Óðinn.
+- **DK_TOKEN** — the shared DK Plus API token for company HR.
 
 ## Database
 

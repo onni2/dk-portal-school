@@ -2,6 +2,10 @@
 
 Student graduation project portal — browse projects, filter by status, and view details.
 
+## Note for Reviewers
+
+This repository has been prepared for code review only. All sensitive data (database credentials, API keys, seed data, and environment files) has been removed before submission. **The application cannot be run** — the backend has no database connection and the frontend has no API credentials. The app will load but will not get past the login page. Please review the source code directly.
+
 ## Getting Started
 
 ```bash
